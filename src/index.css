@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font loading optimization for Dancing Script */
+.font-dancing-script {
+  font-family: 'Dancing Script', 'Brush Script MT', 'Lucida Handwriting', cursive, serif !important;
+  font-display: swap;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent FOUT (Flash of Unstyled Text) */
+.font-dancing-script {
+  visibility: hidden;
+}
+
+/* Show when font is loaded */
+.fonts-loaded .font-dancing-script {
+  visibility: visible;
+}

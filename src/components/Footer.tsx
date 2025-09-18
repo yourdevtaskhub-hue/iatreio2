@@ -1,0 +1,265 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Heart, Mail, MapPin, Shield, Phone, Clock, Instagram, Facebook, Linkedin } from 'lucide-react';
+
+interface FooterProps {
+  language: string;
+}
+
+const Footer: React.FC<FooterProps> = ({ language }) => {
+  const content = {
+    gr: {
+      description: 'Παρέχοντας συμπονετική, βασισμένη σε αποδείξεις φροντίδα ψυχικής υγείας για παιδιά και εφήβους. Υποστηρίζοντας οικογένειες σε κάθε βήμα του ταξιδιού προς τη θεραπεία και την ανάπτυξη.',
+      services: 'Υπηρεσίες',
+      servicesList: [
+        'Ψυχιατρική Αξιολόγηση',
+        'Ατομική Θεραπεία',
+        'Οικογενειακή Θεραπεία',
+        'Παρέμβαση Κρίσης',
+        'Διαδικτυακές Συμβουλές'
+      ],
+      quickLinks: 'Γρήγοροι Σύνδεσμοι',
+      linksList: [
+        'Σχετικά με τη Δρ. Φύτρου',
+        'Υπηρεσίες',
+        'Η Προσέγγισή μας',
+        'Επικοινωνία'
+      ],
+      emergency: 'Ειδοποίηση Έκτακτης Ανάγκης',
+      emergencyText: 'Εάν εσείς ή το παιδί σας αντιμετωπίζετε μια έκτακτη ανάγκη ψυχικής υγείας, παρακαλώ επικοινωνήστε αμέσως με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών. Μην περιμένετε απάντηση σε διαδικτυακές επικοινωνίες.',
+      swissEmergency: 'Έκτακτη Ανάγκη Ελβετίας: 144',
+      euEmergency: 'Έκτακτη Ανάγκη ΕΕ: 112',
+      copyright: '© 2024 Δρ. Άννα-Μαρία Φύτρου. Όλα τα δικαιώματα διατηρούνται.',
+      privacyProtected: 'Προστασία Ιδιωτικότητας Ασθενών'
+    },
+    en: {
+      description: 'Providing compassionate, evidence-based mental health care for children and adolescents. Supporting families through every step of the journey towards healing and growth.',
+      services: 'Our Services',
+      servicesList: [
+        'Psychiatric Assessment',
+        'Individual Therapy',
+        'Family Therapy',
+        'Crisis Intervention',
+        'Online Consultations'
+      ],
+      quickLinks: 'Quick Links',
+      linksList: [
+        'About Dr. Fytrou',
+        'Services',
+        'Our Approach',
+        'Contact'
+      ],
+      emergency: 'Emergency Notice',
+      emergencyText: 'If you or your child is experiencing a mental health emergency, please contact emergency services immediately or go to your nearest emergency room. Do not wait for a response to online communications.',
+      swissEmergency: 'Switzerland Emergency: 144',
+      euEmergency: 'EU Emergency: 112',
+      copyright: '© 2024 Dr. Anna-Maria Fytrou. All rights reserved.',
+      privacyProtected: 'Patient Privacy Protected'
+    }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <footer className="bg-gradient-to-br from-gray-800 via-gray-900 to-purple-900 text-white py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Brand Section */}
+          <div className="lg:col-span-2">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center space-x-3 mb-6"
+            >
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, 0]
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-lg"
+              >
+                <Heart className="h-7 w-7 text-white" />
+              </motion.div>
+              <div>
+                <h3 className="font-bold text-xl font-poppins">Dr. Anna-Maria Fytrou</h3>
+                <p className="text-gray-300 text-sm font-quicksand">
+                  {language === 'gr' ? 'Παιδοψυχίατρος' : 'Child & Adolescent Psychiatrist'}
+                </p>
+              </div>
+            </motion.div>
+            <p className="text-gray-300 leading-relaxed mb-6 max-w-md font-nunito">
+              {content[language].description}
+            </p>
+            
+            {/* Social Media Links */}
+            <div className="flex space-x-4 mb-6">
+              <motion.a
+                href="https://www.instagram.com/drfytrouannamaria/"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300"
+              >
+                <Instagram className="h-5 w-5" />
+              </motion.a>
+              <motion.a
+                href="https://www.tiktok.com/@drfytrouannamaria"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-3 rounded-full bg-black text-white hover:shadow-lg transition-all duration-300"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                </svg>
+              </motion.a>
+              <motion.a
+                href="https://www.facebook.com/p/Dr-Fytrou-Anna-Maria-61568951687995/"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-3 rounded-full bg-blue-600 text-white hover:shadow-lg transition-all duration-300"
+              >
+                <Facebook className="h-5 w-5" />
+              </motion.a>
+              <motion.a
+                href="https://www.linkedin.com/in/anna-maria-fytrou-bb60ab138/?originalSubdomain=gr"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-3 rounded-full bg-blue-700 text-white hover:shadow-lg transition-all duration-300"
+              >
+                <Linkedin className="h-5 w-5" />
+              </motion.a>
+            </div>
+            <div className="space-y-3">
+              <motion.div 
+                whileHover={{ x: 5 }}
+                className="flex items-center text-gray-300"
+              >
+                <Mail className="h-4 w-4 mr-3" />
+                <a href="mailto:iatreiodrfytrou@gmail.com" className="hover:text-rose-soft transition-colors font-nunito">
+                  iatreiodrfytrou@gmail.com
+                </a>
+              </motion.div>
+              <motion.div 
+                whileHover={{ x: 5 }}
+                className="flex items-center text-gray-300"
+              >
+                <MapPin className="h-4 w-4 mr-3" />
+                <span className="font-nunito">
+                  {language === 'gr' ? 'Λωζάνη, Ελβετία' : 'Lausanne, Switzerland'}
+                </span>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Services */}
+          <div>
+            <h4 className="font-semibold text-lg mb-4 font-poppins">{content[language].services}</h4>
+            <ul className="space-y-2">
+              {content[language].servicesList.map((service, index) => (
+                <motion.li 
+                  key={index}
+                  whileHover={{ x: 5 }}
+                  className="text-gray-300 hover:text-rose-soft transition-colors cursor-pointer font-nunito"
+                  onClick={() => scrollToSection('services')}
+                >
+                  {service}
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="font-semibold text-lg mb-4 font-poppins">{content[language].quickLinks}</h4>
+            <ul className="space-y-2">
+              {content[language].linksList.map((link, index) => {
+                const sectionIds = ['about', 'services', 'approach', 'contact'];
+                return (
+                  <motion.li 
+                    key={index}
+                    whileHover={{ x: 5 }}
+                    className="text-gray-300 hover:text-rose-soft transition-colors cursor-pointer font-nunito"
+                    onClick={() => scrollToSection(sectionIds[index])}
+                  >
+                    {link}
+                  </motion.li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-700 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div className="mb-4 md:mb-0">
+              <p className="text-gray-400 text-sm font-nunito">
+                {content[language].copyright}
+              </p>
+            </div>
+            <div className="flex items-center space-x-6">
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center text-gray-400 text-sm"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                <span className="font-quicksand">{content[language].privacyProtected}</span>
+              </motion.div>
+            </div>
+          </div>
+
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="bg-gradient-to-r from-red-900/50 to-orange-900/50 p-6 rounded-3xl border border-red-700/30"
+          >
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, 0]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="bg-red-600 p-3 rounded-full mr-3"
+                >
+                  <Phone className="h-6 w-6 text-white" />
+                </motion.div>
+                <h4 className="font-semibold text-lg text-red-300 font-poppins">{content[language].emergency}</h4>
+              </div>
+              <p className="text-red-200 text-sm mb-4 leading-relaxed font-nunito">
+                {content[language].emergencyText}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
+                <motion.span 
+                  whileHover={{ scale: 1.05 }}
+                  className="text-red-300 font-medium bg-red-800/30 px-4 py-2 rounded-full font-poppins"
+                >
+                  {content[language].swissEmergency}
+                </motion.span>
+                <motion.span 
+                  whileHover={{ scale: 1.05 }}
+                  className="text-red-300 font-medium bg-red-800/30 px-4 py-2 rounded-full font-poppins"
+                >
+                  {content[language].euEmergency}
+                </motion.span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;

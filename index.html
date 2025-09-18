@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Διαδικτυακό Ιατρείο Γονέων και Εφήβων - Dr. Anna-Maria Fytrou</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Inline critical font CSS to prevent FOUT -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
+      
+      /* Immediate font application */
+      .font-dancing-script {
+        font-family: 'Dancing Script', cursive !important;
+        font-display: swap;
+      }
+      
+      /* Hide content until font loads */
+      .font-dancing-script {
+        visibility: hidden;
+      }
+      
+      /* Show content when font loads */
+      @font-face {
+        font-family: 'Dancing Script';
+        src: url('https://fonts.gstatic.com/s/dancingscript/v25/If2cXTr6YSzFjSg5EK2hRtvdl-SHAYlEtJmIGPpbL.woff2') format('woff2');
+        font-display: swap;
+      }
+    </style>
+    
+    <!-- Load other fonts after -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Quicksand:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Font loading script to prevent FOUT -->
+    <script>
+      // Function to show Dancing Script elements
+      function showDancingScriptElements() {
+        const dancingScriptElements = document.querySelectorAll('.font-dancing-script');
+        dancingScriptElements.forEach(element => {
+          element.style.visibility = 'visible';
+        });
+        document.body.classList.add('fonts-loaded');
+      }
+      
+      // Try to load Dancing Script font
+      if ('fonts' in document) {
+        document.fonts.load('700 16px "Dancing Script"').then(function() {
+          showDancingScriptElements();
+        }).catch(function() {
+          // If font loading fails, show after short delay
+          setTimeout(showDancingScriptElements, 500);
+        });
+        
+        // Fallback timeout
+        setTimeout(showDancingScriptElements, 1500);
+      } else {
+        // Fallback for browsers without Font Loading API
+        setTimeout(showDancingScriptElements, 500);
+      }
+    </script>
+  </body>
+</html>
