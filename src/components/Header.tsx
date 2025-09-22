@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             <div>
             <h1 className="font-bold text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
               <p className="text-sm text-white/90 font-quicksand">
-                {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια' : 'Child & Adolescent Psychiatrist'}
+                {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου Ψυχοθεραπεύτρια' : 'Child & Adolescent Psychiatrist'}
               </p>
             </div>
           </motion.div>

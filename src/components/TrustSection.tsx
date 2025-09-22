@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
-import drProfile from '../assets/dr_profile.jpeg';
+import drProfile from '../assets/profile.png';
 
 interface TrustSectionProps {
   language: 'gr' | 'en';
@@ -59,7 +59,7 @@ const TrustSection: React.FC<TrustSectionProps> = ({ language }) => {
                   {language === 'gr' ? 'Παιδοψυχίατρος' : 'Child Psychiatrist'}
                 </p>
                 <p className="text-base text-gray-600 mb-4 font-quicksand">
-                  {language === 'gr' ? '& Ψυχοθεραπεύτρια' : '& Psychotherapist'}
+                  {language === 'gr' ? 'Ψυχοθεραπεύτρια' : 'Psychotherapist'}
                 </p>
                 <div className="bg-gradient-to-r from-warm-cream to-yellow-soft p-3 rounded-xl shadow-sm">
                   <p className="text-sm text-gray-500 mb-1 font-quicksand">

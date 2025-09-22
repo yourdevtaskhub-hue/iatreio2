@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook } from 'lucide-react';
+import profile2 from '../assets/profile2.png';
 
 interface ContactProps {
   language: 'gr' | 'en';
@@ -163,9 +164,26 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
             </span>
           </h2>
           <h3 className="text-2xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
-              {content[language].subtitle}
-            </span>
+            <div className="flex items-center justify-center gap-6">
+              <div className="flex-shrink-0 rounded-full p-[6px] md:p-[8px] bg-gradient-to-br from-rose-soft via-purple-soft to-blue-soft shadow-[0_10px_30px_rgba(234,84,85,0.35)]">
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.03 }}
+                  className="rounded-full overflow-hidden bg-white"
+                >
+                  <img 
+                    src={profile2} 
+                    alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 'Doctor profile'} 
+                    className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 object-cover rounded-full border-2 border-white"
+                  />
+                </motion.div>
+              </div>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft text-center">
+                {content[language].subtitle}
+              </span>
+            </div>
           </h3>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-nunito">
             {content[language].description}
@@ -257,16 +275,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                       >
                         <Facebook className="h-4 w-4" />
                       </motion.a>
-                      <motion.a
-                        href="https://www.linkedin.com/in/anna-maria-fytrou-bb60ab138/?originalSubdomain=gr"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="p-2 rounded-full bg-blue-700 text-white hover:shadow-lg transition-all duration-300"
-                      >
-                        <Linkedin className="h-4 w-4" />
-                      </motion.a>
+                      
                     </div>
                   </div>
                 </motion.div>

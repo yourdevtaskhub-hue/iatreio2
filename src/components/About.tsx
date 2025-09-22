@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Award, Users, Clock, Star } from 'lucide-react';
-import drProfile from '../assets/dr_profile.jpeg';
+import drProfile from '../assets/profile.png';
 
 interface AboutProps {
   language: 'gr' | 'en';

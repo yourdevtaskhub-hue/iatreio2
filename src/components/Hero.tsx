@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Award } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 
 interface HeroProps {
   language: 'gr' | 'en';
@@ -46,76 +46,27 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
   return (
     <section id="home" className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
       
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{
-            x: [0, 60, 0, -60, 0],
-            y: [0, 30, 0, -30, 0]
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-8 left-8 w-40 h-40 bg-pastel-pink/40 rounded-full"
-        />
-        <motion.div
-          animate={{
-            x: [0, -80, 0, 80, 0],
-            y: [0, -40, 0, 40, 0]
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute bottom-8 right-8 w-48 h-48 bg-baby-blue/40 rounded-full"
-        />
-        <motion.div
-          animate={{
-            x: [0, 50, 0, -50, 0],
-            y: [0, -60, 0, 60, 0]
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-16 right-16 w-32 h-32 bg-mint-green/40 rounded-full"
-        />
-        <motion.div
-          animate={{
-            x: [0, -70, 0, 70, 0],
-            y: [0, 50, 0, -50, 0]
-          }}
-          transition={{
-            duration: 22,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute bottom-16 left-16 w-44 h-44 bg-rose-soft/35 rounded-full"
-        />
-      </div>
+      {/* Καμία διακόσμηση background: καθαρό λευκό */}
       
-      {/* Certified Badge */}
+      {/* Top-left badge text with stars (no CERTIFIED) */}
       <motion.div
         initial={{ opacity: 0, x: -50, y: -50 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -5 }}
         transition={{ duration: 0.8, delay: 0.2 }}
         className="absolute top-32 left-8 z-10"
       >
-        <div className="bg-gradient-to-r from-green-400 to-green-500 rounded-2xl p-4 shadow-xl border-2 border-green-300">
-          <div className="flex items-center space-x-3">
-            <Award className="h-8 w-8 text-white" />
-            <div className="text-white">
-              <div className="text-xs font-bold font-quicksand">CERTIFIED</div>
-              <div className="text-xs font-medium font-nunito leading-tight">
-                1ο Διαδικτυακό Ιατρείο<br />
-                Γονέων και Εφήβων στην<br />
-                Ευρώπη και την Ελβετία
-              </div>
-            </div>
+        <div className="bg-white/90 rounded-2xl px-4 py-3 shadow-xl border border-gray-200">
+          <div className="text-gray-800 text-xs font-medium font-nunito leading-tight">
+            1ο Διαδικτυακό Ιατρείο<br />
+            Γονέων και Εφήβων στην<br />
+            Ευρώπη και την Ελβετία
+          </div>
+          <div className="mt-2 flex space-x-1">
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
           </div>
         </div>
       </motion.div>
@@ -126,7 +77,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-5xl lg:text-6xl font-extrabold mb-6 leading-tight font-poppins"
+          className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extrabold mb-8 leading-[1.05] font-poppins"
         >
           <span className="text-gray-900">
             Διαδικτυακό Ιατρείο
@@ -175,31 +126,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
 
       </div>
 
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ 
-            rotate: 360,
-            scale: [1, 1.1, 1]
-          }}
-          transition={{ 
-            rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-            scale: { duration: 8, repeat: Infinity, ease: "easeInOut" }
-          }}
-          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-rose-soft/20 to-purple-soft/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ 
-            rotate: -360,
-            scale: [1.1, 1, 1.1]
-          }}
-          transition={{ 
-            rotate: { duration: 25, repeat: Infinity, ease: "linear" },
-            scale: { duration: 10, repeat: Infinity, ease: "easeInOut" }
-          }}
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-soft/20 to-mint-green/20 rounded-full blur-3xl"
-        />
-      </div>
+      {/* Καμία επιπλέον διακόσμηση στο φόντο */}
     </section>
   );
 };

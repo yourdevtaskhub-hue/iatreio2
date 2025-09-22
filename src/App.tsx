@@ -20,8 +20,8 @@ function App() {
       <Header language={language} setLanguage={setLanguage} />
       <Hero language={language} setLanguage={setLanguage} />
       <TrustSection language={language} />
-      <Services language={language} />
       <About language={language} />
+      <Services language={language} />
       <Testimonials language={language} />
       <FAQ language={language} />
       <Articles language={language} />

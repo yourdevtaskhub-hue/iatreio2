@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Mail, MapPin, Shield, Phone, Clock, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Heart, Mail, MapPin, Shield, Phone, Clock, Instagram, Facebook } from 'lucide-react';
 
 interface FooterProps {
   language: string;
@@ -130,16 +130,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               >
                 <Facebook className="h-5 w-5" />
               </motion.a>
-              <motion.a
-                href="https://www.linkedin.com/in/anna-maria-fytrou-bb60ab138/?originalSubdomain=gr"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-3 rounded-full bg-blue-700 text-white hover:shadow-lg transition-all duration-300"
-              >
-                <Linkedin className="h-5 w-5" />
-              </motion.a>
+              
             </div>
             <div className="space-y-3">
               <motion.div 
