@@ -78,7 +78,7 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h3 className="text-lg font-semibold mb-4 font-quicksand">
+          <h3 className="text-2xl font-semibold mb-4 font-quicksand">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
               {content[language].title}
             </span>

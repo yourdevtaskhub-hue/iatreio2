@@ -16,7 +16,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
       description2: 'Η προσέγγιση της συνδυάζει την ασφάλεια της εμπεριστατωμένης ιατρικής κατάρτισης, την κατανόηση και τρυφερή ματιά της ψυχοδυναμικής ψυχοθεραπείας.',
       description3: 'Έχει δημιουργήσει το Πρώτο Διαδικτυακό Παιδοψυχιατρικό Ιατρείο Γονέων και Εφήβων προκειμένου γονείς και έφηβοι να βρίσκουν άμεσα στήριξη και φροντίδα στις δυσκολίες της σύγχρονη εποχής. Εξάλλου τα σύγχρονα προβλήματα πρέπει να αντιμετωπίζονται με σύγχρονους μεθόδους.',
       description4: 'Οι γονείς στη πλατφόρμα μας βρίσκουν έναν άμεσο τρόπο να επικοινωνήσουν με την Ειδικό από οπουδήποτε. Από το σπίτι, από το εξοχικό, από ένα ξενοδοχείο, από το αμάξι ακόμα και από ένα παγκάκι στο πάρκο μπορούν να βρεθούν στο διαδικτυακό μας ιατρείο με το πάτημα ενός κουμπιού του κινητού τους.',
-      quote: 'Ο D.W.Winnicott είχε πει "Είναι χαρά να κρύβεσαι μα συμφορά να μην σε βρίσκουν" και μέσα σε αυτή τη φράση κρύβεται όλο το νόημα της παιδοψυχιατρικής. Το ασυνείδητο συχνά κρύβει τα τραύματα μας, χρησιμοποιεί τις άμυνες μας και δοκιμάζει την δική μας αντοχή όπως και του περιβάλλοντος μας. Ως παιδοψυχίατρος έχω τον ρόλο του ειδικού που σημειώνει το προφανές και ως ψυχοθεραπεύτρια συγχρόνως ερευνά το καλά κρυμμένο που προκαλεί τη δυσκολία. Έπειτα με αγάπη προς το παιδί και τον θεσμό της οικογένειας δουλεύουμε μαζί για να ξεπεραστεί η όποια δυσκολία έχει μπει εμπόδιο στην εξέλιξη του.',
+      quote: 'Ο D.W.Winnicott είχε πει "Είναι χαρά να κρύβεσαι μα συμφορά να μην σε βρίσκουν" και μέσα σε αυτή τη φράση κρύβεται όλο το νόημα της παιδοψυχιατρικής. Το ασυνείδητο συχνά κρύβει τα τραύματα μας, χρησιμοποιεί τις άμυνες μας και δοκιμάζει την δική μας αντοχή όπως και του περιβάλλοντος μας. Ως παιδοψυχίατρος έχω τον ρόλο του ειδικού που σημειώνει το προφανές και ως ψυχοθεραπεύτρια συγχρόνως ερευνώ το καλά κρυμμένο που προκαλεί τη δυσκολία. Έπειτα με αγάπη προς το παιδί και τον θεσμό της οικογένειας δουλεύουμε μαζί για να ξεπεραστεί η όποια δυσκολία έχει μπει εμπόδιο στην εξέλιξη του.',
                   qualifications: [
                     {
                       title: 'Ψυχιατρική Παιδιού και Εφήβου',
@@ -32,7 +32,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                     },
                     {
                       title: 'Πιστοποιήσεις',
-                      description: 'Η ειδικός έχει αναγνωριστεί και έχει άδεια ασκήσεως επαγγέλματος ως Ειδικός Ψυχίατρος και Ψυχοθεραπευτής στην Ελλάδα και την Ελβετία.'
+                      description: 'Η ειδικός έχει αναγνωρισμένο πτυχίο Ιατρικής και έχει άδεια ασκήσεως επαγγέλματος ως Ειδικός Ψυχίατρος και Ψυχοθεραπευτής στην Ελλάδα και την Ελβετία.'
                     },
                     {
                       title: 'Ψυχοθεραπευτική Εκπαίδευση',
@@ -114,12 +114,13 @@ const About: React.FC<AboutProps> = ({ language }) => {
   return (
     <section id="about" className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
+            className="order-2 lg:order-1"
           >
             <div className="mb-8">
               <motion.span 
@@ -127,9 +128,9 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
-                className="text-purple-soft font-semibold text-lg font-quicksand"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft font-semibold text-lg font-quicksand"
               >
-                {content[language].title}
+                Σχετικά με την <span className="text-2xl">Δρ. Φύτρου</span>
               </motion.span>
               <motion.h2 
                 initial={{ opacity: 0, y: 30 }}
@@ -181,35 +182,43 @@ const About: React.FC<AboutProps> = ({ language }) => {
               </motion.p>
             </div>
 
+            {/* Επαγγελματικές Συμμετοχές */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
               viewport={{ once: true }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
+              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-36"
             >
-              <blockquote className="text-gray-700 italic text-lg mb-6 leading-relaxed font-nunito">
-                "{content[language].quote}"
-              </blockquote>
-              <div className="flex items-center">
-                <motion.div 
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  className="w-16 h-16 rounded-full overflow-hidden mr-4 shadow-lg border-2 border-rose-soft"
+              <div className="flex items-center mb-4">
+                <motion.div
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl mr-4 shadow-md"
                 >
-                  <img 
-                    src={drProfile} 
-                    alt="Dr. Anna-Maria Fytrou" 
-                    className="w-full h-full object-cover"
-                  />
+                  <Star className="h-5 w-5 text-gray-700" />
                 </motion.div>
-                <div>
-                  <p className="font-semibold text-gray-800 text-lg font-poppins">Dr. Anna-Maria Fytrou</p>
-                  <p className="text-sm text-gray-600 font-quicksand">
-                    {language === 'gr' ? 'Παιδοψυχίατρος' : 'Child & Adolescent Psychiatrist'}
-                  </p>
-                </div>
+                <h3 className="font-bold text-lg text-gray-800 font-poppins">{content[language].memberships || 'Επαγγελματικές Συμμετοχές'}</h3>
               </div>
+              <ul className="space-y-2">
+                {(content[language].membershipsList || []).map((membership: string, index: number) => (
+                  <motion.li 
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="flex items-start text-gray-700 font-nunito text-sm"
+                  >
+                    <motion.div 
+                      whileHover={{ scale: 1.5 }}
+                      className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3 mt-1 flex-shrink-0"
+                    />
+                    <span className="leading-relaxed">{membership}</span>
+                  </motion.li>
+                ))}
+              </ul>
             </motion.div>
           </motion.div>
 
@@ -218,6 +227,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
+            className="order-1 lg:order-2"
           >
             {/* Εικόνα με χαρούμενα, υγιή παιδιά */}
             <motion.div 
@@ -226,7 +236,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
               whileHover={{ scale: 1.02 }}
-              className="mb-8 overflow-hidden rounded-4xl shadow-2xl border border-gray-100"
+              className="mb-8 overflow-hidden rounded-4xl shadow-2xl border border-gray-100 mt-8"
             >
               <img
                 src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1600&q=80"
@@ -272,43 +282,6 @@ const About: React.FC<AboutProps> = ({ language }) => {
               })}
             </div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
-            >
-              <div className="flex items-center mb-6">
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl mr-4 shadow-md"
-                >
-                  <Star className="h-6 w-6 text-gray-700" />
-                </motion.div>
-                <h3 className="font-bold text-xl text-gray-800 font-poppins">{content[language].memberships || 'Επαγγελματικές Συμμετοχές'}</h3>
-              </div>
-              <ul className="space-y-3">
-                {(content[language].membershipsList || []).map((membership: string, index: number) => (
-                  <motion.li 
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="flex items-start text-gray-700 font-nunito"
-                  >
-                    <motion.div 
-                      whileHover={{ scale: 1.5 }}
-                      className="w-3 h-3 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-4 mt-1 flex-shrink-0"
-                    />
-                    <span className="leading-relaxed">{membership}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
           </motion.div>
         </div>
       </div>

@@ -29,6 +29,16 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       emergencyText: 'Εάν εσείς ή το παιδί σας αντιμετωπίζετε μια έκτακτη ανάγκη ψυχικής υγείας, παρακαλώ επικοινωνήστε αμέσως με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών. Μην περιμένετε απάντηση σε διαδικτυακές επικοινωνίες.',
       swissEmergency: 'Έκτακτη Ανάγκη Ελβετίας: 144',
       euEmergency: 'Έκτακτη Ανάγκη ΕΕ: 112',
+      helplines: [
+        'Τηλ. Γραμμή βοήθειας για την Αυτοκτονία Κλίμακα: 1018',
+        'Τηλ. Γραμμή SOS για Παιδιά, Εφήβους και Γονείς: 1056',
+        'Τηλ. Γραμμή Ψυχοκοινωνικής Υποστήριξης: 10306',
+        'Εθνική Τηλ. Γραμμή Παιδικής Προστασίας: 1107',
+        'Τηλ. Γραμμή Βοήθειας ΥΠΟΣΤΗΡΙΖΩ: 80011 80015',
+        'Τηλ. Γραμμή για εφήβους: 116111',
+        'Τηλ. Γραμμή Ψυχολογικής Υποστήριξης ΙΘΑΚΗ: 1145',
+        'Τηλ. Γραμμή SOS του ΟΚΑΝΑ: 1031'
+      ],
       copyright: '© 2024 Δρ. Άννα-Μαρία Φύτρου. Όλα τα δικαιώματα διατηρούνται.',
       privacyProtected: 'Προστασία Ιδιωτικότητας Ασθενών'
     },
@@ -53,6 +63,16 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       emergencyText: 'If you or your child is experiencing a mental health emergency, please contact emergency services immediately or go to your nearest emergency room. Do not wait for a response to online communications.',
       swissEmergency: 'Switzerland Emergency: 144',
       euEmergency: 'EU Emergency: 112',
+      helplines: [
+        'Suicide Prevention Helpline Klimaka: 1018',
+        'SOS Helpline for Children, Teens and Parents: 1056',
+        'Psychosocial Support Helpline: 10306',
+        'National Child Protection Helpline: 1107',
+        'Support Helpline ΥΠΟΣΤΗΡΙΖΩ: 80011 80015',
+        'Teen Helpline: 116111',
+        'Psychological Support Helpline ITHAKI: 1145',
+        'SOS Helpline of OKANA: 1031'
+      ],
       copyright: '© 2024 Dr. Anna-Maria Fytrou. All rights reserved.',
       privacyProtected: 'Patient Privacy Protected'
     }
@@ -231,7 +251,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               <p className="text-red-200 text-sm mb-4 leading-relaxed font-nunito">
                 {content[language].emergencyText}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm mb-4">
                 <motion.span 
                   whileHover={{ scale: 1.05 }}
                   className="text-red-300 font-medium bg-red-800/30 px-4 py-2 rounded-full font-poppins"
@@ -244,6 +264,23 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
                 >
                   {content[language].euEmergency}
                 </motion.span>
+              </div>
+              
+              <div className="text-left">
+                <h5 className="text-red-300 font-semibold text-sm mb-3 font-poppins">
+                  {language === 'gr' ? 'Τηλεφωνικές Γραμμές Βοήθειας:' : 'Helplines:'}
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {content[language].helplines.map((helpline, index) => (
+                    <motion.div
+                      key={index}
+                      whileHover={{ x: 5 }}
+                      className="text-red-200 text-xs font-nunito hover:text-red-100 transition-colors"
+                    >
+                      {helpline}
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>

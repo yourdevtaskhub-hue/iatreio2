@@ -16,7 +16,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     urgency: '',
     message: '',
     appointmentDate: '',
-    privacyAccepted: false
+    privacyAccepted: false,
+    recordingPolicyAccepted: false
   });
   const [messageLength, setMessageLength] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +46,15 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       alert(language === 'gr' 
         ? 'Παρακαλώ αποδεχτείτε τους όρους ιδιωτικότητας για να συνεχίσετε.'
         : 'Please accept the privacy terms to continue.'
+      );
+      return;
+    }
+    
+    // Check if recording policy is accepted
+    if (!formData.recordingPolicyAccepted) {
+      alert(language === 'gr' 
+        ? 'Παρακαλώ αποδεχτείτε την πολιτική ηχογράφησης για να συνεχίσετε.'
+        : 'Please accept the recording policy to continue.'
       );
       return;
     }
@@ -156,35 +166,37 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-16 mt-32"
         >
-          <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
-              {content[language].title}
-            </span>
-          </h2>
-          <h3 className="text-2xl font-bold mt-2 mb-6 font-poppins">
-            <div className="flex items-center justify-center gap-6">
-              <div className="flex-shrink-0 rounded-full p-[6px] md:p-[8px] bg-gradient-to-br from-rose-soft via-purple-soft to-blue-soft shadow-[0_10px_30px_rgba(234,84,85,0.35)]">
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.03 }}
-                  className="rounded-full overflow-hidden bg-white"
-                >
-                  <img 
-                    src={profile2} 
-                    alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 'Doctor profile'} 
-                    className="w-24 h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 object-cover rounded-full border-2 border-white"
-                  />
-                </motion.div>
-              </div>
+          <div className="flex items-center justify-center gap-8">
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.02 }}
+              className="flex-shrink-0 overflow-hidden shadow-xl -mt-48"
+            >
+              <img 
+                src={profile2} 
+                alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 'Doctor profile'} 
+                className="w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 object-cover"
+              />
+            </motion.div>
+            <div className="flex flex-col items-center">
+              <h2 className="text-4xl font-bold mb-4 font-poppins">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+                  {content[language].title}
+                </span>
+              </h2>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft text-center">
                 {content[language].subtitle}
               </span>
+              <p className="text-sm text-gray-500 mt-2 font-nunito">
+                Το πρώτο βήμα προς την υποστήριξη…
+              </p>
             </div>
-          </h3>
+          </div>
+          <div className="mt-8"></div>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-nunito">
             {content[language].description}
           </p>
@@ -521,13 +533,28 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 </label>
               </div>
 
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="recordingPolicy"
+                  name="recordingPolicyAccepted"
+                  checked={formData.recordingPolicyAccepted}
+                  onChange={handleInputChange}
+                  className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="recordingPolicy" className="text-sm text-red-600 font-nunito">
+                  <strong>Πολιτική ηχογράφησης & καταγραφής:</strong> Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.
+                </label>
+              </div>
+
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={isSubmitting || !formData.privacyAccepted || messageLength > 200}
+                disabled={isSubmitting || !formData.privacyAccepted || !formData.recordingPolicyAccepted || messageLength > 200}
                 className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
-                  isSubmitting || !formData.privacyAccepted || messageLength > 200
+                  isSubmitting || !formData.privacyAccepted || !formData.recordingPolicyAccepted || messageLength > 200
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
                 }`}

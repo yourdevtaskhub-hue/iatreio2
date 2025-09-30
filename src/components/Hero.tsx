@@ -19,7 +19,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       location: 'Λωζάνη, Ελβετία'
     },
     en: {
-      title: 'Parents and Adolescents Online Clinic',
+      title: 'Online Parent Teen Clinic',
       subtitle: 'Support for the Mental Health of adolescents and their parents with professionalism, understanding and complete confidentiality.',
       cta: 'Book Appointment',
       learnMore: 'Learn More',
@@ -44,7 +44,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
   };
 
   return (
-    <section id="home" className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
+    <section id="home" className="py-20 bg-white relative overflow-hidden">
       
       {/* Καμία διακόσμηση background: καθαρό λευκό */}
       
@@ -55,13 +55,13 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
         transition={{ duration: 0.8, delay: 0.2 }}
         className="absolute top-32 left-8 z-10"
       >
-        <div className="bg-white/90 rounded-2xl px-4 py-3 shadow-xl border border-gray-200">
-          <div className="text-gray-800 text-xs font-medium font-nunito leading-tight">
+        <div className="bg-blue-50/90 rounded-2xl px-4 py-3 shadow-xl border border-blue-200">
+          <div className="text-gray-800 text-xs font-bold font-nunito leading-tight">
             1ο Διαδικτυακό Ιατρείο<br />
             Γονέων και Εφήβων στην<br />
             Ευρώπη και την Ελβετία
           </div>
-          <div className="mt-2 flex space-x-1">
+          <div className="mt-2 flex justify-center space-x-1">
             <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
             <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
             <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
@@ -72,20 +72,36 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       </motion.div>
 
       {/* Centered Content */}
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center min-h-[70vh]">
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extrabold mb-8 leading-[1.05] font-poppins"
+          className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold mb-7 leading-tight font-poppins"
         >
-          <span className="text-gray-900">
-            Διαδικτυακό Ιατρείο
-          </span>
-          <br />
-          <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent">
-            Γονέων και Εφήβων
-          </span>
+          {language === 'gr' ? (
+            <>
+              <span className="text-gray-900">
+                Διαδικτυακό Ιατρείο
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent">
+                Γονέων και Εφήβων
+              </span>
+            </>
+          ) : (
+            <div className="flex flex-col items-center w-full">
+              <span className="text-gray-900 block" style={{ marginLeft: '10%' }}>
+                Online
+              </span>
+              <span className="text-gray-900 block" style={{ marginLeft: '3%', whiteSpace: 'nowrap' }}>
+                Parent Teen
+              </span>
+              <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent block" style={{ marginLeft: '10%' }}>
+                Clinic
+              </span>
+            </div>
+          )}
         </motion.h1>
         
         <motion.p 
@@ -102,7 +118,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-2"
         >
           <motion.button
             whileHover={{ scale: 1.05 }}

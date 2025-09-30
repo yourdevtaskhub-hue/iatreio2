@@ -9,7 +9,7 @@ interface TestimonialsProps {
 const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
   const content = {
     gr: {
-      title: 'Αξιολογήσεις Γονέων',
+      title: 'Αξιολογήσεις Γονέων και Εφήβων',
       subtitle: 'Ιστορίες Ελπίδας και Θεραπείας',
       description: 'Ακούστε από οικογένειες που βρήκαν υποστήριξη, κατανόηση και θεραπεία μέσω της φροντίδας μας.',
       testimonials: [
@@ -17,19 +17,19 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Μαρία Κ.',
           role: 'Μητέρα 12χρονου',
           text: 'Η Δρ. Φύτρου άλλαξε τη ζωή της οικογένειάς μας. Η κόρη μου που αντιμετώπιζε άγχος, τώρα είναι πιο αυτοπεποίθησα και χαρούμενη. Η προσέγγισή της είναι τόσο ζεστή και κατανοητή.',
-          image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'Γιάννης Π.',
           role: 'Πατέρας εφήβου',
           text: 'Ο γιος μου ήταν κλειστός και θυμωμένος. Μετά από μήνες θεραπείας με τη Δρ. Φύτρου, επικοινωνεί ανοιχτά και έχει βρει τρόπους να διαχειρίζεται τα συναισθήματά του.',
-          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'Ελένη Μ.',
           role: 'Μητέρα 8χρονου',
           text: 'Η διαδικτυακή θεραπεία ήταν σωτήρια για εμάς. Το παιδί μου αισθάνεται άνετα στο σπίτι και η Δρ. Φύτρου κατάφερε να δημιουργήσει μια ασφαλή σχέση εξ αποστάσεως.',
-          image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         }
       ]
     },
@@ -42,19 +42,19 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Maria K.',
           role: 'Mother of 12-year-old',
           text: 'Dr. Fytrou changed our family\'s life. My daughter who was struggling with anxiety is now more confident and happy. Her approach is so warm and understanding.',
-          image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'John P.',
           role: 'Father of teenager',
           text: 'My son was withdrawn and angry. After months of therapy with Dr. Fytrou, he communicates openly and has found ways to manage his emotions.',
-          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'Helen M.',
           role: 'Mother of 8-year-old',
           text: 'Online therapy was a lifesaver for us. My child feels comfortable at home and Dr. Fytrou managed to create a safe relationship remotely.',
-          image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         }
       ]
     }

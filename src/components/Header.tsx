@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X, Heart, Globe } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
+import logoIatrio from '../assets/logoiatrio.png';
 
 interface HeaderProps {
   language: string;
@@ -56,19 +57,17 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        isScrolled ? 'bg-gradient-to-r from-rose-soft/95 via-purple-soft/95 to-blue-soft/95 backdrop-blur-md shadow-xl' : 'bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft'
+        isScrolled ? 'bg-gradient-to-r from-pink-300/95 via-purple-300/95 to-blue-300/95 backdrop-blur-md shadow-xl' : 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300'
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24">
           <motion.div 
             className="flex items-center space-x-3"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-lg">
-              <Heart className="h-7 w-7 text-white" />
-            </div>
+            <img src={logoIatrio} alt="Logo" className="h-20 w-20" />
             <div>
             <h1 className="font-bold text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
               <p className="text-sm text-white/90 font-quicksand">
@@ -92,8 +91,9 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                     {value}
                   </motion.button>
                 ) : (
-                  <>
+                  <React.Fragment key={`fragment-${key}-${index}`}>
                     <motion.button
+                      key={`lang-${key}-${index}`}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setLanguage(language === 'gr' ? 'en' : 'gr')}
@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                       <span className="text-sm font-medium">{language === 'gr' ? 'EN' : 'GR'}</span>
                     </motion.button>
                     <motion.button
-                      key={key}
+                      key={`appointment-${key}-${index}`}
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => scrollToSection('contact')}
@@ -111,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                     >
                       {value}
                     </motion.button>
-                  </>
+                  </React.Fragment>
                 )
               })}
             </div>

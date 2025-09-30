@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, MessageSquare, Shield, Smile, BookOpen, Pill, Home, X } from 'lucide-react';
+import { Brain, MessageSquare, Shield, Smile, BookOpen, Pill, Home, X, Users } from 'lucide-react';
 import happyImg from '../assets/happy.jpg';
 
 interface ServicesProps {
@@ -37,14 +37,19 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           features: ['Σχεδιασμός Φαρμακευτικής αγωγής', 'Συζήτηση Θεραπευτικών Πρωτοκόλλων με συναδέλφους', 'Αναλυτική Εκπαίδευση Γονέων και Εφήβων στη Φαρμακευτική Αγωγή']
         },
         {
-          title: 'Προγράμματα Πρόληψης',
-          description: 'Εκπαιδευτικές και προληπτικές παρεμβάσεις για προώθηση της ψυχικής υγείας και ανθεκτικότητας.',
-          features: ['Σε παιδικούς σταθμούς, νηπιαγωγεία, σχολεία', 'Σε Σχολές Γονέων', 'Σε Συλλόγους Γονέων και Κηδεμόνων']
+          title: 'Εποπτείες',
+          description: 'Επαγγελματική εποπτεία και υποστήριξη για ψυχιάτρους και ψυχολόγους στην παιδική και εφηβική ψυχιατρική.',
+          features: ['Ατομική Εποπτεία Ειδικευόμενων Ψυχιάτρων', 'Ατομική Εποπτεία Κλινικών Ψυχολόγων', 'Ομαδική Εποπτεία Ψυχολόγων', 'Ομαδική Εποπτεία Ειδικευόμενων Ψυχιάτρων']
         },
         {
           title: 'Επιστημονική Επιμέλεια Βιβλίων και Παραμυθιών',
           description: 'Συμβουλευτική και επιστημονική επιμέλεια σε παιδικά βιβλία και παραμύθια με θέματα ψυχικής υγείας.',
           features: ['Ακρίβεια περιεχομένου', 'Κατάλληλη γλώσσα για ηλικίες', 'Εκπαιδευτική αξία', 'Επαγγελματική αξιολόγηση']
+        },
+        {
+          title: 'Προγράμματα Πρόληψης',
+          description: 'Εκπαιδευτικές και προληπτικές παρεμβάσεις για προώθηση της ψυχικής υγείας και ανθεκτικότητας.',
+          features: ['Σε παιδικούς σταθμούς, νηπιαγωγεία, σχολεία', 'Σε Σχολές Γονέων', 'Σε Συλλόγους Γονέων και Κηδεμόνων']
         }
       ],
       conditionsTitle: 'Διαγνώσεις που Χρήζουν Θεραπείας',
@@ -158,8 +163,13 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           features: ['24/7 availability', 'Safety planning', 'Emergency assessment', 'Rapid stabilization']
         },
         {
-          title: 'Scientific Editing of Children’s Books & Stories',
-          description: 'Consultation and scientific editing for children’s books and stories addressing mental health topics.',
+          title: 'Supervision',
+          description: 'Professional supervision and support for psychiatrists and psychologists in child and adolescent psychiatry.',
+          features: ['Individual Supervision of Psychiatry Residents', 'Individual Supervision of Clinical Psychologists', 'Group Supervision of Psychologists', 'Group Supervision of Psychiatry Residents']
+        },
+        {
+            title: 'Scientific Editing of Children\'s Books and Stories',
+            description: 'Consultation and scientific editing for children\'s books and stories addressing mental health topics.',
           features: ['Content accuracy', 'Age-appropriate language', 'Educational value', 'Collaboration with publishers/authors']
         },
         {
@@ -260,7 +270,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
   const lang: Lang = language;
   type Service = typeof content[Lang extends never ? 'gr' : Lang]['services'][number];
 
-  const icons = [Brain, MessageSquare, Home, Pill, Shield, BookOpen];
+  const icons = [Brain, MessageSquare, Home, Pill, Users, Shield, BookOpen];
 
   // Detailed information for each condition
   const conditionDetails = {
@@ -400,7 +410,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-black font-semibold text-lg font-quicksand">{content[lang].title}</span>
+          <span className="text-black font-semibold text-2xl font-quicksand">{content[lang].title}</span>
           <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
               {content[lang].subtitle}
@@ -430,6 +440,9 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {content[lang].services.map((service: Service, index: number) => {
             const IconComponent = icons[index];
+            const isLastItem = index === content[lang].services.length - 1;
+            const isSupervision = service.title === 'Εποπτείες' || service.title === 'Supervision';
+            
             return (
               <motion.div
                 key={index}
@@ -438,35 +451,206 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="bg-blue-50 rounded-4xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500"
+                className={`${isSupervision 
+                  ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-4xl p-8 shadow-2xl border border-purple-500/30 hover:shadow-3xl transition-all duration-500 relative overflow-hidden group hover:border-purple-400/60' 
+                  : 'bg-blue-50 rounded-4xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500'
+                } ${isLastItem ? 'md:col-start-2 lg:col-start-2' : ''}`}
               >
-                <motion.div 
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-rose-soft to-purple-soft p-4 rounded-2xl w-fit mb-6 shadow-lg"
-                >
-                  <IconComponent className="h-8 w-8 text-white" />
-                </motion.div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4 font-poppins">{service.title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed font-nunito">{service.description}</p>
-                <ul className="space-y-3">
-                  {service.features.map((feature: string, featureIndex: number) => (
-                    <motion.li 
-                      key={featureIndex}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: featureIndex * 0.1 }}
-                      viewport={{ once: true }}
-                      className="flex items-center text-sm text-gray-600 font-quicksand"
-                    >
-                      <motion.div 
-                        whileHover={{ scale: 1.5 }}
-                        className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3"
-                      />
-                      {feature}
-                    </motion.li>
-                  ))}
-                </ul>
+                {/* Premium background decorations για το Εποπτείες */}
+                {isSupervision && (
+                  <>
+                    {/* Animated particles */}
+                    <motion.div 
+                      animate={{ 
+                        y: [0, -15, 0],
+                        x: [0, 10, 0],
+                        rotate: [0, 180, 360],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute top-4 right-4 w-24 h-24 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full blur-md"
+                    ></motion.div>
+                    
+                    <motion.div 
+                      animate={{ 
+                        y: [0, 15, 0],
+                        x: [0, -10, 0],
+                        rotate: [360, 180, 0],
+                        scale: [1, 0.8, 1]
+                      }}
+                      transition={{ 
+                        duration: 10,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 2
+                      }}
+                      className="absolute bottom-4 left-4 w-20 h-20 bg-gradient-to-tr from-blue-400/30 to-purple-400/30 rounded-full blur-md"
+                    ></motion.div>
+                    
+                    {/* Floating smaller particles */}
+                    <motion.div 
+                      animate={{ 
+                        y: [0, -8, 0],
+                        opacity: [0.3, 0.8, 0.3]
+                      }}
+                      transition={{ 
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 1
+                      }}
+                      className="absolute top-1/3 right-8 w-3 h-3 bg-purple-400/50 rounded-full"
+                    ></motion.div>
+                    
+                    <motion.div 
+                      animate={{ 
+                        y: [0, 8, 0],
+                        opacity: [0.5, 0.2, 0.5]
+                      }}
+                      transition={{ 
+                        duration: 7,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 3
+                      }}
+                      className="absolute bottom-1/3 left-8 w-2 h-2 bg-pink-400/60 rounded-full"
+                    ></motion.div>
+                    
+                    {/* Glowing border effect */}
+                    <div className="absolute inset-0 rounded-4xl bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 blur-sm"></div>
+                    
+                    {/* Subtle mesh gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-500/5 to-transparent opacity-60"></div>
+                  </>
+                )}
+                
+                <div className={isSupervision ? 'relative z-10' : ''}>
+                  <motion.div 
+                    whileHover={{ rotate: 360, scale: 1.2 }}
+                    transition={{ duration: 0.8 }}
+                    className={`${isSupervision 
+                      ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 p-5 rounded-3xl w-fit mb-6 shadow-xl relative overflow-hidden group/icon border border-purple-400/50' 
+                      : 'bg-gradient-to-r from-rose-soft to-purple-soft p-4 rounded-2xl w-fit mb-6 shadow-lg'
+                    }`}
+                  >
+                    {/* Enhanced shine effect για το icon */}
+                    {isSupervision && (
+                      <>
+                        <motion.div
+                          animate={{ x: [-100, 100] }}
+                          transition={{ 
+                            duration: 3,
+                            repeat: Infinity,
+                            repeatDelay: 4,
+                            ease: "easeInOut"
+                          }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+                        />
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ 
+                            duration: 20,
+                            repeat: Infinity,
+                            ease: "linear"
+                          }}
+                          className="absolute inset-0 rounded-3xl border border-white/20"
+                        />
+                      </>
+                    )}
+                    <IconComponent className="h-8 w-8 text-white relative z-10 drop-shadow-lg" />
+                  </motion.div>
+                  
+                  <h3 className={`${isSupervision 
+                    ? 'text-xl font-bold text-white mb-4 font-poppins bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent relative' 
+                    : 'text-xl font-bold text-gray-800 mb-4 font-poppins'
+                  }`}>
+                    {service.title}
+                    {isSupervision && (
+                      <>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: "100%" }}
+                          transition={{ duration: 1.5, delay: 0.8 }}
+                          className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"
+                        />
+                        <motion.div
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-sm"
+                        />
+                      </>
+                    )}
+                  </h3>
+                  
+                  <p className={`${isSupervision 
+                    ? 'text-gray-300 mb-6 leading-relaxed font-nunito bg-black/20 backdrop-blur-md p-4 rounded-xl border border-purple-400/30 shadow-lg' 
+                    : 'text-gray-600 mb-6 leading-relaxed font-nunito'
+                  }`}>
+                    {service.description}
+                  </p>
+                  
+                  {isSupervision ? (
+                    <div className="space-y-3">
+                      {service.features.map((feature: string, featureIndex: number) => (
+                        <motion.div
+                          key={featureIndex}
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: featureIndex * 0.1 }}
+                          viewport={{ once: true }}
+                          className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-purple-400/30 hover:bg-black/50 hover:border-purple-300/50 transition-all duration-300 flex items-center group/feature hover:shadow-lg hover:shadow-purple-500/20"
+                        >
+                          <motion.div 
+                            whileHover={{ scale: 1.5, rotate: 360 }}
+                            className="w-4 h-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-full mr-4 group-hover/feature:from-blue-400 group-hover/feature:via-purple-400 group-hover/feature:to-pink-400 transition-all duration-300 shadow-lg shadow-purple-500/50"
+                          />
+                          <span className="text-gray-200 font-medium font-quicksand text-sm group-hover/feature:text-white transition-colors duration-300">
+                            {feature}
+                          </span>
+                          
+                          {/* Enhanced arrow on hover */}
+                          <motion.div
+                            initial={{ opacity: 0, x: -10, scale: 0.8 }}
+                            whileHover={{ opacity: 1, x: 0, scale: 1 }}
+                            className="ml-auto text-purple-400 opacity-0 group-hover/feature:opacity-100 transition-all duration-300 text-lg font-bold"
+                          >
+                            ✦
+                          </motion.div>
+                          
+                          {/* Glow effect */}
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            whileHover={{ opacity: 1 }}
+                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 blur-sm"
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {service.features.map((feature: string, featureIndex: number) => (
+                        <motion.li 
+                          key={featureIndex}
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: featureIndex * 0.1 }}
+                          viewport={{ once: true }}
+                          className="flex items-center text-sm text-gray-600 font-quicksand"
+                        >
+                          <motion.div 
+                            whileHover={{ scale: 1.5 }}
+                            className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3"
+                          />
+                          {feature}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </motion.div>
             );
           })}
