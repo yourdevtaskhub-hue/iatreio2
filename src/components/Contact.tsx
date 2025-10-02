@@ -166,15 +166,31 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-16 mt-32"
+          className="text-center mb-8 mt-2"
         >
-          <div className="flex items-center justify-center gap-8">
+          {/* Title Section */}
+          <div className="mb-6">
+            <h2 className="text-4xl font-bold mb-4 font-poppins">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+                {content[language].title}
+              </span>
+            </h2>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft text-center block text-xl font-poppins">
+              {content[language].subtitle}
+            </span>
+            <p className="text-sm text-gray-500 mt-2 font-nunito">
+              Το πρώτο βήμα προς την υποστήριξη…
+            </p>
+          </div>
+
+          {/* Image and Description Section */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-6xl mx-auto">
             <motion.div
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               whileHover={{ scale: 1.02 }}
-              className="flex-shrink-0 overflow-hidden shadow-xl -mt-48"
+              className="flex-shrink-0 overflow-hidden shadow-xl"
             >
               <img 
                 src={profile2} 
@@ -182,24 +198,18 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 className="w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 object-cover"
               />
             </motion.div>
-            <div className="flex flex-col items-center">
-              <h2 className="text-4xl font-bold mb-4 font-poppins">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
-                  {content[language].title}
-                </span>
-              </h2>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft text-center">
-                {content[language].subtitle}
-              </span>
-              <p className="text-sm text-gray-500 mt-2 font-nunito">
-                Το πρώτο βήμα προς την υποστήριξη…
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="flex-1"
+            >
+              <p className="text-xl text-gray-600 leading-relaxed font-nunito text-left lg:text-left">
+                {content[language].description}
               </p>
-            </div>
+            </motion.div>
           </div>
-          <div className="mt-8"></div>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-nunito">
-            {content[language].description}
-          </p>
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
@@ -529,7 +539,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   required
                 />
                 <label htmlFor="privacy" className="text-sm text-red-600 font-nunito">
-                  {content[language].privacy}
+                  <strong>Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις.</strong> Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.
                 </label>
               </div>
 

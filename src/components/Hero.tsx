@@ -44,16 +44,16 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
   };
 
   return (
-    <section id="home" className="py-20 bg-white relative overflow-hidden">
+    <section id="home" className="pt-20 pb-8 bg-white relative overflow-hidden">
       
       {/* Καμία διακόσμηση background: καθαρό λευκό */}
       
-      {/* Top-left badge text with stars (no CERTIFIED) */}
+      {/* Badge text with stars positioned left of title */}
       <motion.div
         initial={{ opacity: 0, x: -50, y: -50 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -5 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-32 left-8 z-10"
+        className="absolute top-[35%] left-48 z-10"
       >
         <div className="bg-blue-50/90 rounded-2xl px-4 py-3 shadow-xl border border-blue-200">
           <div className="text-gray-800 text-xs font-bold font-nunito leading-tight">

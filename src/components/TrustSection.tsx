@@ -21,7 +21,7 @@ const TrustSection: React.FC<TrustSectionProps> = ({ language }) => {
   } as const;
 
   return (
-    <section className="py-4 bg-white">
+    <section className="pt-0 pb-4 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Doctor Photo and Quote Grid */}
         <div className="grid lg:grid-cols-2 gap-4 items-center max-w-7xl mx-auto">

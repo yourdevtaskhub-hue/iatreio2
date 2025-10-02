@@ -16,19 +16,19 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
         {
           name: 'Μαρία Κ.',
           role: 'Μητέρα 12χρονου',
-          text: 'Η Δρ. Φύτρου άλλαξε τη ζωή της οικογένειάς μας. Η κόρη μου που αντιμετώπιζε άγχος, τώρα είναι πιο αυτοπεποίθησα και χαρούμενη. Η προσέγγισή της είναι τόσο ζεστή και κατανοητή.',
+          text: 'Η Δρ. Φύτρου άλλαξε τη ζωή της οικογένειάς μας. Η κόρη μου που αντιμετώπιζε άγχος, τώρα είναι πιο ήρεμη και χαρούμενη. Η προσέγγισή της είναι τόσο ζεστή και κατανοητή.',
           image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'Γιάννης Π.',
-          role: 'Πατέρας εφήβου',
+          role: 'Πατέρας 15χρονου',
           text: 'Ο γιος μου ήταν κλειστός και θυμωμένος. Μετά από μήνες θεραπείας με τη Δρ. Φύτρου, επικοινωνεί ανοιχτά και έχει βρει τρόπους να διαχειρίζεται τα συναισθήματά του.',
           image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         },
         {
           name: 'Ελένη Μ.',
-          role: 'Μητέρα 8χρονου',
-          text: 'Η διαδικτυακή θεραπεία ήταν σωτήρια για εμάς. Το παιδί μου αισθάνεται άνετα στο σπίτι και η Δρ. Φύτρου κατάφερε να δημιουργήσει μια ασφαλή σχέση εξ αποστάσεως.',
+          role: 'Μητέρα 13χρονης',
+          text: 'Η διαδικτυακή θεραπεία ήταν σωτήρια για εμάς. Η έφηβη μας ηταν αρκετά στεναχωρεμένη αλλα η κυρία Δρ. Φύτρου κατάφερε να δημιουργήσει μια καλή σχέση μαζί της και να της δείξει τον δρομο για να βρει νεους τροπους να ειναι πιο χαρουμενη και πιο ηρεμη',
           image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         }
       ]
@@ -52,8 +52,8 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
         },
         {
           name: 'Helen M.',
-          role: 'Mother of 8-year-old',
-          text: 'Online therapy was a lifesaver for us. My child feels comfortable at home and Dr. Fytrou managed to create a safe relationship remotely.',
+          role: 'Mother of 13-year-old',
+          text: 'Online therapy was a lifesaver for us. Our teenager was quite sad but Dr. Fytrou managed to create a good relationship with her and show her the way to find new ways to be happier and more calm.',
           image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         }
       ]

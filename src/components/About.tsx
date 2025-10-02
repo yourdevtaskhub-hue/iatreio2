@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Award, Users, Clock, Star } from 'lucide-react';
 import drProfile from '../assets/profile.png';
+import happyTeen from '../assets/happyteen.jpg';
 
 interface AboutProps {
   language: 'gr' | 'en';
@@ -48,7 +49,12 @@ const About: React.FC<AboutProps> = ({ language }) => {
                     },
                     {
                       title: 'Γλώσσες',
-                      description: 'Η ειδικός μιλάει άψογα την ελληνική, την αγγλική και την γαλλική γλώσσα.'
+                      description: 'Η ειδικός μιλάει άψογα τις παρακάτω γλώσσες:',
+                      details: [
+                        'Ελληνικά',
+                        'Αγγλικά', 
+                        'Γαλλικά'
+                      ]
                     }
                   ],
       memberships: 'Επαγγελματικές Συμμετοχές',
@@ -97,7 +103,12 @@ const About: React.FC<AboutProps> = ({ language }) => {
         },
         {
           title: 'Languages',
-          description: 'The specialist speaks Greek, English and French fluently.'
+          description: 'The specialist speaks the following languages fluently:',
+          details: [
+            'Greek',
+            'English',
+            'French'
+          ]
         }
       ],
       memberships: 'Professional Memberships',
@@ -189,7 +200,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
               transition={{ duration: 0.8, delay: 0.8 }}
               viewport={{ once: true }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-36"
+              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-12"
             >
               <div className="flex items-center mb-4">
                 <motion.div
@@ -220,6 +231,46 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 ))}
               </ul>
             </motion.div>
+
+            {/* Ψυχοθεραπευτική Εκπαίδευση */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.0 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.02 }}
+              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-6"
+            >
+              <div className="flex items-center mb-4">
+                <motion.div
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className="bg-gradient-to-r from-purple-soft to-blue-soft p-3 rounded-2xl mr-4 shadow-md"
+                >
+                  <Users className="h-5 w-5 text-white" />
+                </motion.div>
+                <h3 className="font-bold text-lg text-gray-800 font-poppins">{content[language].qualifications[2].title}</h3>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed font-nunito mb-4">{content[language].qualifications[2].description}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {(content[language].qualifications[2].details || []).map((detail: string, index: number) => (
+                  <motion.li 
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="flex items-start text-gray-700 font-nunito text-sm"
+                  >
+                    <motion.div 
+                      whileHover={{ scale: 1.5 }}
+                      className="w-2 h-2 bg-gradient-to-r from-purple-soft to-blue-soft rounded-full mr-3 mt-1 flex-shrink-0"
+                    />
+                    <span className="leading-relaxed">{detail}</span>
+                  </motion.li>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.div
@@ -239,18 +290,19 @@ const About: React.FC<AboutProps> = ({ language }) => {
               className="mb-8 overflow-hidden rounded-4xl shadow-2xl border border-gray-100 mt-8"
             >
               <img
-                src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1600&q=80"
+                src={happyTeen}
                 alt="Χαρούμενα και υγιή παιδιά παίζουν σε εξωτερικό χώρο"
                 className="w-full h-64 object-cover"
               />
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-              {content[language].qualifications.map((qual, index) => {
-                const IconComponent = qualificationIcons[index] || GraduationCap;
+              {content[language].qualifications.filter((_, index) => index !== 2).map((qual, index) => {
+                const originalIndex = content[language].qualifications.indexOf(qual);
+                const IconComponent = qualificationIcons[originalIndex] || GraduationCap;
                 return (
                   <motion.div 
-                    key={index}
+                    key={originalIndex}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}

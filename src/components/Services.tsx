@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, MessageSquare, Shield, Smile, BookOpen, Pill, Home, X, Users } from 'lucide-react';
+import { Brain, MessageSquare, Smile, BookOpen, Pill, Home, X, Users } from 'lucide-react';
 import happyImg from '../assets/happy.jpg';
 
 interface ServicesProps {
@@ -8,7 +8,7 @@ interface ServicesProps {
 }
 
 const Services: React.FC<ServicesProps> = ({ language }) => {
-  const [selectedCondition, setSelectedCondition] = useState<{name: string, details: string[]} | null>(null);
+  const [selectedCondition, setSelectedCondition] = useState<{name: string, definition?: string, symptoms: readonly string[]} | null>(null);
 
   const content = {
     gr: {
@@ -39,99 +39,164 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         {
           title: 'Εποπτείες',
           description: 'Επαγγελματική εποπτεία και υποστήριξη για ψυχιάτρους και ψυχολόγους στην παιδική και εφηβική ψυχιατρική.',
-          features: ['Ατομική Εποπτεία Ειδικευόμενων Ψυχιάτρων', 'Ατομική Εποπτεία Κλινικών Ψυχολόγων', 'Ομαδική Εποπτεία Ψυχολόγων', 'Ομαδική Εποπτεία Ειδικευόμενων Ψυχιάτρων']
+          features: ['Ατομική Εποπτεία Ειδικευόμενων Ψυχιάτρων', 'Ατομική Εποπτεία Κλινικών Ψυχολόγων', 'Ομαδική Εποπτεία Ειδικευόμενων Ψυχιάτρων', 'Ομαδική Εποπτεία Ψυχολόγων']
         },
         {
           title: 'Επιστημονική Επιμέλεια Βιβλίων και Παραμυθιών',
           description: 'Συμβουλευτική και επιστημονική επιμέλεια σε παιδικά βιβλία και παραμύθια με θέματα ψυχικής υγείας.',
           features: ['Ακρίβεια περιεχομένου', 'Κατάλληλη γλώσσα για ηλικίες', 'Εκπαιδευτική αξία', 'Επαγγελματική αξιολόγηση']
-        },
-        {
-          title: 'Προγράμματα Πρόληψης',
-          description: 'Εκπαιδευτικές και προληπτικές παρεμβάσεις για προώθηση της ψυχικής υγείας και ανθεκτικότητας.',
-          features: ['Σε παιδικούς σταθμούς, νηπιαγωγεία, σχολεία', 'Σε Σχολές Γονέων', 'Σε Συλλόγους Γονέων και Κηδεμόνων']
         }
       ],
       conditionsTitle: 'Διαγνώσεις που Χρήζουν Θεραπείας',
+      conditionsDescription: 'Παρακάτω θα βρείτε κάποια από τα συνήθη συμπτώματα των διαταραχών αλλά δεν αναφέρονται αναλυτικά τα κριτήρια τους για λόγους προστασίας των ασθενών.',
       conditions: [
         {
-          name: 'Διαταραχές Άγχους',
-          details: [
-            'Αξιολόγηση και θεραπεία γενικευμένου άγχους, κοινωνικού άγχους και φοβιών',
-            'Θεραπευτικές τεχνικές για διαχείριση συμπτωμάτων άγχους',
-            'Συνεργασία με οικογένεια για δημιουργία ασφαλούς περιβάλλοντος'
+          name: 'ΔΤΧ Άγχους',
+          definition: 'Οι διαταραχές άγχους χαρακτηρίζονται από επίμονο άγχος και ανησυχία.',
+          symptoms: [
+            'Αποφυγή δραστηριοτήτων ή/και σχολείου ή/και προσώπων',
+            'Θλίψη ή/και ευερεθιστότητα',
+            'Αποφυγή να μείνει μόνος/η',
+            'Δυσκολία στον ύπνο',
+            'Παρουσία τικ'
           ]
         },
         {
           name: 'Κατάθλιψη',
-          details: [
-            'Διάγνωση και θεραπεία καταθλιπτικών διαταραχών σε παιδιά και εφήβους',
-            'Θεραπευτικές προσεγγίσεις βασισμένες σε αποδείξεις',
-            'Παρακολούθηση και υποστήριξη κατά τη διάρκεια της ανάκαμψης'
+          definition: 'Η κατάθλιψη εκδηλώνεται διαφορετικά από την κατάθλιψη των ενηλίκων.',
+          symptoms: [
+            'Εκρήξεις θυμού',
+            'Έντονες ενοχές',
+            'Δυσκολία στον ύπνο',
+            'Αποφυγή δραστηριοτήτων',
+            'Απομόνωση',
+            'Αυτοτραυματισμός',
+            'Σκοτεινές σκέψεις',
+            'Απελπισία για το παρόν/το μέλλον'
           ]
         },
         {
           name: 'ΔΕΠΥ',
-          details: [
-            'Ολοκληρωμένη αξιολόγηση για Διαταραχή Ελλειμματικής Προσοχής και Υπερκινητικότητας',
-            'Συνεργασία με σχολικό περιβάλλον για ακαδημαϊκή υποστήριξη',
-            'Θεραπευτικές στρατηγικές για βελτίωση συγκέντρωσης και συμπεριφοράς'
+          definition: 'Η ΔΕΠΥ παρουσιάζει ως πυρηνικά συμπτώματα τη διάσπαση προσοχής, την υπερκινητικότητα και την παρορμητικότητα.',
+          symptoms: [
+            'Επιπλέον συμπτώματα:',
+            'Δυσκολία συγκέντρωσης',
+            'Αφηρημάδα',
+            'Δυσκολία στον ύπνο',
+            'Δυσκολία να περιμένει τη σειρά του',
+            'Αγένεια',
+            'Επικίνδυνο παιχνίδι'
           ]
         },
         {
-          name: 'Διαταραχές Φάσματος Αυτισμού',
-          details: [
-            'Ειδικευμένη αξιολόγηση και θεραπεία για παιδιά με αυτισμό',
-            'Αναπτυξιακές θεραπευτικές προσεγγίσεις',
-            'Οικογενειακή υποστήριξη και εκπαίδευση'
+          name: 'ΔΑΦ',
+          definition: 'Διαταραχές Φάσματος Αυτισμού',
+          symptoms: [
+            'Επαναλαμβανόμενα μοτίβα συμπεριφοράς',
+            'Επαναλαμβανόμενες κινήσεις',
+            'Δυσκολία στην εξωλεκτική επικοινωνία',
+            'Δυσκολία στην ανάπτυξη και κατανόηση των σχέσεων',
+            'Εξαιρετικά περιορισμένα ενδιαφέροντα',
+            'Υπέρ/Υπόαντιδραστικότητα στις αισθητηριακές πληροφορίες'
           ]
         },
         {
-          name: 'Διατροφικές Διαταραχές',
-          details: [
-            'Θεραπεία ανορεξίας, βουλιμίας και άλλων διατροφικών διαταραχών',
-            'Συνεργασία με διατροφολόγο και άλλους ειδικούς',
-            'Ψυχολογική υποστήριξη για την ανάκαμψη'
+          name: 'Διαταραχές Διαγωγής',
+          definition: 'Αντικατάσταση των Αντισυμπεριφορικών προβλημάτων',
+          symptoms: [
+            'Θυμωμένη/Ευερέθιστη διάθεση',
+            'Προκλητική συμπεριφορά',
+            'Εκρηκτική συμπεριφορά',
+            'Εκδικητικότητα',
+            'Παραβίαση κανόνων',
+            'Αδιαφορία στα συναισθήματα του άλλου',
+            'Καταστροφή ιδιοκτησίας',
+            'Απάτη/Κλοπή'
           ]
         },
         {
-          name: 'Συμπεριφορικά Προβλήματα',
-          details: [
-            'Αξιολόγηση και θεραπεία προβληματικής συμπεριφοράς',
-            'Θεραπευτικές τεχνικές για βελτίωση αυτορρύθμισης',
-            'Οικογενειακές στρατηγικές για διαχείριση συμπεριφοράς'
+          name: 'ΔΤΧ Διατροφής',
+          definition: 'Διαταραχές Διατροφής',
+          symptoms: [
+            'Περιορισμένη ή Αυξημένη λήψη τροφής',
+            'Αίσθηση απώλειας ελέγχου',
+            'Συχνή και έντονη γυμναστική',
+            'Εμέτοι',
+            'Ενοχές',
+            'Ανησυχία για το σωματικό βάρος/εικόνα σώματος',
+            'Επιπλοκές (π.χ. διακοπή περιόδου, απώλεια μαλλιών, δέρμα που ξεφλουδίζει)'
           ]
         },
         {
-          name: 'Τραύμα & PTSD',
-          details: [
-            'Ειδικευμένη θεραπεία για ψυχολογικό τραύμα και PTSD',
-            'Θεραπευτικές προσεγγίσεις ενημερωμένες για τραύμα',
-            'Ασφαλής και υποστηρικτική θεραπευτική σχέση'
+          name: 'Διαταραχή Μετατραυματικού Στρες',
+          definition: 'Η Διαταραχή Μετατραυματικού Στρες μπορεί να αναπτυχθεί μετά από τραυματική/ες εμπειρία/ες.',
+          symptoms: [
+            'Επαναλαμβανόμενες, ενοχλητικές μνήμες',
+            'Επαναλαμβανόμενα, ενοχλητικά όνειρα',
+            'Επαναβιώσεις/Flashbacks',
+            'Αποφυγή σχετικών υπαινισγμών, καταστάσεων, προσώπων',
+            'Υπεραγρύπνηση',
+            'Δυσκολία στον ύπνο',
+            'Θλίψη',
+            'Αδυναμία να θυμηθεί σημαντικές πληροφορίες του τραύματος',
+            'Αυτοτραυματισμοί',
+            'Ευερεθιστότητα'
           ]
         },
         {
-          name: 'Διαταραχές Διάθεσης',
-          details: [
-            'Διάγνωση και θεραπεία διπολικών και άλλων διαταραχών διάθεσης',
-            'Φαρμακολογική και ψυχοθεραπευτική φροντίδα',
-            'Παρακολούθηση και πρόληψη υποτροπών'
+          name: 'ΔΤΧ Διάθεσης',
+          definition: 'Οι διαταραχές διάθεσης περιλαμβάνουν την κατάθλιψη, την διπολική διαταραχή και άλλες παρόμοιες διαταραχές.',
+          symptoms: [
+            'Έντονες διακυμάνσεις στη διάθεση (αβάσταχτη θλίψη ή υπερβολική χαρά)',
+            'Έντονες διακυμάνσεις στην ενέργεια (πολλή ή ελάχιστη ενέργεια)',
+            'Διογκωμένη αυτοεκτίμηση',
+            'Καλμπάζουσες σκέψεις',
+            'Μειωμένη σχολική απόδοση',
+            'Δυσκολία στη συγκέντρωση',
+            'Αποφυγή ή έντονη ενασχόληση με δραστηριότητες',
+            'Επικίνδυνη συμπεριφορά',
+            'Αγένεια',
+            'Δυσκολίες στον ύπνο'
           ]
         },
         {
-          name: 'Μαθησιακές Δυσκολίες',
-          details: [
-            'Αξιολόγηση μαθησιακών δυσκολιών και διαταραχών μάθησης',
-            'Συνεργασία με εκπαιδευτικούς για ακαδημαϊκή υποστήριξη',
-            'Θεραπευτικές στρατηγικές για βελτίωση μαθησιακών δεξιοτήτων'
+          name: 'Τικς',
+          definition: 'Τα τικς (μυοσπάσματα) είναι αιφνίδιες, ταχείες, επαναλαμβανόμενες, μη ρυθμικές κινητικές κινήσεις ή φωνητικές εκφράσεις.',
+          symptoms: [
+            'Κινητικά τικ: Βλεφαρίσματα, κούνημα κεφαλιού, ανασήκωμα ώμων',
+            'Φωνητικά τικ: Βήχας, καθαρισμός λαιμού, γρυλίσματα, επανάληψη λέξεων'
           ]
         },
         {
-          name: 'Κοινωνικές Δυσκολίες',
-          details: [
-            'Θεραπεία κοινωνικού άγχους και δυσκολιών κοινωνικοποίησης',
-            'Ανάπτυξη κοινωνικών δεξιοτήτων και αυτοπεποίθησης',
-            'Ομαδικές θεραπευτικές δραστηριότητες'
+          name: 'Ψυχώσεις',
+          definition: 'Οι ψυχώσεις είναι σοβαρές ψυχικές διαταραχές που χαρακτηρίζονται από απώλεια επαφής με την πραγματικότητα.',
+          symptoms: [
+            'Παραληρητικές ιδέες (π.χ. καταδίωξης, μεγαλείου, ελέγχου)',
+            'Ψευδαισθήσεις (ακουστικές, οπτικές, απτικές)',
+            'Αποδιοργανωμένη σκέψη',
+            'Αποδιοργανωμένος λόγος',
+            'Αποδιοργανωμένη ή κατατονική συμπεριφορά',
+            'Έλλειψη επίγνωσης της διαταραχής'
+          ]
+        },
+        {
+          name: 'Ιδεοψυχαναγκαστική Διαταραχή (OCD)',
+          definition: 'Ψυχική διαταραχή με επαναλαμβανόμενες, ανεπιθύμητες σκέψεις (ιδεοληψίες) και καταναγκαστικές συμπεριφορές.',
+          symptoms: [
+            'Επαναλαμβανόμενες σκέψεις που προκαλούν άγχος (π.χ. μικρόβια, συμμετρία)',
+            'Τελετουργικές πράξεις για μείωση άγχους (π.χ. πλύσιμο/γλύψιμο/τρίψιμο χεριών, τακτοποίηση χώρου, σκέπασμα, παιχνίδι με πόρτες/παράθυρα)',
+            'Ο πάσχων αναγνωρίζει τον παράλογο χαρακτήρα των σκέψεων του'
+          ]
+        },
+        {
+          name: 'Διαταραχές Ύπνου - Αφύπνισης',
+          definition: 'Ομάδα διαταραχών που επηρεάζουν την ποιότητα, ποσότητα ή χρονοκαθυστέρηση του ύπνου.',
+          symptoms: [
+            'Αϋπνία: Δυσκολία έναρξης/διατήρησης ύπνου',
+            'Υπερυπνία: Υπερβολική υπνηλία κατά τη μέρα',
+            'Διαταραχές κιρκάδιου ρυθμού: Ύπνος σε λάθος ώρες',
+            'Παραϋπνίες: Εφιάλτες, υπνοβασία, τρόμος ύπνου',
+            'Σύνδρομο Απνοιών Ύπνου: Διακοπές της αναπνοής κατά τη διάρκεια του ύπνου'
           ]
         }
       ],
@@ -165,100 +230,164 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         {
           title: 'Supervision',
           description: 'Professional supervision and support for psychiatrists and psychologists in child and adolescent psychiatry.',
-          features: ['Individual Supervision of Psychiatry Residents', 'Individual Supervision of Clinical Psychologists', 'Group Supervision of Psychologists', 'Group Supervision of Psychiatry Residents']
+          features: ['Individual Supervision of Psychiatry Residents', 'Individual Supervision of Clinical Psychologists', 'Group Supervision of Psychiatry Residents', 'Group Supervision of Psychologists']
         },
         {
             title: 'Scientific Editing of Children\'s Books and Stories',
             description: 'Consultation and scientific editing for children\'s books and stories addressing mental health topics.',
           features: ['Content accuracy', 'Age-appropriate language', 'Educational value', 'Collaboration with publishers/authors']
-        },
-        {
-          title: 'Prevention Programs',
-          description: 'Educational and preventive interventions to promote mental health and resilience.',
-          features: ['School consultations', 'Parent education', 'Resilience building', 'Early intervention']
         }
       ],
       conditionsTitle: 'Diagnoses We Handle',
-      conditionsDesc: 'Our expertise spans a wide range of mental health conditions affecting children and adolescents.',
+      conditionsDescription: 'Below you will find some of the common symptoms of disorders but their criteria are not detailed for patient protection reasons.',
       conditions: [
         {
           name: 'Anxiety Disorders',
-          details: [
-            'Assessment and treatment of generalized anxiety, social anxiety, and phobias',
-            'Therapeutic techniques for anxiety symptom management',
-            'Family collaboration to create a safe environment'
+          definition: 'Anxiety disorders are characterized by persistent anxiety and worry.',
+          symptoms: [
+            'Avoidance of activities or school or people',
+            'Sadness or irritability',
+            'Avoidance of being alone',
+            'Sleep difficulties',
+            'Presence of tics'
           ]
         },
         {
           name: 'Depression',
-          details: [
-            'Diagnosis and treatment of depressive disorders in children and adolescents',
-            'Evidence-based therapeutic approaches',
-            'Monitoring and support during recovery'
+          definition: 'Depression manifests differently from adult depression.',
+          symptoms: [
+            'Anger outbursts',
+            'Intense guilt',
+            'Sleep difficulties',
+            'Avoidance of activities',
+            'Isolation',
+            'Self-harm',
+            'Dark thoughts',
+            'Despair about present/future'
           ]
         },
         {
           name: 'ADHD',
-          details: [
-            'Comprehensive assessment for Attention Deficit Hyperactivity Disorder',
-            'Collaboration with school environment for academic support',
-            'Therapeutic strategies to improve focus and behavior'
+          definition: 'ADHD presents with core symptoms of attention deficit, hyperactivity, and impulsivity.',
+          symptoms: [
+            'Additional symptoms:',
+            'Difficulty concentrating',
+            'Absentmindedness',
+            'Sleep difficulties',
+            'Difficulty waiting for turn',
+            'Rudeness',
+            'Dangerous play'
           ]
         },
         {
           name: 'Autism Spectrum Disorders',
-          details: [
-            'Specialized assessment and treatment for children with autism',
-            'Developmental therapeutic approaches',
-            'Family support and education'
+          definition: 'Autism Spectrum Disorders',
+          symptoms: [
+            'Repetitive behavioral patterns',
+            'Repetitive movements',
+            'Difficulty in external communication',
+            'Difficulty in developing and understanding relationships',
+            'Extremely limited interests',
+            'Hyper/Hypo-reactivity to sensory information'
+          ]
+        },
+        {
+          name: 'Conduct Disorders',
+          definition: 'Replacement of Antisocial Behavioral Problems',
+          symptoms: [
+            'Angry/Irritable mood',
+            'Defiant behavior',
+            'Explosive behavior',
+            'Vindictiveness',
+            'Rule violations',
+            'Indifference to others\' feelings',
+            'Property destruction',
+            'Deceit/Theft'
           ]
         },
         {
           name: 'Eating Disorders',
-          details: [
-            'Treatment of anorexia, bulimia, and other eating disorders',
-            'Collaboration with nutritionists and other specialists',
-            'Psychological support for recovery'
+          definition: 'Eating Disorders',
+          symptoms: [
+            'Restricted or Increased food intake',
+            'Feeling of loss of control',
+            'Frequent and intense exercise',
+            'Vomiting',
+            'Guilt',
+            'Concern about body weight/image',
+            'Complications (e.g., missed periods, hair loss, flaky skin)'
           ]
         },
         {
-          name: 'Behavioral Issues',
-          details: [
-            'Assessment and treatment of problematic behavior',
-            'Therapeutic techniques for improving self-regulation',
-            'Family strategies for behavior management'
-          ]
-        },
-        {
-          name: 'Trauma & PTSD',
-          details: [
-            'Specialized treatment for psychological trauma and PTSD',
-            'Trauma-informed therapeutic approaches',
-            'Safe and supportive therapeutic relationship'
+          name: 'Post-Traumatic Stress Disorder',
+          definition: 'Post-Traumatic Stress Disorder can develop after traumatic experience(s).',
+          symptoms: [
+            'Recurrent, distressing memories',
+            'Recurrent, distressing dreams',
+            'Flashbacks',
+            'Avoidance of related cues, situations, people',
+            'Hypervigilance',
+            'Sleep difficulties',
+            'Sadness',
+            'Inability to remember important trauma information',
+            'Self-harm',
+            'Irritability'
           ]
         },
         {
           name: 'Mood Disorders',
-          details: [
-            'Diagnosis and treatment of bipolar and other mood disorders',
-            'Pharmacological and psychotherapeutic care',
-            'Monitoring and relapse prevention'
+          definition: 'Mood disorders include depression, bipolar disorder and other similar disorders.',
+          symptoms: [
+            'Intense mood swings (unbearable sadness or excessive joy)',
+            'Intense energy fluctuations (much or minimal energy)',
+            'Inflated self-esteem',
+            'Grandiose thoughts',
+            'Reduced school performance',
+            'Difficulty concentrating',
+            'Avoidance or intense engagement with activities',
+            'Dangerous behavior',
+            'Rudeness',
+            'Sleep difficulties'
           ]
         },
         {
-          name: 'Learning Difficulties',
-          details: [
-            'Assessment of learning difficulties and learning disorders',
-            'Collaboration with educators for academic support',
-            'Therapeutic strategies to improve learning skills'
+          name: 'Tics',
+          definition: 'Tics (muscle spasms) are sudden, rapid, repetitive, non-rhythmic motor movements or vocal expressions.',
+          symptoms: [
+            'Motor tics: Blinking, head shaking, shoulder shrugging',
+            'Vocal tics: Coughing, throat clearing, grunting, word repetition'
           ]
         },
         {
-          name: 'Social Difficulties',
-          details: [
-            'Treatment of social anxiety and socialization difficulties',
-            'Development of social skills and self-confidence',
-            'Group therapeutic activities'
+          name: 'Psychoses',
+          definition: 'Psychoses are serious mental disorders characterized by loss of contact with reality.',
+          symptoms: [
+            'Delusional ideas (e.g., persecution, grandeur, control)',
+            'Hallucinations (auditory, visual, tactile)',
+            'Disorganized thinking',
+            'Disorganized speech',
+            'Disorganized or catatonic behavior',
+            'Lack of awareness of the disorder'
+          ]
+        },
+        {
+          name: 'Obsessive-Compulsive Disorder (OCD)',
+          definition: 'Mental disorder with recurrent, unwanted thoughts (obsessions) and compulsive behaviors.',
+          symptoms: [
+            'Recurrent thoughts that cause anxiety (e.g., germs, symmetry)',
+            'Ritualistic actions to reduce anxiety (e.g., washing/licking/rubbing hands, organizing space, covering, playing with doors/windows)',
+            'The sufferer recognizes the irrational nature of their thoughts'
+          ]
+        },
+        {
+          name: 'Sleep-Wake Disorders',
+          definition: 'Group of disorders that affect sleep quality, quantity, or timing.',
+          symptoms: [
+            'Insomnia: Difficulty initiating/maintaining sleep',
+            'Hypersomnia: Excessive daytime sleepiness',
+            'Circadian rhythm disorders: Sleep at wrong times',
+            'Parasomnias: Nightmares, sleepwalking, night terrors',
+            'Sleep Apnea Syndrome: Breathing interruptions during sleep'
           ]
         }
       ],
@@ -270,135 +399,8 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
   const lang: Lang = language;
   type Service = typeof content[Lang extends never ? 'gr' : Lang]['services'][number];
 
-  const icons = [Brain, MessageSquare, Home, Pill, Users, Shield, BookOpen];
+  const icons = [Brain, MessageSquare, Home, Pill, Users, BookOpen];
 
-  // Detailed information for each condition
-  const conditionDetails = {
-    gr: {
-      'Διαταραχές Άγχους': {
-        title: 'Διαταραχές Άγχους',
-        description: 'Οι διαταραχές άγχους είναι από τις πιο συχνές ψυχικές διαταραχές στην παιδική ηλικία.',
-        symptoms: ['Επίμονη ανησυχία', 'Σωματικές εκδηλώσεις (πονοκέφαλος, στομαχόπονος)', 'Αποφυγή δραστηριοτήτων'],
-        treatment: 'Κοgnitive Behavioral Therapy (CBT), χαλαρωτικές τεχνικές, και σε ορισμένες περιπτώσεις φαρμακευτική αγωγή.'
-      },
-      'Κατάθλιψη': {
-        title: 'Κατάθλιψη',
-        description: 'Η κατάθλιψη στην παιδική ηλικία μπορεί να εκδηλώνεται διαφορετικά από τους ενήλικες.',
-        symptoms: ['Θλίψη ή ευερεθιστότητα', 'Απώλεια ενδιαφέροντος', 'Αλλαγές στη διατροφή και τον ύπνο'],
-        treatment: 'Ψυχοθεραπεία, οικογενειακή υποστήριξη και σε σοβαρές περιπτώσεις φαρμακευτική αγωγή.'
-      },
-      'ΔΕΠΥ': {
-        title: 'ΔΕΠΥ (Διαταραχή Ελλειμματικής Προσοχής και Υπερκινητικότητας)',
-        description: 'Η ΔΕΠΥ επηρεάζει την ικανότητα συγκέντρωσης και αυτοελέγχου.',
-        symptoms: ['Δυσκολία συγκέντρωσης', 'Υπερκινητικότητα', 'Αυθόρμητη συμπεριφορά'],
-        treatment: 'Συνδυασμός φαρμακευτικής αγωγής, συμπεριφορικής θεραπείας και εκπαιδευτικής υποστήριξης.'
-      },
-      'Διαταραχές Φάσματος Αυτισμού': {
-        title: 'Διαταραχές Φάσματος Αυτισμού',
-        description: 'Οι διαταραχές φάσματος αυτισμού επηρεάζουν την κοινωνική αλληλεπίδραση και επικοινωνία.',
-        symptoms: ['Δυσκολίες κοινωνικής αλληλεπίδρασης', 'Επαναλαμβανόμενα μοτίβα συμπεριφοράς', 'Ευαισθησίες στις αισθήσεις'],
-        treatment: 'Εξειδικευμένα προγράμματα παρέμβασης, οικογενειακή υποστήριξη και εκπαιδευτικά μέτρα.'
-      },
-      'Διατροφικές Διαταραχές': {
-        title: 'Διατροφικές Διαταραχές',
-        description: 'Οι διατροφικές διαταραχές στην εφηβική ηλικία απαιτούν άμεση επαγγελματική παρέμβαση.',
-        symptoms: ['Επιμονή σε περιορισμένη διατροφή', 'Εξαιρετική ανησυχία για το σωματικό βάρος', 'Σωματικές επιπλοκές'],
-        treatment: 'Ολοκληρωμένη θεραπευτική ομάδα, διατροφική συμβουλευτική και οικογενειακή υποστήριξη.'
-      },
-      'Συμπεριφορικά Προβλήματα': {
-        title: 'Συμπεριφορικά Προβλήματα',
-        description: 'Τα συμπεριφορικά προβλήματα μπορεί να επηρεάσουν σημαντικά την καθημερινή λειτουργία.',
-        symptoms: ['Ανυπακοή', 'Εκρηκτική συμπεριφορά', 'Δυσκολίες στον έλεγχο των παρορμήσεων'],
-        treatment: 'Συμπεριφορικές στρατηγικές, οικογενειακή εκπαίδευση και θεραπευτική παρέμβαση.'
-      },
-      'Τραύμα & PTSD': {
-        title: 'Τραύμα & PTSD',
-        description: 'Το Post-Traumatic Stress Disorder μπορεί να αναπτυχθεί μετά από τραυματικές εμπειρίες.',
-        symptoms: ['Επαναλαμβανόμενα όνειρα', 'Αποφυγή αναμνήσεων', 'Υπερβολική εγρήγορση'],
-        treatment: 'Trauma-focused therapy, EMDR, και τεχνικές διαχείρισης άγχους.'
-      },
-      'Διαταραχές Διάθεσης': {
-        title: 'Διαταραχές Διάθεσης',
-        description: 'Οι διαταραχές διάθεσης περιλαμβάνουν την κατάθλιψη και την διπολική διαταραχή.',
-        symptoms: ['Ακραίες διακυμάνσεις στη διάθεση', 'Ενεργειακές αλλαγές', 'Δυσκολίες στη συγκέντρωση'],
-        treatment: 'Ψυχοθεραπεία, φαρμακευτική αγωγή και οικογενειακή υποστήριξη.'
-      },
-      'Μαθησιακές Δυσκολίες': {
-        title: 'Μαθησιακές Δυσκολίες',
-        description: 'Οι μαθησιακές δυσκολίες μπορούν να επηρεάσουν την ακαδημαϊκή απόδοση.',
-        symptoms: ['Δυσκολίες στην ανάγνωση ή γραφή', 'Προβλήματα με τα μαθηματικά', 'Αδυναμία συγκέντρωσης'],
-        treatment: 'Εκπαιδευτική αξιολόγηση, εξειδικευμένη διδασκαλία και θεραπευτική υποστήριξη.'
-      },
-      'Κοινωνικές Δυσκολίες': {
-        title: 'Κοινωνικές Δυσκολίες',
-        description: 'Οι κοινωνικές δυσκολίες μπορούν να επηρεάσουν τις σχέσεις και την αυτοπεποίθηση.',
-        symptoms: ['Δυσκολία στην δημιουργία φιλιών', 'Κοινωνικό άγχος', 'Αποφυγή κοινωνικών καταστάσεων'],
-        treatment: 'Κοινωνικές δεξιότητες, ομαδική θεραπεία και βήμα προς βήμα έκθεση.'
-      }
-    },
-    en: {
-      'Anxiety Disorders': {
-        title: 'Anxiety Disorders',
-        description: 'Anxiety disorders are among the most common mental health conditions in childhood.',
-        symptoms: ['Persistent worry', 'Physical symptoms (headaches, stomach aches)', 'Avoidance of activities'],
-        treatment: 'Cognitive Behavioral Therapy (CBT), relaxation techniques, and in some cases medication.'
-      },
-      'Depression': {
-        title: 'Depression',
-        description: 'Depression in childhood can manifest differently than in adults.',
-        symptoms: ['Sadness or irritability', 'Loss of interest', 'Changes in appetite and sleep'],
-        treatment: 'Psychotherapy, family support, and in severe cases medication.'
-      },
-      'ADHD': {
-        title: 'ADHD (Attention Deficit Hyperactivity Disorder)',
-        description: 'ADHD affects the ability to concentrate and self-control.',
-        symptoms: ['Difficulty concentrating', 'Hyperactivity', 'Impulsive behavior'],
-        treatment: 'Combination of medication, behavioral therapy, and educational support.'
-      },
-      'Autism Spectrum Disorders': {
-        title: 'Autism Spectrum Disorders',
-        description: 'Autism spectrum disorders affect social interaction and communication.',
-        symptoms: ['Difficulties in social interaction', 'Repetitive behavioral patterns', 'Sensory sensitivities'],
-        treatment: 'Specialized intervention programs, family support, and educational measures.'
-      },
-      'Eating Disorders': {
-        title: 'Eating Disorders',
-        description: 'Eating disorders in adolescence require immediate professional intervention.',
-        symptoms: ['Persistent dietary restrictions', 'Excessive concern about body weight', 'Physical complications'],
-        treatment: 'Comprehensive treatment team, nutritional counseling, and family support.'
-      },
-      'Behavioral Issues': {
-        title: 'Behavioral Issues',
-        description: 'Behavioral problems can significantly affect daily functioning.',
-        symptoms: ['Disobedience', 'Explosive behavior', 'Difficulty controlling impulses'],
-        treatment: 'Behavioral strategies, family education, and therapeutic intervention.'
-      },
-      'Trauma & PTSD': {
-        title: 'Trauma & PTSD',
-        description: 'Post-Traumatic Stress Disorder can develop after traumatic experiences.',
-        symptoms: ['Recurring nightmares', 'Avoidance of memories', 'Hypervigilance'],
-        treatment: 'Trauma-focused therapy, EMDR, and anxiety management techniques.'
-      },
-      'Mood Disorders': {
-        title: 'Mood Disorders',
-        description: 'Mood disorders include depression and bipolar disorder.',
-        symptoms: ['Extreme mood swings', 'Energy changes', 'Concentration difficulties'],
-        treatment: 'Psychotherapy, medication, and family support.'
-      },
-      'Learning Difficulties': {
-        title: 'Learning Difficulties',
-        description: 'Learning difficulties can affect academic performance.',
-        symptoms: ['Difficulties in reading or writing', 'Math problems', 'Inability to concentrate'],
-        treatment: 'Educational assessment, specialized instruction, and therapeutic support.'
-      },
-      'Social Difficulties': {
-        title: 'Social Difficulties',
-        description: 'Social difficulties can affect relationships and self-confidence.',
-        symptoms: ['Difficulty making friends', 'Social anxiety', 'Avoidance of social situations'],
-        treatment: 'Social skills, group therapy, and gradual exposure.'
-      }
-    }
-  };
 
   return (
     <section id="services" className="py-20 bg-white">
@@ -437,11 +439,9 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           />
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {content[lang].services.map((service: Service, index: number) => {
             const IconComponent = icons[index];
-            const isLastItem = index === content[lang].services.length - 1;
-            const isSupervision = service.title === 'Εποπτείες' || service.title === 'Supervision';
             
             return (
               <motion.div
@@ -451,186 +451,25 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className={`${isSupervision 
-                  ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-4xl p-8 shadow-2xl border border-purple-500/30 hover:shadow-3xl transition-all duration-500 relative overflow-hidden group hover:border-purple-400/60' 
-                  : 'bg-blue-50 rounded-4xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500'
-                } ${isLastItem ? 'md:col-start-2 lg:col-start-2' : ''}`}
+                className="bg-blue-50 rounded-4xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500"
               >
-                {/* Premium background decorations για το Εποπτείες */}
-                {isSupervision && (
-                  <>
-                    {/* Animated particles */}
+                {/* Icon */}
                     <motion.div 
-                      animate={{ 
-                        y: [0, -15, 0],
-                        x: [0, 10, 0],
-                        rotate: [0, 180, 360],
-                        scale: [1, 1.2, 1]
-                      }}
-                      transition={{ 
-                        duration: 8,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                      className="absolute top-4 right-4 w-24 h-24 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full blur-md"
-                    ></motion.div>
-                    
-                    <motion.div 
-                      animate={{ 
-                        y: [0, 15, 0],
-                        x: [0, -10, 0],
-                        rotate: [360, 180, 0],
-                        scale: [1, 0.8, 1]
-                      }}
-                      transition={{ 
-                        duration: 10,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 2
-                      }}
-                      className="absolute bottom-4 left-4 w-20 h-20 bg-gradient-to-tr from-blue-400/30 to-purple-400/30 rounded-full blur-md"
-                    ></motion.div>
-                    
-                    {/* Floating smaller particles */}
-                    <motion.div 
-                      animate={{ 
-                        y: [0, -8, 0],
-                        opacity: [0.3, 0.8, 0.3]
-                      }}
-                      transition={{ 
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 1
-                      }}
-                      className="absolute top-1/3 right-8 w-3 h-3 bg-purple-400/50 rounded-full"
-                    ></motion.div>
-                    
-                    <motion.div 
-                      animate={{ 
-                        y: [0, 8, 0],
-                        opacity: [0.5, 0.2, 0.5]
-                      }}
-                      transition={{ 
-                        duration: 7,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 3
-                      }}
-                      className="absolute bottom-1/3 left-8 w-2 h-2 bg-pink-400/60 rounded-full"
-                    ></motion.div>
-                    
-                    {/* Glowing border effect */}
-                    <div className="absolute inset-0 rounded-4xl bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 blur-sm"></div>
-                    
-                    {/* Subtle mesh gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-500/5 to-transparent opacity-60"></div>
-                  </>
-                )}
-                
-                <div className={isSupervision ? 'relative z-10' : ''}>
-                  <motion.div 
-                    whileHover={{ rotate: 360, scale: 1.2 }}
-                    transition={{ duration: 0.8 }}
-                    className={`${isSupervision 
-                      ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 p-5 rounded-3xl w-fit mb-6 shadow-xl relative overflow-hidden group/icon border border-purple-400/50' 
-                      : 'bg-gradient-to-r from-rose-soft to-purple-soft p-4 rounded-2xl w-fit mb-6 shadow-lg'
-                    }`}
-                  >
-                    {/* Enhanced shine effect για το icon */}
-                    {isSupervision && (
-                      <>
-                        <motion.div
-                          animate={{ x: [-100, 100] }}
-                          transition={{ 
-                            duration: 3,
-                            repeat: Infinity,
-                            repeatDelay: 4,
-                            ease: "easeInOut"
-                          }}
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                        />
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ 
-                            duration: 20,
-                            repeat: Infinity,
-                            ease: "linear"
-                          }}
-                          className="absolute inset-0 rounded-3xl border border-white/20"
-                        />
-                      </>
-                    )}
-                    <IconComponent className="h-8 w-8 text-white relative z-10 drop-shadow-lg" />
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className="bg-gradient-to-r from-rose-soft to-purple-soft p-4 rounded-2xl w-fit mb-6 shadow-lg"
+                >
+                  <IconComponent className="h-8 w-8 text-white" />
                   </motion.div>
                   
-                  <h3 className={`${isSupervision 
-                    ? 'text-xl font-bold text-white mb-4 font-poppins bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent relative' 
-                    : 'text-xl font-bold text-gray-800 mb-4 font-poppins'
-                  }`}>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 font-poppins">
                     {service.title}
-                    {isSupervision && (
-                      <>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: "100%" }}
-                          transition={{ duration: 1.5, delay: 0.8 }}
-                          className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"
-                        />
-                        <motion.div
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-sm"
-                        />
-                      </>
-                    )}
                   </h3>
                   
-                  <p className={`${isSupervision 
-                    ? 'text-gray-300 mb-6 leading-relaxed font-nunito bg-black/20 backdrop-blur-md p-4 rounded-xl border border-purple-400/30 shadow-lg' 
-                    : 'text-gray-600 mb-6 leading-relaxed font-nunito'
-                  }`}>
+                <p className="text-gray-600 mb-6 leading-relaxed font-nunito">
                     {service.description}
                   </p>
                   
-                  {isSupervision ? (
-                    <div className="space-y-3">
-                      {service.features.map((feature: string, featureIndex: number) => (
-                        <motion.div
-                          key={featureIndex}
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: featureIndex * 0.1 }}
-                          viewport={{ once: true }}
-                          className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-purple-400/30 hover:bg-black/50 hover:border-purple-300/50 transition-all duration-300 flex items-center group/feature hover:shadow-lg hover:shadow-purple-500/20"
-                        >
-                          <motion.div 
-                            whileHover={{ scale: 1.5, rotate: 360 }}
-                            className="w-4 h-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-full mr-4 group-hover/feature:from-blue-400 group-hover/feature:via-purple-400 group-hover/feature:to-pink-400 transition-all duration-300 shadow-lg shadow-purple-500/50"
-                          />
-                          <span className="text-gray-200 font-medium font-quicksand text-sm group-hover/feature:text-white transition-colors duration-300">
-                            {feature}
-                          </span>
-                          
-                          {/* Enhanced arrow on hover */}
-                          <motion.div
-                            initial={{ opacity: 0, x: -10, scale: 0.8 }}
-                            whileHover={{ opacity: 1, x: 0, scale: 1 }}
-                            className="ml-auto text-purple-400 opacity-0 group-hover/feature:opacity-100 transition-all duration-300 text-lg font-bold"
-                          >
-                            ✦
-                          </motion.div>
-                          
-                          {/* Glow effect */}
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            whileHover={{ opacity: 1 }}
-                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 blur-sm"
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
                     <ul className="space-y-3">
                       {service.features.map((feature: string, featureIndex: number) => (
                         <motion.li 
@@ -649,8 +488,6 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                         </motion.li>
                       ))}
                     </ul>
-                  )}
-                </div>
               </motion.div>
             );
           })}
@@ -665,10 +502,15 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         >
           <div className="text-center mb-10">
             <h3 className="text-3xl font-bold text-gray-800 mb-4 font-poppins">{content[lang].conditionsTitle}</h3>
+            {content[lang].conditionsDescription && (
+              <p className="text-gray-600 text-lg font-nunito max-w-4xl mx-auto leading-relaxed">
+                {content[lang].conditionsDescription}
+              </p>
+            )}
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-            {content[lang].conditions.map((condition: {name: string, details: string[]}, index: number) => (
+            {content[lang].conditions.map((condition, index: number) => (
               <motion.button 
                 key={index}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -677,7 +519,11 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                 viewport={{ once: true }}
                 whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedCondition({name: condition.name, details: [...condition.details]})}
+                onClick={() => setSelectedCondition({
+                  name: condition.name, 
+                  definition: condition.definition,
+                  symptoms: condition.symptoms
+                })}
                 className="bg-gradient-to-r from-pastel-pink to-baby-blue border border-rose-soft/20 rounded-2xl p-4 text-center hover:shadow-lg transition-all duration-300 cursor-pointer"
               >
                 <span className="text-gray-700 font-medium text-sm font-quicksand">{condition.name}</span>
@@ -731,12 +577,24 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                   </motion.button>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {selectedCondition.definition && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-700 font-quicksand mb-3">
+                        {language === 'gr' ? 'Ορισμός:' : 'Definition:'}
+                      </h4>
+                      <p className="text-gray-600 font-nunito leading-relaxed bg-gray-50 p-4 rounded-lg">
+                        {selectedCondition.definition}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div>
                   <h4 className="text-lg font-semibold text-gray-700 font-quicksand mb-3">
-                    {language === 'gr' ? 'Πληροφορίες Θεραπείας:' : 'Treatment Information:'}
+                      {language === 'gr' ? 'Συμπτώματα:' : 'Symptoms:'}
                   </h4>
                   <ul className="space-y-3">
-                    {selectedCondition.details.map((detail: string, index: number) => (
+                      {selectedCondition.symptoms.map((symptom: string, index: number) => (
                       <motion.li
                         key={index}
                         initial={{ opacity: 0, x: -20 }}
@@ -748,10 +606,11 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                           whileHover={{ scale: 1.2 }}
                           className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3 mt-2 flex-shrink-0"
                         />
-                        <span className="text-gray-600 font-nunito leading-relaxed">{detail}</span>
+                          <span className="text-gray-600 font-nunito leading-relaxed">{symptom}</span>
                       </motion.li>
                     ))}
                   </ul>
+                  </div>
                 </div>
                 
                 <motion.div
@@ -773,71 +632,6 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         </AnimatePresence>
       </div>
 
-      {/* Condition Details Popup */}
-      <AnimatePresence>
-        {selectedCondition && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedCondition(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
-              className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-start mb-6">
-                <h3 className="text-2xl font-bold text-gray-800 font-poppins">
-                  {conditionDetails[lang][selectedCondition.name]?.title || selectedCondition.name}
-                </h3>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setSelectedCondition(null)}
-                  className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <X className="h-6 w-6" />
-                </motion.button>
-              </div>
-
-              {conditionDetails[lang][selectedCondition.name] && (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-2 font-quicksand">Περιγραφή</h4>
-                    <p className="text-gray-600 leading-relaxed font-nunito">
-                      {conditionDetails[lang][selectedCondition.name].description}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3 font-quicksand">Συμπτώματα</h4>
-                    <ul className="space-y-2">
-                      {conditionDetails[lang][selectedCondition.name].symptoms.map((symptom: string, index: number) => (
-                        <li key={index} className="flex items-start text-gray-600 font-nunito">
-                          <span className="text-rose-soft mr-3 mt-1">•</span>
-                          <span>{symptom}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-2 font-quicksand">Θεραπευτική Προσέγγιση</h4>
-                    <p className="text-gray-600 leading-relaxed font-nunito">
-                      {conditionDetails[lang][selectedCondition.name].treatment}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 };
