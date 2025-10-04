@@ -65,6 +65,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           name: 'Κατάθλιψη',
           definition: 'Η κατάθλιψη εκδηλώνεται διαφορετικά από την κατάθλιψη των ενηλίκων.',
           symptoms: [
+            'Έντονη θλίψη',
             'Εκρήξεις θυμού',
             'Έντονες ενοχές',
             'Δυσκολία στον ύπνο',
@@ -79,7 +80,6 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           name: 'ΔΕΠΥ',
           definition: 'Η ΔΕΠΥ παρουσιάζει ως πυρηνικά συμπτώματα τη διάσπαση προσοχής, την υπερκινητικότητα και την παρορμητικότητα.',
           symptoms: [
-            'Επιπλέον συμπτώματα:',
             'Δυσκολία συγκέντρωσης',
             'Αφηρημάδα',
             'Δυσκολία στον ύπνο',
@@ -256,6 +256,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           name: 'Depression',
           definition: 'Depression manifests differently from adult depression.',
           symptoms: [
+            'Intense sadness',
             'Anger outbursts',
             'Intense guilt',
             'Sleep difficulties',
@@ -270,7 +271,6 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           name: 'ADHD',
           definition: 'ADHD presents with core symptoms of attention deficit, hyperactivity, and impulsivity.',
           symptoms: [
-            'Additional symptoms:',
             'Difficulty concentrating',
             'Absentmindedness',
             'Sleep difficulties',

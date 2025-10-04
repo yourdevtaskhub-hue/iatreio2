@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Heart, Quote } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Review } from '../types/reviews';
+import ReviewForm from './ReviewForm';
 
 interface TestimonialsProps {
   language: 'gr' | 'en';
 }
 
 const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const content = {
     gr: {
       title: 'Αξιολογήσεις Γονέων και Εφήβων',
@@ -60,6 +66,33 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
     }
   };
 
+  // Fetch approved reviews from database
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setReviews(data || []);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        // Fallback to mock data if database fails
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  // Use database reviews if available, otherwise fallback to mock data
+  const displayReviews = reviews.length > 0 ? reviews : content[language].testimonials;
+
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,8 +113,16 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {content[language].testimonials.map((testimonial, index) => (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-soft mx-auto mb-4"></div>
+            <p className="text-gray-600 font-nunito">
+              {language === 'gr' ? 'Φόρτωση αξιολογήσεων...' : 'Loading reviews...'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {displayReviews.map((testimonial, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 50 }}
@@ -108,7 +149,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
                   className="relative"
                 >
                   <img 
-                    src={testimonial.image}
+                    src={testimonial.image || 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'}
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full object-cover mr-4 shadow-lg"
                   />
@@ -122,7 +163,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
                 </motion.div>
                 <div>
                   <p className="font-semibold text-gray-800 font-poppins">{testimonial.name}</p>
-                  <p className="text-sm text-gray-600 font-quicksand">{testimonial.role}</p>
+                  <p className="text-sm text-gray-600 font-quicksand">
+                    {testimonial.session_topic || testimonial.role}
+                  </p>
                 </div>
               </div>
               
@@ -136,13 +179,20 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
                     viewport={{ once: true }}
                     whileHover={{ scale: 1.2 }}
                   >
-                    <Star className="h-4 w-4 text-yellow-soft fill-current" />
+                    <Star 
+                      className={`h-4 w-4 ${
+                        starIndex < (testimonial.rating || 5)
+                          ? 'text-yellow-soft fill-current'
+                          : 'text-gray-300'
+                      }`} 
+                    />
                   </motion.div>
                 ))}
               </div>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -169,6 +219,17 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
               }
             </p>
           </div>
+        </motion.div>
+
+        {/* Review Form Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          viewport={{ once: true }}
+          className="mt-20"
+        >
+          <ReviewForm language={language} />
         </motion.div>
       </div>
     </section>
