@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook } from 'lucide-react';
 import profile2 from '../assets/profile2.png';
+import { supabase } from '../lib/supabase';
+import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 
 interface ContactProps {
   language: 'gr' | 'en';
@@ -20,6 +22,16 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     recordingPolicyAccepted: false
   });
   const [messageLength, setMessageLength] = useState(0);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
+  const [slots, setSlots] = useState<SlotInfo[]>([]);
+  const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [availableDays, setAvailableDays] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -38,7 +50,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Check if privacy is accepted
@@ -68,17 +80,58 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       return;
     }
     
+    if (!formData.appointmentDate || !selectedDoctorId || !selectedTime) {
+      alert(language==='gr' ? 'Επιλέξτε γιατρό, ημερομηνία και ώρα.' : 'Select doctor, date and time.');
+      return;
+    }
+    // Προσομοίωση online πληρωμής
+    const approved = confirm(language==='gr' ? 'Προσομοίωση πληρωμής: Θέλετε να συνεχίσετε;' : 'Simulate payment: proceed?');
+    if (!approved) return;
+
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      console.log('Form submitted:', formData);
+    console.log('[Contact] booking insert →', { doctor_id: selectedDoctorId, date: formData.appointmentDate, time: selectedTime });
+    const { error } = await supabase.from('appointments').insert({
+      doctor_id: selectedDoctorId,
+      date: formData.appointmentDate,
+      time: selectedTime,
+      duration_minutes: 30,
+      parent_name: formData.parentName,
+      child_age: formData.childAge,
+      email: formData.email,
+      phone: formData.phone,
+      concerns: formData.message
+    }).single();
+    console.log('[Contact] booking insert result error:', error);
+    // Αν η εισαγωγή αποτύχει λόγω unique index, ενημερώνουμε τον χρήστη
+    if (error && (error as any).code === '23505') {
       setIsSubmitting(false);
-      alert(language === 'gr' 
-        ? 'Το μήνυμά σας στάλθηκε επιτυχώς! Θα επικοινωνήσουμε μαζί σας σύντομα.'
-        : 'Your message has been sent successfully! We will contact you soon.'
-      );
-    }, 2000);
+      alert(language==='gr' ? 'Η ώρα μόλις κλείστηκε από άλλον χρήστη. Παρακαλώ επιλέξτε άλλη ώρα.' : 'This time was just booked by someone else. Please select another time.');
+      // Ανανεώνουμε slots
+      const { data: bookedNow } = await supabase
+        .from('appointments')
+        .select('time')
+        .eq('doctor_id', selectedDoctorId)
+        .eq('date', formData.appointmentDate);
+      const setNow = new Set<string>((bookedNow||[]).map((b:any)=> (b.time||'').slice(0,5)));
+      setSlots(prev => prev.map(s => ({ ...s, available: !setNow.has(s.time) })));
+      return;
+    }
+    // Αμέσως μετά την επιτυχή καταχώρηση, ανανέωση λίστας booked για να εξαφανιστεί το slot
+    const { data: bookedAfter } = await supabase
+      .from('appointments')
+      .select('time')
+      .eq('doctor_id', selectedDoctorId)
+      .eq('date', formData.appointmentDate);
+    console.log('[Contact] booked after insert:', bookedAfter);
+    const bookedSetAfter = new Set<string>((bookedAfter||[]).map((b:any)=> (b.time||'').slice(0,5)));
+    setSlots(prev => prev.map(s => ({ ...s, available: !bookedSetAfter.has(s.time) })));
+    setIsSubmitting(false);
+    if (error) {
+      console.error(error);
+      alert(language==='gr'? 'Αποτυχία καταχώρησης ραντεβού.' : 'Failed to book appointment.');
+      return;
+    }
+    alert(language==='gr'? 'Το ραντεβού καταχωρήθηκε και η πληρωμή ολοκληρώθηκε!' : 'Appointment booked and payment completed!');
   };
   const content = {
     gr: {
@@ -112,6 +165,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       concerns: 'Σύντομη Περιγραφή Ανησυχιών',
       concernsPlaceholder: 'Παρακαλώ περιγράψτε συνοπτικά τις ανησυχίες σας ή τι θα θέλατε να συζητήσετε κατά τη διάρκεια της συμβουλής...',
       appointmentDate: 'Ημερομηνία Ραντεβού',
+      doctor: 'Γιατρός',
+      selectDoctor: 'Επιλέξτε γιατρό',
+      slotLegend: 'Διαθεσιμότητα: Πράσινο διαθέσιμο, Κόκκινο μη διαθέσιμο',
       appointmentDatePlaceholder: 'Επιλέξτε την ημερομηνία που σας ενδιαφέρει',
       privacy: 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.',
       sendMessage: 'Αποστολή Μηνύματος',
@@ -150,6 +206,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       concerns: 'Brief Description of Concerns',
       concernsPlaceholder: 'Please briefly describe your concerns or what you\'d like to discuss during the consultation...',
       appointmentDate: 'Appointment Date',
+      doctor: 'Doctor',
+      selectDoctor: 'Select doctor',
+      slotLegend: 'Availability: Green available, Red unavailable',
       appointmentDatePlaceholder: 'Select your preferred date',
       privacy: 'I understand that this form is not for emergency situations. For immediate help, please contact emergency services or go to your nearest emergency room.',
       sendMessage: 'Send Message',
@@ -157,6 +216,108 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.'
     }
   };
+
+  // Φόρτωση γιατρών και ρύθμισης
+  useEffect(() => {
+    const load = async () => {
+      console.log('[Contact] load(): fetching doctors & settings');
+      const [{ data: doctorsData }, { data: settingsData }] = await Promise.all([
+        supabase.from('doctors').select('*').eq('active', true).order('name'),
+        supabase.from('admin_settings').select('*').eq('id',1).single()
+      ]);
+      console.log('[Contact] doctors:', doctorsData);
+      console.log('[Contact] settings:', settingsData);
+      setDoctors(doctorsData || []);
+      if (doctorsData && doctorsData.length>0) setSelectedDoctorId(doctorsData[0].id);
+      setSettings(settingsData as any);
+    };
+    load();
+  }, []);
+
+  // Φόρτωση διαθέσιμων ημερών για τον τρέχοντα μήνα (για έγχρωμο ημερολόγιο)
+  useEffect(() => {
+    const fetchMonth = async () => {
+      if (!selectedDoctorId) return;
+      console.log('[Contact] fetchMonth for', calendarMonth, 'doctor:', selectedDoctorId);
+      const start = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+      const end = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth()+1, 0);
+      const s = start.toISOString().slice(0,10);
+      const e = end.toISOString().slice(0,10);
+      const { data } = await supabase
+        .from('availability')
+        .select('date')
+        .eq('doctor_id', selectedDoctorId)
+        .gte('date', s)
+        .lte('date', e);
+      console.log('[Contact] month availability rows:', data);
+      const map: Record<string, boolean> = {};
+      (data||[]).forEach((row: any) => { map[row.date] = true; });
+      setAvailableDays(map);
+    };
+    fetchMonth();
+  }, [calendarMonth, selectedDoctorId]);
+
+  // Υπολογισμός slots για επιλεγμένη ημερομηνία/γιατρό
+  useEffect(() => {
+    const compute = async () => {
+      if (!formData.appointmentDate || !selectedDoctorId) { setSlots([]); return; }
+      console.log('[Contact] compute slots for', formData.appointmentDate, 'doctor:', selectedDoctorId);
+      // Φέρνουμε μόνο availability ακριβώς για τη μέρα και τον γιατρό
+      const { data: av } = await supabase
+        .from('availability')
+        .select('start_time,end_time,increment_minutes')
+        .eq('doctor_id', selectedDoctorId)
+        .eq('date', formData.appointmentDate)
+        .order('start_time');
+
+      console.log('[Contact] day availability rows:', av);
+      const { data: booked } = await supabase
+        .from('appointments')
+        .select('time')
+        .eq('doctor_id', selectedDoctorId)
+        .eq('date', formData.appointmentDate);
+
+      console.log('[Contact] booked rows:', booked);
+      const toHHMM = (t: string) => (t || '').slice(0,5);
+      const bookedSet = new Set<string>((booked||[]).map((b: { time: string })=> toHHMM(b.time)));
+
+      const slotMap = new Map<string, SlotInfo>();
+      (av||[]).forEach((a: any) => {
+        // Αν μια availability δεν έχει valid εύρος, αγνόησέ την
+        if (!a || !a.start_time || !a.end_time || !a.increment_minutes) return;
+        const [sh, sm] = a.start_time.split(':').map(Number);
+        const [eh, em] = a.end_time.split(':').map(Number);
+        let cur = sh*60+sm;
+        const end = eh*60+em;
+        const step = a.increment_minutes as 30|60;
+        if (step !== 30 && step !== 60) return;
+        while (cur < end) {
+          const hh = Math.floor(cur/60).toString().padStart(2,'0');
+          const mm = (cur%60).toString().padStart(2,'0');
+          const t = `${hh}:${mm}`;
+          let available = !bookedSet.has(t);
+          let reason: SlotInfo['reason'] | undefined = bookedSet.has(t)? 'booked': undefined;
+          if (settings?.lock_half_hour) {
+            const hourStart = `${hh}:00`;
+            const half = `${hh}:30`;
+            if (bookedSet.has(hourStart) || bookedSet.has(half)) { available = false; reason = 'locked'; }
+          }
+          const existing = slotMap.get(t);
+          if (existing) {
+            slotMap.set(t, { time: t, available: existing.available || available, reason: existing.reason || reason });
+          } else {
+            slotMap.set(t, { time: t, available, reason });
+          }
+          cur += step;
+        }
+      });
+      const list = Array.from(slotMap.values()).sort((a,b)=> a.time.localeCompare(b.time));
+      console.log('[Contact] computed slots:', list);
+      setSlots(list);
+      setSelectedTime('');
+    };
+    compute();
+  }, [formData.appointmentDate, selectedDoctorId, settings]);
 
   return (
     <section id="contact" className="py-20 bg-white">
@@ -476,6 +637,17 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                  {content[language].doctor}
+                </label>
+                <select className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito" value={selectedDoctorId} onChange={e=> setSelectedDoctorId(e.target.value)}>
+                  {(doctors||[]).map(d=> (
+                    <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label htmlFor="appointmentDate" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
                   {content[language].appointmentDate}
                 </label>
@@ -490,6 +662,24 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   placeholder={content[language].appointmentDatePlaceholder}
                 />
               </div>
+
+              {/* Slots visualization */}
+              {formData.appointmentDate && (
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500 mb-2 font-quicksand">{content[language].slotLegend}</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {slots.length===0 ? (
+                      <div className="text-gray-500 col-span-full">{language==='gr'? 'Δεν υπάρχουν διαθέσιμα για την ημέρα.': 'No availability for the day.'}</div>
+                    ) : (
+                      slots.map(s=> (
+                        <button type="button" disabled={!s.available} onClick={()=> s.available && setSelectedTime(s.time)} key={s.time} className={`px-3 py-2 rounded-xl text-center text-sm font-semibold border transition ${s.available? 'bg-green-100 text-green-800 hover:ring-2 hover:ring-green-400':'bg-red-100 text-red-700 cursor-not-allowed'} ${selectedTime===s.time? 'ring-2 ring-purple-soft':''}`}>
+                          {s.time}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <div className="flex justify-between items-center mb-2">
