@@ -9,6 +9,7 @@ import Testimonials from './components/Testimonials';
 import FAQ from './components/FAQ';
 import Articles from './components/Articles';
 import Contact from './components/Contact';
+import TeamMembers from './components/TeamMembers';
 import Footer from './components/Footer';
 import Admin from './pages/Admin';
 
@@ -41,6 +42,7 @@ function App() {
             <FAQ language={language} />
             <Articles language={language} />
             <Contact language={language} />
+            <TeamMembers language={language} />
             <Footer language={language} />
           </>
         );
