@@ -37,12 +37,12 @@ function App() {
             <Hero language={language} setLanguage={setLanguage} />
             <TrustSection language={language} />
             <About language={language} />
+            <TeamMembers language={language} />
             <Services language={language} />
             <Testimonials language={language} />
             <FAQ language={language} />
             <Articles language={language} />
             <Contact language={language} />
-            <TeamMembers language={language} />
             <Footer language={language} />
           </>
         );

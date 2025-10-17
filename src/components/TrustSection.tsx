@@ -47,7 +47,7 @@ const TrustSection: React.FC<TrustSectionProps> = ({ language }) => {
                   className="absolute -top-2 -left-2 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 z-10 min-w-[80px]"
                 >
                   <div className="text-center">
-                    <div className="text-lg font-bold text-green-soft font-poppins">800+</div>
+                    <div className="text-lg font-bold text-green-soft font-poppins">1000+</div>
                     <div className="text-xs text-gray-600 font-quicksand leading-tight">{content[language].families}</div>
                   </div>
                 </motion.div>

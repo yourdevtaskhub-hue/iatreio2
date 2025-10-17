@@ -17,6 +17,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       home: 'Αρχική',
       services: 'Υπηρεσίες',
       about: 'Βιογραφικό',
+      team: 'Η ομάδας μας',
       testimonials: 'Αξιολογήσεις',
       faq: 'Συχνές Ερωτήσεις',
       articles: 'Άρθρα',
@@ -27,6 +28,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       home: 'Home',
       services: 'Services',
       about: 'About',
+      team: 'Our Team',
       testimonials: 'Testimonials',
       faq: 'FAQ',
       articles: 'Articles',
@@ -48,6 +50,13 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
       setIsMenuOpen(false);
+    } else if (sectionId === 'team') {
+      // Scroll to TeamMembers section
+      const teamElement = document.querySelector('[data-section="team"]') || document.querySelector('.team-members-section');
+      if (teamElement) {
+        teamElement.scrollIntoView({ behavior: 'smooth' });
+        setIsMenuOpen(false);
+      }
     }
   };
 
@@ -79,16 +88,19 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:block">
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-6">
               {Object.entries(content[language as keyof typeof content]).map(([key, value], index) => {
                 return key !== 'appointment' ? (
                   <motion.button
                     key={`nav-${key}-${index}`}
                     whileHover={{ y: -2 }}
                     onClick={() => scrollToSection(key)}
-                    className="text-white hover:text-white/80 px-3 py-2 text-sm font-medium transition-colors font-quicksand"
+                    className="text-white hover:text-white/80 px-2 py-2 text-sm font-medium transition-colors font-quicksand text-center"
                   >
-                    {value}
+                    <div className="flex flex-col">
+                      <span>{value}</span>
+                      {key === 'about' && <span className="text-xs opacity-90">Δρ. Φύτρου</span>}
+                    </div>
                   </motion.button>
                 ) : (
                   <React.Fragment key={`fragment-${key}-${index}`}>

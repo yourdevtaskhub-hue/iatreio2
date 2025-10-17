@@ -19,11 +19,51 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     message: '',
     appointmentDate: '',
     privacyAccepted: false,
-    recordingPolicyAccepted: false
+    recordingPolicyAccepted: false,
+    parentalConsentAccepted: false,
+    isFirstSession: ''
   });
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
+  const [selectedThematology, setSelectedThematology] = useState<string>('');
   const [messageLength, setMessageLength] = useState(0);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
+  
+  // Φιλτραρισμένες θεματολογίες βάσει επιλεγμένης ειδικότητας
+  const getAvailableThematologies = () => {
+    if (!selectedSpecialty) return [];
+    
+    if (selectedSpecialty === 'psychiatrist') {
+      // Για Παιδοψυχίατρο: εποπτεία ειδικών, φαρμακευτική ρύθμιση, επιστημονική επιμέλεια, εξέταση παιδιού από ψυχίατρο, ψυχοθεραπεία παιδιού με ψυχίατρο
+      return [
+        'supervision',
+        'medicationAdjustment', 
+        'scientificSupervision',
+        'childExamPsychiatrist',
+        'childTherapyPsychiatrist'
+      ];
+    } else if (selectedSpecialty === 'psychologist') {
+      // Για Κλινικό Παιδοψυχολόγο: όλες οι υπόλοιπες
+      return [
+        'firstSession',
+        'parentCounseling',
+        'childExamPsychologist',
+        'childTherapyPsychologist'
+      ];
+    }
+    
+    return [];
+  };
+
+  // Φιλτραρισμένοι γιατροί βάσει επιλεγμένης ειδικότητας
+  const filteredDoctors = doctors.filter(doctor => {
+    if (!selectedSpecialty) return true;
+    const specialtyMap: { [key: string]: string } = {
+      'psychiatrist': 'Παιδοψυχίατρος',
+      'psychologist': 'Κλινικός Παιδοψυχολόγος'
+    };
+    return doctor.specialty === specialtyMap[selectedSpecialty];
+  });
   const [slots, setSlots] = useState<SlotInfo[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -71,6 +111,15 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       return;
     }
     
+    // Check if parental consent is accepted
+    if (!formData.parentalConsentAccepted) {
+      alert(language === 'gr' 
+        ? 'Παρακαλώ αποδεχτείτε τη γονεϊκή συναίνεση για να συνεχίσετε.'
+        : 'Please accept the parental consent to continue.'
+      );
+      return;
+    }
+    
     // Check if message is within character limit
     if (formData.message.length > 200) {
       alert(language === 'gr' 
@@ -80,8 +129,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       return;
     }
     
-    if (!formData.appointmentDate || !selectedDoctorId || !selectedTime) {
-      alert(language==='gr' ? 'Επιλέξτε γιατρό, ημερομηνία και ώρα.' : 'Select doctor, date and time.');
+    if (!selectedSpecialty || !selectedDoctorId || !formData.appointmentDate || !selectedTime) {
+      alert(language==='gr' ? 'Επιλέξτε ειδικότητα, γιατρό, ημερομηνία και ώρα.' : 'Select specialty, doctor, date and time.');
       return;
     }
     // Προσομοίωση online πληρωμής
@@ -99,7 +148,11 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       child_age: formData.childAge,
       email: formData.email,
       phone: formData.phone,
-      concerns: formData.message
+      concerns: formData.message,
+      specialty: selectedSpecialty,
+      thematology: selectedThematology,
+      urgency: formData.urgency,
+      is_first_session: formData.isFirstSession === 'yes'
     }).single();
     console.log('[Contact] booking insert result error:', error);
     // Αν η εισαγωγή αποτύχει λόγω unique index, ενημερώνουμε τον χρήστη
@@ -165,6 +218,30 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       concerns: 'Σύντομη Περιγραφή Ανησυχιών',
       concernsPlaceholder: 'Παρακαλώ περιγράψτε συνοπτικά τις ανησυχίες σας ή τι θα θέλατε να συζητήσετε κατά τη διάρκεια της συμβουλής...',
       appointmentDate: 'Ημερομηνία Ραντεβού',
+      isFirstSession: 'Είναι η πρώτη σας συνεδρία;',
+      isFirstSessionOptions: {
+        yes: 'Είναι η πρώτη μου συνεδρία.',
+        no: 'Είμαι ήδη ασθενής του ιατρείου.'
+      },
+      specialty: 'Ειδικότητα',
+      selectSpecialty: 'Επιλέξτε ειδικότητα',
+      specialtyOptions: {
+        psychiatrist: 'Παιδοψυχίατρος',
+        psychologist: 'Κλινικός Παιδοψυχολόγος'
+      },
+      thematologies: 'Θεματολογίες',
+      selectThematology: 'Επιλέξτε θεματολογία',
+      thematologyOptions: {
+        firstSession: 'Πρώτη συνεδρία',
+        parentCounseling: 'Συμβουλευτική γονέων',
+        childExamPsychologist: 'Εξέταση παιδιού από ψυχολόγο',
+        childExamPsychiatrist: 'Εξέταση παιδιού από ψυχίατρο',
+        childTherapyPsychiatrist: 'Ψυχοθεραπεία παιδιού με ψυχίατρο',
+        childTherapyPsychologist: 'Ψυχοθεραπεία παιδιού με ψυχολόγο',
+        supervision: 'Εποπτεία ειδικών',
+        medicationAdjustment: 'Φαρμακευτική ρύθμιση',
+        scientificSupervision: 'Επιστημονική επιμέλεια βιβλίου/site/παιχνιδιού'
+      },
       doctor: 'Γιατρός',
       selectDoctor: 'Επιλέξτε γιατρό',
       slotLegend: 'Διαθεσιμότητα: Πράσινο διαθέσιμο, Κόκκινο μη διαθέσιμο',
@@ -206,6 +283,30 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       concerns: 'Brief Description of Concerns',
       concernsPlaceholder: 'Please briefly describe your concerns or what you\'d like to discuss during the consultation...',
       appointmentDate: 'Appointment Date',
+      isFirstSession: 'Is this your first session?',
+      isFirstSessionOptions: {
+        yes: 'This is my first session.',
+        no: 'I am already a patient of the clinic.'
+      },
+      specialty: 'Specialty',
+      selectSpecialty: 'Select specialty',
+      specialtyOptions: {
+        psychiatrist: 'Child Psychiatrist',
+        psychologist: 'Clinical Child Psychologist'
+      },
+      thematologies: 'Thematologies',
+      selectThematology: 'Select thematology',
+      thematologyOptions: {
+        firstSession: 'First session',
+        parentCounseling: 'Parent counseling',
+        childExamPsychologist: 'Child examination by psychologist',
+        childExamPsychiatrist: 'Child examination by psychiatrist',
+        childTherapyPsychiatrist: 'Child therapy with psychiatrist',
+        childTherapyPsychologist: 'Child therapy with psychologist',
+        supervision: 'Specialist supervision',
+        medicationAdjustment: 'Medication adjustment',
+        scientificSupervision: 'Scientific supervision of book/site/game'
+      },
       doctor: 'Doctor',
       selectDoctor: 'Select doctor',
       slotLegend: 'Availability: Green available, Red unavailable',
@@ -233,6 +334,24 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     };
     load();
   }, []);
+
+  // Επαναφορά επιλογής θεματολογίας όταν αλλάζει η ειδικότητα
+  useEffect(() => {
+    setSelectedThematology('');
+  }, [selectedSpecialty]);
+
+  // Επαναφορά επιλογής γιατρού όταν αλλάζει η ειδικότητα
+  useEffect(() => {
+    if (filteredDoctors.length > 0) {
+      // Ελέγχουμε αν ο τρέχων γιατρός είναι στα φιλτραρισμένα
+      const currentDoctorExists = filteredDoctors.some(d => d.id === selectedDoctorId);
+      if (!currentDoctorExists) {
+        setSelectedDoctorId(filteredDoctors[0].id);
+      }
+    } else {
+      setSelectedDoctorId('');
+    }
+  }, [selectedSpecialty, filteredDoctors, selectedDoctorId]);
 
   // Φόρτωση διαθέσιμων ημερών για τον τρέχοντα μήνα (για έγχρωμο ημερολόγιο)
   useEffect(() => {
@@ -332,11 +451,11 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
           {/* Title Section */}
           <div className="mb-6">
             <h2 className="text-4xl font-bold mb-4 font-poppins">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
                 {content[language].title}
               </span>
             </h2>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft text-center block text-xl font-poppins">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 text-center block text-xl font-poppins">
               {content[language].subtitle}
             </span>
             <p className="text-sm text-gray-500 mt-2 font-nunito">
@@ -392,7 +511,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   <Heart className="h-6 w-6 text-white" />
                 </motion.div>
                 <h3 className="text-2xl font-bold font-poppins">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
                     {content[language].contactInfo}
                   </span>
                 </h3>
@@ -501,7 +620,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
               className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
             >
               <h3 className="text-xl font-bold mb-4 font-poppins">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
                   {content[language].expectTitle}
                 </span>
               </h3>
@@ -543,7 +662,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 <Send className="h-6 w-6 text-white" />
               </motion.div>
               <h3 className="text-2xl font-bold font-poppins">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
                   {content[language].formTitle}
                 </span>
               </h3>
@@ -637,11 +756,81 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
               </div>
 
               <div>
+                <label htmlFor="isFirstSession" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                  {content[language].isFirstSession}
+                </label>
+                <motion.select
+                  whileFocus={{ scale: 1.02 }}
+                  id="isFirstSession"
+                  name="isFirstSession"
+                  value={formData.isFirstSession}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
+                >
+                  <option value="">{language === 'gr' ? 'Επιλέξτε επιλογή' : 'Select option'}</option>
+                  <option value="yes">{content[language].isFirstSessionOptions.yes}</option>
+                  <option value="no">{content[language].isFirstSessionOptions.no}</option>
+                </motion.select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                  {content[language].specialty}
+                </label>
+                <motion.select
+                  whileFocus={{ scale: 1.02 }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
+                  value={selectedSpecialty}
+                  onChange={e => setSelectedSpecialty(e.target.value)}
+                >
+                  <option value="">{content[language].selectSpecialty}</option>
+                  <option value="psychiatrist">{content[language].specialtyOptions.psychiatrist}</option>
+                  <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
+                </motion.select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                  {content[language].thematologies}
+                </label>
+                <motion.select
+                  whileFocus={{ scale: 1.02 }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
+                  value={selectedThematology}
+                  onChange={e => setSelectedThematology(e.target.value)}
+                  disabled={!selectedSpecialty}
+                >
+                  <option value="">
+                    {selectedSpecialty 
+                      ? content[language].selectThematology 
+                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 'First select specialty')
+                    }
+                  </option>
+                  {getAvailableThematologies().map(thematologyKey => (
+                    <option key={thematologyKey} value={thematologyKey}>
+                      {content[language].thematologyOptions[thematologyKey as keyof typeof content[typeof language]['thematologyOptions']]}
+                    </option>
+                  ))}
+                </motion.select>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
                   {content[language].doctor}
                 </label>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito" value={selectedDoctorId} onChange={e=> setSelectedDoctorId(e.target.value)}>
-                  {(doctors||[]).map(d=> (
+                <select 
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito" 
+                  value={selectedDoctorId} 
+                  onChange={e=> setSelectedDoctorId(e.target.value)}
+                  disabled={!selectedSpecialty}
+                >
+                  <option value="">
+                    {selectedSpecialty 
+                      ? content[language].selectDoctor 
+                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 'First select specialty')
+                    }
+                  </option>
+                  {filteredDoctors.map(d=> (
                     <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
                   ))}
                 </select>
@@ -660,7 +849,19 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                   placeholder={content[language].appointmentDatePlaceholder}
+                  min={new Date().toISOString().split('T')[0]}
+                  style={{ direction: 'ltr' }}
                 />
+                {/* Display selected date in Greek format */}
+                {formData.appointmentDate && (
+                  <div className="mt-2 text-sm text-gray-600 font-nunito">
+                    Επιλεγμένη ημερομηνία: {new Date(formData.appointmentDate + 'T00:00:00').toLocaleDateString('el-GR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })} (DD/MM/YYYY)
+                  </div>
+                )}
               </div>
 
               {/* Slots visualization */}
@@ -748,13 +949,28 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 </label>
               </div>
 
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="parentalConsent"
+                  name="parentalConsentAccepted"
+                  checked={formData.parentalConsentAccepted}
+                  onChange={handleInputChange}
+                  className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="parentalConsent" className="text-sm text-red-600 font-nunito">
+                  <strong>Ως γονεϊκό ζευγάρι αποδεχόμαστε ο/η ιατρός και η ομάδα του/της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.</strong>
+                </label>
+              </div>
+
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={isSubmitting || !formData.privacyAccepted || !formData.recordingPolicyAccepted || messageLength > 200}
+                disabled={isSubmitting || !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200}
                 className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
-                  isSubmitting || !formData.privacyAccepted || !formData.recordingPolicyAccepted || messageLength > 200
+                  isSubmitting || !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
                 }`}

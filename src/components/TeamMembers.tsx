@@ -40,7 +40,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
   ];
 
   return (
-    <section className="py-6 bg-white">
+    <section className="py-6 bg-white" data-section="team">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -50,74 +50,108 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
           className="text-center mb-6"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            Συνεργάτες
+            Η ομάδα της Δρ. Φύτρου
           </h2>
           <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed font-bold">
             Οι συνεργάτες μας είναι ψυχολόγοι και ψυχοθεραπευτές, εξειδικευμένοι στην παιδική ψυχοπαθολογία και εποπτεύονται εβδομαδιαίως από την Δρ. Φύτρου για τα περιστατικά του ιατρείου.
           </p>
         </motion.div>
 
-        <div className="space-y-8">
-          {teamMembers.map((member, index) => (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.2 }}
-              viewport={{ once: true }}
-              className="bg-gray-50 rounded-xl shadow-sm p-4 md:p-6 overflow-hidden"
-            >
-              <div className="flex flex-col lg:flex-row items-start gap-4 lg:gap-6">
-                {/* Φωτογραφία */}
-                <div className="w-full lg:w-56 flex-shrink-0">
-                  <div className="relative">
-                    <div className="w-48 h-48 mx-auto lg:mx-0 rounded-lg overflow-hidden shadow-sm">
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                </div>
+        {/* Ενιαίο μεγάλο πλαίσιο με τα δύο βιογραφικά */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
+        >
+          {/* Μεγάλη εικόνα στο πάνω μέρος */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="relative w-full h-80 lg:h-96 overflow-hidden bg-gray-50 flex items-center justify-center"
+          >
+            <img
+              src="/womensidebyside.png"
+              alt="Συνεργάτες"
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Overlay για καλύτερη αισθητική */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+            {/* Διακοσμητικό στοιχείο */}
+            <div className="absolute inset-0 border-4 border-white/30 rounded-t-2xl"></div>
+          </motion.div>
 
-                {/* Βιογραφικό */}
-                <div className="flex-1">
-                  <motion.h3
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.3 + index * 0.2 }}
-                    viewport={{ once: true }}
-                    className="text-xl md:text-2xl font-bold text-gray-800 mb-3"
-                  >
-                    {member.name}
-                  </motion.h3>
-                  
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            {teamMembers.map((member, index) => (
+              <div key={member.id} className={`p-8 ${index === 0 ? 'lg:pr-6' : 'lg:pl-6'} relative`}>
+                {/* Όνομα */}
+                <motion.h3
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 + index * 0.3 }}
+                  viewport={{ once: true }}
+                  className="text-center text-xl md:text-2xl font-bold text-gray-800 mb-6"
+                >
+                  {member.name}
+                </motion.h3>
+                
+                {/* Βιογραφικό κείμενο */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 + index * 0.3 }}
+                  viewport={{ once: true }}
+                  className="space-y-4"
+                >
+                  {member.bio.split('\n\n').map((paragraph, pIndex) => (
+                    <p
+                      key={pIndex}
+                      className="text-gray-700 leading-relaxed text-sm text-justify"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </motion.div>
+
+                {/* Διακοσμητική γραμμή κάτω */}
+                <motion.div 
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  whileInView={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.8, delay: 0.8 + index * 0.3 }}
+                  viewport={{ once: true }}
+                  className="mt-6 flex justify-center"
+                >
+                  <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full"></div>
+                </motion.div>
+
+                {/* Διαχωριστική γραμμή ανάμεσα στα κείμενα (μόνο για το δεύτερο βιογραφικό) */}
+                {index === 1 && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.5 + index * 0.2 }}
+                    initial={{ opacity: 0, scaleY: 0 }}
+                    whileInView={{ opacity: 1, scaleY: 1 }}
+                    transition={{ duration: 0.8, delay: 0.5 }}
                     viewport={{ once: true }}
-                    className="space-y-3"
+                    className="hidden lg:block absolute left-0 top-8 bottom-8 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"
                   >
-                    {member.bio.split('\n\n').map((paragraph, pIndex) => (
-                      <p
-                        key={pIndex}
-                        className="text-gray-700 leading-relaxed text-sm"
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-6 h-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center"
                       >
-                        {paragraph}
-                      </p>
-                    ))}
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </motion.div>
+                    </div>
                   </motion.div>
-
-                  {/* Διακοσμητική γραμμή */}
-                  <div className="mt-4 w-12 h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full"></div>
-                </div>
+                )}
               </div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </motion.div>
 
       </div>
     </section>

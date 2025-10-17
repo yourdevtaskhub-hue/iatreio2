@@ -414,7 +414,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         >
           <span className="text-black font-semibold text-2xl font-quicksand">{content[lang].title}</span>
           <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[lang].subtitle}
             </span>
           </h2>

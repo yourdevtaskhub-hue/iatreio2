@@ -15,25 +15,28 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
       readMore: 'Διαβάστε Περισσότερα',
       articles: [
         {
-          title: 'Πώς να Αναγνωρίσετε το Άγχος στα Παιδιά',
-          excerpt: 'Μάθετε τα σημάδια του άγχους στα παιδιά και πώς μπορείτε να τα υποστηρίξετε ως γονείς.',
+          title: 'Παιδιά αντιμετωπίζουν δυσκολίες στην ευεξία μετά την πανδημία',
+          excerpt: 'Η Ελλάδα βρίσκεται εκτός των top 20 χωρών για την ευτυχία των παιδιών σύμφωνα με την έκθεση UNICEF 2025.',
           readTime: '5 λεπτά ανάγνωσης',
-          category: 'Άγχος',
-          image: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Ψυχική Υγεία',
+          image: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://neoskosmos.com/en/2025/08/08/news/greece/greek-children-struggle-with-wellbeing-post-pandemic-unicef-report-says/?utm_source'
         },
         {
-          title: 'Δημιουργώντας Ρουτίνες που Προάγουν την Ψυχική Υγεία',
-          excerpt: 'Πρακτικές συμβουλές για τη δημιουργία υγιών ρουτινών που υποστηρίζουν την ευεξία του παιδιού.',
+          title: 'Γιατί οι μαμάδες δεν νιώθουν ποτέ αρκετές; Η ψυχολογική πίεση να είσαι "η τέλεια μαμά"',
+          excerpt: 'Η ψυχολογική πίεση που αντιμετωπίζουν οι μητέρες για να είναι "τέλειες" κάθε μέρα και πώς να την αντιμετωπίσουν.',
           readTime: '7 λεπτά ανάγνωσης',
-          category: 'Ρουτίνες',
-          image: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Γονεϊκότητα',
+          image: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://www.themamagers.gr/family/500293/giati-oi-mamades-den-niothoun-pote-arketes-i-psuxologiki-piesi-na-eisai-i-teleia-mama-kathe-mera?utm_source=chatgpt.com'
         },
         {
-          title: 'Επικοινωνία με Εφήβους: Στρατηγικές που Λειτουργούν',
-          excerpt: 'Αποτελεσματικοί τρόποι επικοινωνίας με εφήβους και οικοδόμηση εμπιστοσύνης.',
+          title: 'Επιστημονική έρευνα για την ψυχική υγεία των παιδιών',
+          excerpt: 'Νεότερες επιστημονικές μελέτες και ευρήματα σχετικά με την ψυχική υγεία και την ευεξία των παιδιών.',
           readTime: '6 λεπτά ανάγνωσης',
-          category: 'Εφηβεία',
-          image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Έρευνα',
+          image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://pubmed.ncbi.nlm.nih.gov/38748300/?utm_source='
         }
       ]
     },
@@ -44,25 +47,28 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
       readMore: 'Read More',
       articles: [
         {
-          title: 'How to Recognize Anxiety in Children',
-          excerpt: 'Learn the signs of anxiety in children and how you can support them as parents.',
+          title: 'Children struggle with wellbeing post-pandemic',
+          excerpt: 'Greece has fallen behind in global rankings for children happiness, finding itself outside the top 20 according to UNICEF\'s 2025 report.',
           readTime: '5 min read',
-          category: 'Anxiety',
-          image: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Mental Health',
+          image: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://neoskosmos.com/en/2025/08/08/news/greece/greek-children-struggle-with-wellbeing-post-pandemic-unicef-report-says/?utm_source'
         },
         {
-          title: 'Creating Routines that Promote Mental Health',
-          excerpt: 'Practical tips for creating healthy routines that support your child\'s wellbeing.',
+          title: 'Why mothers never feel enough: The psychological pressure to be "the perfect mom"',
+          excerpt: 'The psychological pressure mothers face to be "perfect" every day and how to cope with it.',
           readTime: '7 min read',
-          category: 'Routines',
-          image: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Parenting',
+          image: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://www.themamagers.gr/family/500293/giati-oi-mamades-den-niothoun-pote-arketes-i-psuxologiki-piesi-na-eisai-i-teleia-mama-kathe-mera?utm_source=chatgpt.com'
         },
         {
-          title: 'Communicating with Teenagers: Strategies that Work',
-          excerpt: 'Effective ways to communicate with teenagers and build trust.',
+          title: 'Scientific research on children\'s mental health',
+          excerpt: 'Latest scientific studies and findings regarding children\'s mental health and wellbeing.',
           readTime: '6 min read',
-          category: 'Adolescence',
-          image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          category: 'Research',
+          image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://pubmed.ncbi.nlm.nih.gov/38748300/?utm_source='
         }
       ]
     }
@@ -79,12 +85,12 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           className="text-center mb-16"
         >
           <h3 className="text-2xl font-semibold mb-4 font-quicksand">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[language].title}
             </span>
           </h3>
           <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[language].subtitle}
             </span>
           </h2>
@@ -142,7 +148,8 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
                   <motion.button
                     whileHover={{ scale: 1.05, x: 5 }}
                     whileTap={{ scale: 0.95 }}
-                    className="inline-flex items-center text-rose-soft hover:text-purple-soft font-medium text-sm transition-colors font-poppins"
+                    onClick={() => window.open(article.url, '_blank')}
+                    className="inline-flex items-center text-rose-soft hover:text-purple-soft font-medium text-sm transition-colors font-poppins cursor-pointer"
                   >
                     {content[language].readMore}
                     <ArrowRight className="h-4 w-4 ml-1" />

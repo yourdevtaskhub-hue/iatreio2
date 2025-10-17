@@ -25,6 +25,10 @@ export interface Appointment {
   email: string;
   phone: string;
   concerns: string;
+  specialty?: string;
+  thematology?: string;
+  urgency?: string;
+  is_first_session?: boolean;
   created_at: string;
 }
 

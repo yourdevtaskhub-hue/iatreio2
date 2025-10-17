@@ -821,7 +821,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           <option value={30}>30</option>
           <option value={60}>60</option>
         </select>
-        <input type="date" className="border rounded-xl px-3 py-2" value={singleDate} onChange={e=> setSingleDate(e.target.value)} />
+        <input type="date" className="border rounded-xl px-3 py-2" value={singleDate} onChange={e=> setSingleDate(e.target.value)} placeholder="dd/mm/yyyy" />
         <button disabled={saving || !singleDate} onClick={addSingle} className="px-3 py-2 bg-green-600 text-white rounded-xl disabled:opacity-50">Προσθήκη (μεμονωμένη)</button>
       </div>
       {/* Μηνιαίο Ημερολόγιο (compact, red->default, green->available) */}
@@ -868,7 +868,7 @@ const AppointmentsList: React.FC = () => {
   useEffect(()=>{ (async ()=>{
     const { data } = await supabaseAdmin
       .from('appointments')
-      .select('id, date, time, email, phone, parent_name, doctors(name, specialty)')
+      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
     setItems(data || []);
@@ -876,16 +876,35 @@ const AppointmentsList: React.FC = () => {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left"><th className="p-2">Ημερομηνία</th><th className="p-2">Ώρα</th><th className="p-2">Γιατρός</th><th className="p-2">Όνομα</th><th className="p-2">Τηλέφωνο</th><th className="p-2">Email</th></tr></thead>
+        <thead><tr className="text-left">
+          <th className="p-2">Ημερομηνία</th>
+          <th className="p-2">Ώρα</th>
+          <th className="p-2">Γιατρός</th>
+          <th className="p-2">Όνομα</th>
+          <th className="p-2">Ηλικία</th>
+          <th className="p-2">Τηλέφωνο</th>
+          <th className="p-2">Email</th>
+          <th className="p-2">Ειδικότητα</th>
+          <th className="p-2">Θεματολογία</th>
+          <th className="p-2">Επείγον</th>
+          <th className="p-2">Πρώτη Συνεδρία</th>
+          <th className="p-2">Ανησυχίες</th>
+        </tr></thead>
         <tbody>
           {items.map((a:any)=> (
             <tr key={a.id} className="border-t">
               <td className="p-2">{a.date}</td>
               <td className="p-2">{a.time}</td>
-              <td className="p-2">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id}</td>
+              <td className="p-2">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
               <td className="p-2">{a.parent_name}</td>
+              <td className="p-2">{a.child_age || '-'}</td>
               <td className="p-2">{a.phone || '-'}</td>
               <td className="p-2">{a.email}</td>
+              <td className="p-2">{a.specialty || '-'}</td>
+              <td className="p-2">{a.thematology || '-'}</td>
+              <td className="p-2">{a.urgency || '-'}</td>
+              <td className="p-2">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
+              <td className="p-2 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
             </tr>
           ))}
         </tbody>

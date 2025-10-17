@@ -23,8 +23,8 @@ const About: React.FC<AboutProps> = ({ language }) => {
                       title: 'Ψυχιατρική Παιδιού και Εφήβου',
                       description: 'Η ειδικός εκπαιδεύτηκε για την απόκτηση της ειδικότητας της σε κορυφαία Πανεπιστημιακά Ευρωπαϊκά και μη Νοσοκομεία όπως:',
                       details: [
-                        'Το Πανεπιστημιακό Νοσοκομείο Λοζάνης (CHUV)',
-                        'Το Πανεπιστημιακό Γενικό Νοσοκομείο Αττικόν',
+                        'Πανεπιστημιακό Νοσοκομείο Λοζάνης (CHUV)',
+                        'Πανεπιστημιακό Γενικό Νοσοκομείο Αττικόν',
                         'Γενικό Νοσοκομείο Παίδων Πεντέλης',
                         'Γενικό Νοσοκομείο Κωνσταντοπούλειο',
                         'Fondation de Nant, Secteur psychiatrique (FDN)',
@@ -33,7 +33,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                     },
                     {
                       title: 'Πιστοποιήσεις',
-                      description: 'Η ειδικός έχει αναγνωρισμένο πτυχίο Ιατρικής και έχει άδεια ασκήσεως επαγγέλματος ως Ειδικός Ψυχίατρος και Ψυχοθεραπευτής στην Ελλάδα και την Ελβετία.'
+                      description: 'Η ειδικός έχει αναγνωρισμένο Πτυχίο Ιατρικής και έχει Άδεια Ασκήσεως Επαγγέλματος ως Ειδικός Ψυχίατρος και Ψυχοθεραπευτής στην Ελλάδα και την Ελβετία.'
                     },
                     {
                       title: 'Ψυχοθεραπευτική Εκπαίδευση',
@@ -139,7 +139,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft font-semibold text-lg font-quicksand"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 font-semibold text-lg font-quicksand"
               >
                 Σχετικά με την <span className="text-2xl">Δρ. Φύτρου</span>
               </motion.span>
@@ -148,11 +148,10 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="text-4xl font-bold text-gray-800 mt-2 mb-6 font-poppins"
+                className="text-4xl font-bold mt-2 mb-6 font-poppins"
               >
-                {content[language].subtitle.split(' ').slice(0, 3).join(' ')}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
-                  {' ' + content[language].subtitle.split(' ').slice(3).join(' ')}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+                  {content[language].subtitle}
                 </span>
               </motion.h2>
               <motion.p 

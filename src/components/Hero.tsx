@@ -11,7 +11,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
   const content = {
     gr: {
       title: 'Διαδικτυακό Ιατρείο Γονέων και Εφήβων',
-      subtitle: 'Υποστήριξη της Ψυχικής Υγείας εφήβων και των γονέων τους με επαγγελματισμό, κατανόηση και πλήρη εχεμύθεια.',
+      subtitle: 'Υποστήριξη της Ψυχικής Υγείας των εφήβων και των γονέων τους με επαγγελματισμό, κατανόηση και πλήρη εχεμύθεια.',
       cta: 'Κλείστε Ραντεβού',
       learnMore: 'Μάθετε Περισσότερα',
       experience: 'Χρόνια Εμπειρίας',
@@ -59,7 +59,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           <div className="text-gray-800 text-xs font-bold font-nunito leading-tight">
             1ο Διαδικτυακό Ιατρείο<br />
             Γονέων και Εφήβων στην<br />
-            Ευρώπη και την Ελβετία
+            Ευρώπη
           </div>
           <div className="mt-2 flex justify-center space-x-1">
             <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />

@@ -104,7 +104,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[language].title}
             </span>
           </h2>
