@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3 } from 'lucide-react';
 import profile2 from '../assets/profile2.png';
 import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
@@ -34,7 +34,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     if (!selectedSpecialty) return [];
     
     if (selectedSpecialty === 'psychiatrist') {
-      // Για Παιδοψυχίατρο: εποπτεία ειδικών, φαρμακευτική ρύθμιση, επιστημονική επιμέλεια, εξέταση παιδιού από ψυχίατρο, ψυχοθεραπεία παιδιού με ψυχίατρο
+      // Για Ψυχίατρο Παιδιού και Εφήβου & Ψυχοθεραπεύτρια: εποπτεία ειδικών, φαρμακευτική ρύθμιση, επιστημονική επιμέλεια, εξέταση παιδιού από ψυχίατρο, ψυχοθεραπεία παιδιού με ψυχίατρο
       return [
         'supervision',
         'medicationAdjustment', 
@@ -43,7 +43,15 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
         'childTherapyPsychiatrist'
       ];
     } else if (selectedSpecialty === 'psychologist') {
-      // Για Κλινικό Παιδοψυχολόγο: όλες οι υπόλοιπες
+      // Για Παιδοψυχολόγο & Ψυχοθεραπεύτρια: όλες οι υπόλοιπες
+      return [
+        'firstSession',
+        'parentCounseling',
+        'childExamPsychologist',
+        'childTherapyPsychologist'
+      ];
+    } else if (selectedSpecialty === 'clinicalPsychologist') {
+      // Για Κλινική Παιδοψυχολόγο & Ψυχοθεραπεύτρια: όλες οι υπόλοιπες
       return [
         'firstSession',
         'parentCounseling',
@@ -59,8 +67,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   const filteredDoctors = doctors.filter(doctor => {
     if (!selectedSpecialty) return true;
     const specialtyMap: { [key: string]: string } = {
-      'psychiatrist': 'Παιδοψυχίατρος',
-      'psychologist': 'Κλινικός Παιδοψυχολόγος'
+      'psychiatrist': 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
+      'psychologist': 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
+      'clinicalPsychologist': 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια'
     };
     return doctor.specialty === specialtyMap[selectedSpecialty];
   });
@@ -73,6 +82,16 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   });
   const [availableDays, setAvailableDays] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showWaitlistPopup, setShowWaitlistPopup] = useState(false);
+  const [waitlistFormData, setWaitlistFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    preferredDate: '',
+    preferredTime: ''
+  });
+  const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -186,6 +205,72 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     }
     alert(language==='gr'? 'Το ραντεβού καταχωρήθηκε και η πληρωμή ολοκληρώθηκε!' : 'Appointment booked and payment completed!');
   };
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!waitlistFormData.name || !waitlistFormData.email) {
+      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε τουλάχιστον το όνομά σας και το email σας.' : 'Please fill in at least your name and email.');
+      return;
+    }
+
+    setIsSubmittingWaitlist(true);
+
+    try {
+      // Δημιουργία email περιεχομένου
+      const subject = encodeURIComponent('Αίτημα εγγραφής στη λίστα αναμονής - Ιατρείο Δρ. Φύτρου');
+      const body = encodeURIComponent(`
+Νέο αίτημα εγγραφής στη λίστα αναμονής:
+
+Όνομα Γονέα/Κηδεμόνα: ${waitlistFormData.name}
+Email: ${waitlistFormData.email}
+Τηλέφωνο: ${waitlistFormData.phone || 'Δεν παρέχεται'}
+
+Ημερομηνία που ήθελε να κλείσει ραντεβού: ${waitlistFormData.preferredDate || 'Δεν παρέχεται'}
+Ώρα που ήταν κατελλημένη: ${waitlistFormData.preferredTime || 'Δεν παρέχεται'}
+
+Επιπλέον Μήνυμα:
+${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήνυμα'}
+
+---
+Αυτό το email στάλθηκε από τη φόρμα λίστας αναμονής της ιστοσελίδας.
+      `);
+
+      // Άνοιγμα email client με mailto link
+      const mailtoLink = `mailto:iatreiodrfytrou@gmail.com?subject=${subject}&body=${body}`;
+      window.open(mailtoLink, '_blank');
+      
+      alert(language === 'gr' 
+        ? 'Ανοίχθηκε το email client σας με προ-συμπληρωμένο μήνυμα. Παρακαλώ στείλτε το email για να εγγραφείτε στη λίστα αναμονής.'
+        : 'Your email client has opened with a pre-filled message. Please send the email to join the waitlist.'
+      );
+      
+      // Επαναφορά φόρμας
+      setWaitlistFormData({
+        name: '',
+        email: '',
+        phone: '',
+        message: '',
+        preferredDate: '',
+        preferredTime: ''
+      });
+      setShowWaitlistPopup(false);
+      
+    } catch (error) {
+      console.error('Error opening email client:', error);
+      alert(language === 'gr' 
+        ? 'Υπήρξε πρόβλημα με το άνοιγμα του email client. Παρακαλώ επικοινωνήστε μαζί μας απευθείας στο iatreiodrfytrou@gmail.com'
+        : 'There was a problem opening your email client. Please contact us directly at iatreiodrfytrou@gmail.com'
+      );
+    } finally {
+      setIsSubmittingWaitlist(false);
+    }
+  };
+
+  const handleWaitlistInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setWaitlistFormData(prev => ({ ...prev, [name]: value }));
+  };
   const content = {
     gr: {
       title: 'Επικοινωνία',
@@ -226,13 +311,14 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       specialty: 'Ειδικότητα',
       selectSpecialty: 'Επιλέξτε ειδικότητα',
       specialtyOptions: {
-        psychiatrist: 'Παιδοψυχίατρος',
-        psychologist: 'Κλινικός Παιδοψυχολόγος'
+        psychiatrist: 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
+        psychologist: 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
+        clinicalPsychologist: 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια'
       },
       thematologies: 'Θεματολογίες',
       selectThematology: 'Επιλέξτε θεματολογία',
       thematologyOptions: {
-        firstSession: 'Πρώτη συνεδρία',
+        firstSession: 'Πρώτη συνεδρία (Συζήτηση παραπομπής & ιστορικού ασθενούς)',
         parentCounseling: 'Συμβουλευτική γονέων',
         childExamPsychologist: 'Εξέταση παιδιού από ψυχολόγο',
         childExamPsychiatrist: 'Εξέταση παιδιού από ψυχίατρο',
@@ -249,7 +335,16 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       privacy: 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.',
       sendMessage: 'Αποστολή Μηνύματος',
       privacyGuaranteed: 'Εγγυημένη Ιδιωτικότητα',
-      privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.'
+      privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.',
+      waitlistButton: 'Λίστα Αναμονής',
+      waitlistTitle: 'Εγγραφή στη Λίστα Αναμονής',
+      waitlistDescription: 'Σε περίπτωση που δεν βρήκατε ωρα συνευριας με την γιατρο η τους κλινικους παιδοψυχολογους μας, παρακαλώ αφηστε μας συντομο μυνημα για να μπειτε στην λιστα αναμονης των περιστατικών τους.',
+      waitlistName: 'Όνομα Γονέα/Κηδεμόνα',
+      waitlistEmail: 'Email',
+      waitlistPhone: 'Τηλέφωνο',
+      waitlistMessage: 'Σύντομο Μήνυμα (προαιρετικό)',
+      waitlistSubmit: 'Αποστολή Αιτήματος',
+      waitlistCancel: 'Ακύρωση'
     },
     en: {
       title: 'Contact',
@@ -291,8 +386,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       specialty: 'Specialty',
       selectSpecialty: 'Select specialty',
       specialtyOptions: {
-        psychiatrist: 'Child Psychiatrist',
-        psychologist: 'Clinical Child Psychologist'
+        psychiatrist: 'Child and Adolescent Psychiatrist & Psychotherapist',
+        psychologist: 'Child Psychologist & Psychotherapist',
+        clinicalPsychologist: 'Clinical Child Psychologist & Psychotherapist'
       },
       thematologies: 'Thematologies',
       selectThematology: 'Select thematology',
@@ -314,7 +410,16 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       privacy: 'I understand that this form is not for emergency situations. For immediate help, please contact emergency services or go to your nearest emergency room.',
       sendMessage: 'Send Message',
       privacyGuaranteed: 'Privacy Guaranteed',
-      privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.'
+      privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.',
+      waitlistButton: 'Waitlist',
+      waitlistTitle: 'Join Waitlist',
+      waitlistDescription: 'If you could not find an available appointment time with our doctor or clinical child psychologists, please leave us a brief message to be added to our waitlist.',
+      waitlistName: 'Parent/Guardian Name',
+      waitlistEmail: 'Email',
+      waitlistPhone: 'Phone',
+      waitlistMessage: 'Brief Message (optional)',
+      waitlistSubmit: 'Submit Request',
+      waitlistCancel: 'Cancel'
     }
   };
 
@@ -786,6 +891,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   <option value="">{content[language].selectSpecialty}</option>
                   <option value="psychiatrist">{content[language].specialtyOptions.psychiatrist}</option>
                   <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
+                  <option value="clinicalPsychologist">{content[language].specialtyOptions.clinicalPsychologist}</option>
                 </motion.select>
               </div>
 
@@ -852,14 +958,15 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   min={new Date().toISOString().split('T')[0]}
                   style={{ direction: 'ltr' }}
                 />
-                {/* Display selected date in Greek format */}
+                {/* Display appointment guidelines */}
                 {formData.appointmentDate && (
-                  <div className="mt-2 text-sm text-gray-600 font-nunito">
-                    Επιλεγμένη ημερομηνία: {new Date(formData.appointmentDate + 'T00:00:00').toLocaleDateString('el-GR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    })} (DD/MM/YYYY)
+                  <div className="mt-2 text-xs text-gray-600 font-nunito bg-blue-50 rounded-lg p-2 border-l-4 border-blue-300">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-blue-500 text-sm">ℹ️</span>
+                      <span>
+                        Οι <span className="font-bold text-black">πρωινές ώρες προορίζονται για γονείς</span> (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών. Παρακαλώ σεβαστείτε τις αρχές του ιατρείου.
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -878,6 +985,23 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                         </button>
                       ))
                     )}
+                  </div>
+                  
+                  {/* Waitlist Description και Button - εμφανίζονται μόνο όταν έχει επιλεγεί ημερομηνία */}
+                  <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-200 rounded-2xl">
+                    <p className="text-sm text-gray-700 mb-3 font-nunito leading-relaxed">
+                      Σε περίπτωση που δεν βρήκατε ώρα συνεδρίας με τη γιατρό ή τους κλινικούς παιδοψυχολόγους μας, παρακαλώ αφήστε μας σύντομο μήνυμα για να μπείτε στη λίστα αναμονής των περιστατικών τους.
+                    </p>
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowWaitlistPopup(true)}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-full bg-gradient-to-r from-orange-400 to-pink-400 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-poppins flex items-center justify-center space-x-2"
+                    >
+                      <Clock3 className="h-5 w-5" />
+                      <span>{content[language].waitlistButton}</span>
+                    </motion.button>
                   </div>
                 </div>
               )}
@@ -997,6 +1121,186 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
             </motion.div>
           </motion.div>
         </div>
+
+        {/* Waitlist Popup */}
+        <AnimatePresence>
+          {showWaitlistPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowWaitlistPopup(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                        className="bg-gradient-to-r from-orange-400 to-pink-400 p-3 rounded-2xl shadow-lg"
+                      >
+                        <Clock3 className="h-6 w-6 text-white" />
+                      </motion.div>
+                      <h3 className="text-xl font-bold font-poppins">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400">
+                          {content[language].waitlistTitle}
+                        </span>
+                      </h3>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setShowWaitlistPopup(false)}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-5 w-5 text-gray-500" />
+                    </motion.button>
+                  </div>
+
+
+                  {/* Form */}
+                  <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="waitlistName" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                        {content[language].waitlistName} *
+                      </label>
+                      <motion.input
+                        whileFocus={{ scale: 1.02 }}
+                        type="text"
+                        id="waitlistName"
+                        name="name"
+                        value={waitlistFormData.name}
+                        onChange={handleWaitlistInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 'Your full name'}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="waitlistEmail" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                        {content[language].waitlistEmail} *
+                      </label>
+                      <motion.input
+                        whileFocus={{ scale: 1.02 }}
+                        type="email"
+                        id="waitlistEmail"
+                        name="email"
+                        value={waitlistFormData.email}
+                        onChange={handleWaitlistInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        placeholder="your.email@example.com"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="waitlistPhone" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                        {content[language].waitlistPhone}
+                      </label>
+                      <motion.input
+                        whileFocus={{ scale: 1.02 }}
+                        type="tel"
+                        id="waitlistPhone"
+                        name="phone"
+                        value={waitlistFormData.phone}
+                        onChange={handleWaitlistInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        placeholder="+41 XX XXX XX XX"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3 font-quicksand">
+                        Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <motion.input
+                          whileFocus={{ scale: 1.02 }}
+                          type="date"
+                          id="waitlistPreferredDate"
+                          name="preferredDate"
+                          value={waitlistFormData.preferredDate}
+                          onChange={handleWaitlistInputChange}
+                          className="px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                          min={new Date().toISOString().split('T')[0]}
+                          style={{ direction: 'ltr' }}
+                          placeholder="Ημερομηνία"
+                        />
+                        <motion.input
+                          whileFocus={{ scale: 1.02 }}
+                          type="time"
+                          id="waitlistPreferredTime"
+                          name="preferredTime"
+                          value={waitlistFormData.preferredTime}
+                          onChange={handleWaitlistInputChange}
+                          className="px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                          style={{ direction: 'ltr' }}
+                          placeholder="Ώρα"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="waitlistMessage" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                        {content[language].waitlistMessage}
+                      </label>
+                      <motion.textarea
+                        whileFocus={{ scale: 1.02 }}
+                        id="waitlistMessage"
+                        name="message"
+                        rows={3}
+                        value={waitlistFormData.message}
+                        onChange={handleWaitlistInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 resize-none font-nunito"
+                        placeholder={language === 'gr' ? 'Επιπλέον πληροφορίες ή προτιμήσεις...' : 'Additional information or preferences...'}
+                      />
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex space-x-3 pt-4">
+                      <motion.button
+                        type="button"
+                        onClick={() => setShowWaitlistPopup(false)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 transition-all duration-300 font-poppins"
+                      >
+                        {content[language].waitlistCancel}
+                      </motion.button>
+                      <motion.button
+                        type="submit"
+                        disabled={isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex-1 py-3 px-4 font-semibold rounded-2xl transition-all duration-300 font-poppins ${
+                          isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-orange-400 to-pink-400 text-white hover:shadow-lg'
+                        }`}
+                      >
+                        <Send className="inline-block h-4 w-4 mr-2" />
+                        {isSubmittingWaitlist 
+                          ? (language === 'gr' ? 'Αποστολή...' : 'Sending...')
+                          : content[language].waitlistSubmit
+                        }
+                      </motion.button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

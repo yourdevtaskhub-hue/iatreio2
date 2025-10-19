@@ -109,7 +109,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       increment: 'Βήμα',
       minutes30: '30 λεπτά',
       minutes60: '60 λεπτά',
-      saved: 'Οι ρυθμίσεις αποθηκεύτηκαν'
+      saved: 'Οι ρυθμίσεις αποθηκεύτηκαν',
+      appointments: 'Κρατήσεις',
+      delete: 'Διαγραφή',
+      confirmDelete: 'Επιβεβαίωση Διαγραφής',
+      confirmDeleteText: 'Θέλετε να διαγράψετε αυτή την κράτηση; Η ημερομηνία και ώρα θα ελευθερωθούν για νέα ραντεβού.',
+      deleteSuccess: 'Η κράτηση διαγράφηκε επιτυχώς',
+      deleteError: 'Σφάλμα κατά τη διαγραφή της κράτησης',
+      actions: 'Ενέργειες'
     },
     en: {
       tabTitle: 'Appointments',
@@ -128,7 +135,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       increment: 'Increment',
       minutes30: '30 minutes',
       minutes60: '60 minutes',
-      saved: 'Settings saved'
+      saved: 'Settings saved',
+      appointments: 'Appointments',
+      delete: 'Delete',
+      confirmDelete: 'Confirm Deletion',
+      confirmDeleteText: 'Do you want to delete this appointment? The date and time will be freed for new bookings.',
+      deleteSuccess: 'Appointment deleted successfully',
+      deleteError: 'Error deleting appointment',
+      actions: 'Actions'
     }
   } as const;
 
@@ -448,8 +462,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
               <AvailabilityManager doctors={doctors} availability={availability} onChange={setAvailability} />
             </div>
             <div className="bg-white rounded-2xl shadow p-6">
-              <h3 className="text-lg font-bold mb-4">Κρατήσεις</h3>
-              <AppointmentsList />
+              <h3 className="text-lg font-bold mb-4">{apptContent[language].appointments}</h3>
+              <AppointmentsList language={language} />
             </div>
             <div className="bg-white rounded-2xl shadow p-6 flex items-center justify-between">
               <label className="flex items-center space-x-3">
@@ -863,16 +877,71 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
   );
 };
 
-const AppointmentsList: React.FC = () => {
+interface AppointmentsListProps {
+  language: 'gr' | 'en';
+}
+
+const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
   const [items, setItems] = useState<Appointment[]>([] as any);
-  useEffect(()=>{ (async ()=>{
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
       .from('appointments')
       .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
     setItems(data || []);
-  })(); }, []);
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const handleDelete = async (appointmentId: string) => {
+    const apptContent = {
+      gr: {
+        confirmDelete: 'Επιβεβαίωση Διαγραφής',
+        confirmDeleteText: 'Θέλετε να διαγράψετε αυτή την κράτηση; Η ημερομηνία και ώρα θα ελευθερωθούν για νέα ραντεβού.',
+        deleteSuccess: 'Η κράτηση διαγράφηκε επιτυχώς',
+        deleteError: 'Σφάλμα κατά τη διαγραφή της κράτησης',
+        delete: 'Διαγραφή'
+      },
+      en: {
+        confirmDelete: 'Confirm Deletion',
+        confirmDeleteText: 'Do you want to delete this appointment? The date and time will be freed for new bookings.',
+        deleteSuccess: 'Appointment deleted successfully',
+        deleteError: 'Error deleting appointment',
+        delete: 'Delete'
+      }
+    };
+
+    if (!confirm(apptContent[language].confirmDeleteText)) {
+      return;
+    }
+
+    setDeleting(appointmentId);
+    try {
+      const { error } = await supabaseAdmin
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Ενημέρωση της λίστας μετά τη διαγραφή
+      setItems(prev => prev.filter(item => item.id !== appointmentId));
+      alert(apptContent[language].deleteSuccess);
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert(apptContent[language].deleteError);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -889,10 +958,11 @@ const AppointmentsList: React.FC = () => {
           <th className="p-2">Επείγον</th>
           <th className="p-2">Πρώτη Συνεδρία</th>
           <th className="p-2">Ανησυχίες</th>
+          <th className="p-2">Ενέργειες</th>
         </tr></thead>
         <tbody>
           {items.map((a:any)=> (
-            <tr key={a.id} className="border-t">
+            <tr key={a.id} className="border-t hover:bg-gray-50">
               <td className="p-2">{a.date}</td>
               <td className="p-2">{a.time}</td>
               <td className="p-2">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
@@ -905,6 +975,25 @@ const AppointmentsList: React.FC = () => {
               <td className="p-2">{a.urgency || '-'}</td>
               <td className="p-2">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
               <td className="p-2 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
+              <td className="p-2">
+                <button
+                  onClick={() => handleDelete(a.id)}
+                  disabled={deleting === a.id}
+                  className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                  title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
+                >
+                  {deleting === a.id ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  )}
+                  <span className="text-sm">
+                    {language === 'gr' ? 'Διαγραφή' : 'Delete'}
+                  </span>
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
