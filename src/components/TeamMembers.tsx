@@ -1,4 +1,5 @@
 import React from 'react';
+import doctorsImg from '../assets/doctors.png';
 import { motion } from 'framer-motion';
 
 interface TeamMembersProps {
@@ -25,7 +26,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
     },
     {
       id: 2,
-      name: 'Πισσάρη Ιωάννα',
+      name: 'Ιωάννα Πισσάρη',
       image: '/ioanna_pissari.png',
       bio: `Η κυρία Πισσάρη ολοκλήρωσε τις σπουδές της στην Ψυχολογία στο Εθνικό Καποδιστριακό Πανεπιστήμιο Αθηνών και ακολούθησε **Μεταπτυχιακό Πρόγραμμα Σπουδών στην Κλινική Ψυχική Υγεία** στο Πανεπιστήμιο «University of Wolverhampton» της Αγγλίας.
 
@@ -86,12 +87,12 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
-            className="relative w-full h-80 lg:h-96 overflow-hidden bg-gray-50 flex items-center justify-center"
+            className="relative w-full h-[30rem] lg:h-[36rem] overflow-hidden bg-gray-50 flex items-center justify-center"
           >
             <img
-              src="/womensidebyside.png"
+              src={doctorsImg}
               alt="Συνεργάτες"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-[50%_22%] md:object-[50%_28%]"
             />
             {/* Overlay για καλύτερη αισθητική */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
@@ -112,7 +113,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
                 >
                   {member.name === 'Σοφία Σπυριάδου' ? (
                     <span className="underline">{member.name}</span>
-                  ) : member.name === 'Πισσάρη Ιωάννα' ? (
+                  ) : member.name === 'Ιωάννα Πισσάρη' ? (
                     <span className="underline">{member.name}</span>
                   ) : (
                     member.name

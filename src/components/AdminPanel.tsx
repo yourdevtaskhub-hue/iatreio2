@@ -777,12 +777,12 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
 
   const monthGrid = getMonthGrid(month);
   const formatHM = (t: string) => (t||'').slice(0,5);
-  const rangesByDate = new Map<string, {start:string; end:string}[]>();
+  const rangesByDate = new Map<string, {id:string; start:string; end:string}[]>();
   (availability||[])
     .filter(a => a.doctor_id===doctorId && a.date.startsWith(month))
     .forEach(a => {
       const list = rangesByDate.get(a.date) || [];
-      list.push({ start: formatHM(a.start_time as any), end: formatHM(a.end_time as any) });
+      list.push({ id: a.id, start: formatHM(a.start_time as any), end: formatHM(a.end_time as any) });
       rangesByDate.set(a.date, list);
     });
 
@@ -795,6 +795,25 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     if (h === 0) h = 12;
     const hh = h.toString().padStart(2, '0');
     return `${hh}:${mStr} ${suffix}`;
+  };
+
+  const [cancelTarget, setCancelTarget] = useState<{id:string; date:string; start:string; end:string} | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelAvailability = async () => {
+    if (!cancelTarget) return;
+    if (!confirm(`Θέλετε να ακυρώσετε τη διαθεσιμότητα ${cancelTarget.date} ${cancelTarget.start}–${cancelTarget.end};`)) {
+      return;
+    }
+    setIsCancelling(true);
+    const { error } = await supabaseAdmin.from('availability').delete().eq('id', cancelTarget.id);
+    setIsCancelling(false);
+    if (error) {
+      alert('Σφάλμα κατά την ακύρωση διαθεσιμότητας');
+      return;
+    }
+    onChange((availability||[]).filter(a => a.id !== cancelTarget.id));
+    setCancelTarget(null);
   };
 
   return (
@@ -862,7 +881,14 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
                 {has ? (
                   <div className="flex flex-wrap gap-1 justify-center">
                     {ranges.map((r, i)=> (
-                      <span key={i} className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px]">{formatGreekTime(r.start)}–{formatGreekTime(r.end)}</span>
+                      <button
+                        key={i}
+                        onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
+                        className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] hover:bg-green-600 transition"
+                        title="Κλικ για ακύρωση διαθεσιμότητας"
+                      >
+                        {formatGreekTime(r.start)}–{formatGreekTime(r.end)}
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -873,6 +899,89 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           })}
         </div>
       </div>
+      {/* Μαζική Ακύρωση Συνεδριών Προγράμματος */}
+      <div className="mt-4 p-4 rounded-2xl border bg-white">
+        <div className="font-semibold mb-3">Μαζική Ακύρωση Συνεδριών Προγράμματος</div>
+        <BulkCancel
+          doctorId={doctorId}
+          onCancelled={(deletedIds)=>{
+            if (!deletedIds || deletedIds.length===0) return;
+            onChange((availability||[]).filter(a => !deletedIds.includes(a.id)));
+          }}
+        />
+      </div>
+      {/* Cancel Availability Modal (simple confirm overlay) */}
+      {cancelTarget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={()=> !isCancelling && setCancelTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={(e)=> e.stopPropagation()}>
+            <div className="mb-4">
+              <div className="text-lg font-bold mb-1">Ακύρωση διαθεσιμότητας</div>
+              <div className="text-sm text-gray-600">{cancelTarget.date} — {formatGreekTime(cancelTarget.start)}–{formatGreekTime(cancelTarget.end)}</div>
+            </div>
+            <div className="text-sm text-gray-700 mb-6">Θέλετε σίγουρα να ακυρώσετε αυτή τη διαθέσιμη ώρα; Θα πάψει να εμφανίζεται στο ημερολόγιο των χρηστών.</div>
+            <div className="flex justify-end gap-2">
+              <button disabled={isCancelling} onClick={()=> setCancelTarget(null)} className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 disabled:opacity-50">Άκυρο</button>
+              <button disabled={isCancelling} onClick={handleCancelAvailability} className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+                {isCancelling? 'Ακύρωση...' : 'Ακύρωση διαθέσιμου'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+type BulkCancelProps = {
+  doctorId: string;
+  onCancelled: (deletedIds: string[]) => void;
+};
+
+const BulkCancel: React.FC<BulkCancelProps> = ({ doctorId, onCancelled }) => {
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+
+  const run = async () => {
+    if (!doctorId) { alert('Επιλέξτε γιατρό.'); return; }
+    if (!fromDate || !toDate) { alert('Συμπληρώστε Από και Μέχρι ημερομηνίες.'); return; }
+    if (toDate < fromDate) { alert('Η "Μέχρι" ημερομηνία πρέπει να είναι μετά την "Από".'); return; }
+    if (!confirm(`Θέλετε να ακυρώσετε όλες τις διαθέσιμες συνεδρίες για τον επιλεγμένο γιατρό από ${fromDate} έως ${toDate};`)) { return; }
+
+    setLoading(true);
+    const { data: idsData } = await supabaseAdmin
+      .from('availability')
+      .select('id')
+      .eq('doctor_id', doctorId)
+      .gte('date', fromDate)
+      .lte('date', toDate);
+    const ids = (idsData||[]).map((r:any)=> r.id);
+
+    const { error } = await supabaseAdmin
+      .from('availability')
+      .delete()
+      .eq('doctor_id', doctorId)
+      .gte('date', fromDate)
+      .lte('date', toDate);
+    setLoading(false);
+    if (error) { alert('Σφάλμα κατά τη μαζική ακύρωση.'); return; }
+    onCancelled(ids);
+    alert('Η μαζική ακύρωση ολοκληρώθηκε.');
+  };
+
+  return (
+    <div className="flex flex-wrap items-end gap-2">
+      <div className="flex flex-col">
+        <label className="text-xs text-gray-600 mb-1">Από</label>
+        <input type="date" value={fromDate} onChange={e=> setFromDate(e.target.value)} className="border rounded-xl px-3 py-2" />
+      </div>
+      <div className="flex flex-col">
+        <label className="text-xs text-gray-600 mb-1">Μέχρι</label>
+        <input type="date" value={toDate} onChange={e=> setToDate(e.target.value)} className="border rounded-xl px-3 py-2" />
+      </div>
+      <button disabled={loading} onClick={run} className="px-4 py-2 bg-red-600 text-white rounded-xl disabled:opacity-50">
+        {loading? 'Ακύρωση...' : 'Μαζική ακύρωση συνεδριών προγράμματος'}
+      </button>
     </div>
   );
 };
@@ -891,7 +1000,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
       .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
-    setItems(data || []);
+    setItems((data || []) as any);
   };
 
   useEffect(() => {
