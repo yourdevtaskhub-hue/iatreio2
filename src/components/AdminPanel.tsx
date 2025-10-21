@@ -111,7 +111,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       minutes30: '30 λεπτά',
       minutes60: '60 λεπτά',
       saved: 'Οι ρυθμίσεις αποθηκεύτηκαν',
-      appointments: 'Κρατήσεις',
+      appointments: 'Κρατήσεις Ολόκληρου Ιατρείου',
+      annaAppointments: 'Κρατήσεις ΜΌΝΟ για Dr. Άννα Μαρία Φύτρου',
       delete: 'Διαγραφή',
       confirmDelete: 'Επιβεβαίωση Διαγραφής',
       confirmDeleteText: 'Θέλετε να διαγράψετε αυτή την κράτηση; Η ημερομηνία και ώρα θα ελευθερωθούν για νέα ραντεβού.',
@@ -137,7 +138,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       minutes30: '30 minutes',
       minutes60: '60 minutes',
       saved: 'Settings saved',
-      appointments: 'Appointments',
+      appointments: 'All Clinic Appointments',
+      annaAppointments: 'Dr. Anna Maria Fytrou Appointments',
       delete: 'Delete',
       confirmDelete: 'Confirm Deletion',
       confirmDeleteText: 'Do you want to delete this appointment? The date and time will be freed for new bookings.',
@@ -497,10 +499,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
               <h3 className="text-lg font-bold mb-4">{apptContent[language].availability}</h3>
               <AvailabilityManager doctors={doctors} availability={availability} onChange={setAvailability} />
             </div>
-            <div className="bg-white rounded-2xl shadow p-6">
-              <h3 className="text-lg font-bold mb-4">{apptContent[language].appointments}</h3>
-              <AppointmentsList language={language} />
-            </div>
+            <AppointmentsList language={language} />
+            <AnnaAppointmentsList language={language} />
             <div className="bg-white rounded-2xl shadow p-6 flex items-center justify-between">
               <label className="flex items-center space-x-3">
                 <input type="checkbox" checked={settings.lock_half_hour} onChange={e=> setSettings({ ...settings, lock_half_hour: e.target.checked })} />
@@ -1435,6 +1435,8 @@ interface AppointmentsListProps {
 const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
   const [items, setItems] = useState<Appointment[]>([] as any);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
@@ -1514,62 +1516,337 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
     }
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = items.slice(startIndex, endIndex);
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead><tr className="text-left">
-          <th className="p-2">Ημερομηνία</th>
-          <th className="p-2">Ώρα</th>
-          <th className="p-2">Γιατρός</th>
-          <th className="p-2">Όνομα</th>
-          <th className="p-2">Ηλικία</th>
-          <th className="p-2">Τηλέφωνο</th>
-          <th className="p-2">Email</th>
-          <th className="p-2">Ειδικότητα</th>
-          <th className="p-2">Θεματολογία</th>
-          <th className="p-2">Επείγον</th>
-          <th className="p-2">Πρώτη Συνεδρία</th>
-          <th className="p-2">Ανησυχίες</th>
-          <th className="p-2">Ενέργειες</th>
-        </tr></thead>
-        <tbody>
-          {items.map((a:any)=> (
-            <tr key={a.id} className="border-t hover:bg-gray-50">
-              <td className="p-2">{a.date}</td>
-              <td className="p-2">{a.time}</td>
-              <td className="p-2">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
-              <td className="p-2">{a.parent_name}</td>
-              <td className="p-2">{a.child_age || '-'}</td>
-              <td className="p-2">{a.phone || '-'}</td>
-              <td className="p-2">{a.email}</td>
-              <td className="p-2">{a.specialty || '-'}</td>
-              <td className="p-2">{a.thematology || '-'}</td>
-              <td className="p-2">{a.urgency || '-'}</td>
-              <td className="p-2">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
-              <td className="p-2 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
-              <td className="p-2">
-                <button
-                  onClick={() => handleDelete(a.id)}
-                  disabled={deleting === a.id}
-                  className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
-                  title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
-                >
-                  {deleting === a.id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                  <span className="text-sm">
-                    {language === 'gr' ? 'Διαγραφή' : 'Delete'}
-                  </span>
-                </button>
-              </td>
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Κρατήσεις Ολόκληρου Ιατρείου</h3>
+            <p className="text-sm text-gray-600 mt-1">Σύνολο: {items.length} κρατήσεις</p>
+          </div>
+          {items.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <div className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border">
+                {totalPages} σελίδα{totalPages !== 1 ? 'ς' : ''}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr className="text-left">
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentItems.map((a:any, index)=> (
+              <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.date}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.time}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">{a.parent_name}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.child_age || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.phone || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.email}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.specialty || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.thematology || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.urgency || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
+                <td className="px-4 py-3 text-sm">
+                  <button
+                    onClick={() => handleDelete(a.id)}
+                    disabled={deleting === a.id}
+                    className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                    title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
+                  >
+                    {deleting === a.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                    <span className="text-sm">
+                      {language === 'gr' ? 'Διαγραφή' : 'Delete'}
+                    </span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Εμφάνιση {startIndex + 1}-{Math.min(endIndex, items.length)} από {items.length} κρατήσεις
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Προηγούμενη
+            </button>
+            <span className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Επόμενη
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface AnnaAppointmentsListProps {
+  language: 'gr' | 'en';
+}
+
+const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language }) => {
+  const [items, setItems] = useState<Appointment[]>([] as any);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const fetchAppointments = async () => {
+    const { data } = await supabaseAdmin
+      .from('appointments')
+      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
+      .eq('doctors.name', 'Dr. Άννα Μαρία Φύτρου')
+      .order('date', { ascending: false })
+      .order('time', { ascending: false });
+    setItems((data || []) as any);
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+
+    // Set up real-time subscription for appointments
+    const channel = supabaseAdmin
+      .channel('admin_anna_appointments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        (payload) => {
+          console.log('Admin: Anna appointment change detected:', payload);
+          fetchAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseAdmin.removeChannel(channel);
+    };
+  }, []);
+
+  const handleDelete = async (appointmentId: string) => {
+    const apptContent = {
+      gr: {
+        confirmDelete: 'Επιβεβαίωση Διαγραφής',
+        confirmDeleteText: 'Θέλετε να διαγράψετε αυτή την κράτηση; Η ημερομηνία και ώρα θα ελευθερωθούν για νέα ραντεβού.',
+        deleteSuccess: 'Η κράτηση διαγράφηκε επιτυχώς',
+        deleteError: 'Σφάλμα κατά τη διαγραφή της κράτησης',
+        delete: 'Διαγραφή'
+      },
+      en: {
+        confirmDelete: 'Confirm Deletion',
+        confirmDeleteText: 'Do you want to delete this appointment? The date and time will be freed for new bookings.',
+        deleteSuccess: 'Appointment deleted successfully',
+        deleteError: 'Error deleting appointment',
+        delete: 'Delete'
+      }
+    };
+
+    if (!confirm(apptContent[language].confirmDeleteText)) {
+      return;
+    }
+
+    setDeleting(appointmentId);
+    try {
+      const { error } = await supabaseAdmin
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Ενημέρωση της λίστας μετά τη διαγραφή
+      setItems(prev => prev.filter(item => item.id !== appointmentId));
+      alert(apptContent[language].deleteSuccess);
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert(apptContent[language].deleteError);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = items.slice(startIndex, endIndex);
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Κρατήσεις Dr. Άννα Μαρία Φύτρου</h3>
+            <p className="text-sm text-gray-600 mt-1">Σύνολο: {items.length} κρατήσεις</p>
+          </div>
+          {items.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <div className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border">
+                {totalPages} σελίδα{totalPages !== 1 ? 'ς' : ''}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr className="text-left">
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map((a:any, index)=> (
+              <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.date}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.time}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">{a.parent_name}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.child_age || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.phone || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.email}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.specialty || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.thematology || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.urgency || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
+                <td className="px-4 py-3 text-sm">
+                  <button
+                    onClick={() => handleDelete(a.id)}
+                    disabled={deleting === a.id}
+                    className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                    title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
+                  >
+                    {deleting === a.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                    <span className="text-sm">
+                      {language === 'gr' ? 'Διαγραφή' : 'Delete'}
+                    </span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Εμφάνιση {startIndex + 1}-{Math.min(endIndex, items.length)} από {items.length} κρατήσεις
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Προηγούμενη
+            </button>
+            <span className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Επόμενη
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
