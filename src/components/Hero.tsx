@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star, Trophy } from 'lucide-react';
+import { ArrowRight, Trophy } from 'lucide-react';
 
 interface HeroProps {
   language: 'gr' | 'en';
@@ -48,12 +48,12 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       
       {/* Καμία διακόσμηση background: καθαρό λευκό */}
       
-      {/* Post-it Note Effect - Μικρότερο και πιο ψηλά */}
+      {/* Post-it Note Effect - Responsive positioning */}
       <motion.div
         initial={{ opacity: 0, x: -30, y: -30 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-[32%] left-32 z-10"
+        className="absolute top-[32%] left-4 sm:left-8 md:left-16 lg:left-32 xl:left-40 z-10"
       >
         {/* Post-it Note with realistic styling - Μικρότερο */}
         <div className="relative">
@@ -86,7 +86,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold mb-7 leading-tight font-poppins"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold mb-7 leading-tight font-poppins"
         >
           {language === 'gr' ? (
             <>
@@ -100,13 +100,13 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             </>
           ) : (
             <div className="flex flex-col items-center w-full">
-              <span className="text-gray-900 block" style={{ marginLeft: '10%' }}>
+              <span className="text-gray-900 block">
                 Online
               </span>
-              <span className="text-gray-900 block" style={{ marginLeft: '3%', whiteSpace: 'nowrap' }}>
+              <span className="text-gray-900 block">
                 Parent Teen
               </span>
-              <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent block" style={{ marginLeft: '10%' }}>
+              <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent block">
                 Clinic
               </span>
             </div>
@@ -117,7 +117,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-lg text-gray-900 mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center"
+          className="text-base sm:text-lg text-gray-900 mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center"
         >
           {content[language].subtitle}
         </motion.p>
@@ -133,7 +133,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToContact}
-            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-8 py-4 rounded-xl text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins"
+            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins"
           >
             <span>{content[language].cta}</span>
             <ArrowRight className="h-5 w-5" />
@@ -143,7 +143,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToServices}
-            className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins"
+            className="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins"
           >
             {content[language].learnMore}
           </motion.button>

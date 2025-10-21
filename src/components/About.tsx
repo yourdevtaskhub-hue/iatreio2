@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Award, Users, Clock, Star } from 'lucide-react';
-import drProfile from '../assets/profile.png';
+// import drProfile from '../assets/profile.png';
 import happyTeen from '../assets/happyteen.jpg';
 
 interface AboutProps {
@@ -125,7 +125,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
   return (
     <section id="about" className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-start">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -148,7 +148,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="text-4xl font-bold mt-2 mb-6 font-poppins"
+                className="text-3xl sm:text-4xl font-bold mt-2 mb-6 font-poppins"
               >
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
                   {content[language].subtitle}
@@ -159,7 +159,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="text-lg text-gray-600 leading-relaxed mb-6 font-nunito"
+                className="text-base sm:text-lg text-gray-600 leading-relaxed mb-6 font-nunito"
               >
                 {content[language].description1}
               </motion.p>

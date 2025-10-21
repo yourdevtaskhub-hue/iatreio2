@@ -16,10 +16,10 @@ const VideoSection: React.FC<VideoSectionProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-6 font-poppins">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-6 font-poppins">
             {language === 'gr' ? 'Η Θεραπεία Ενώνει Οικογένειες' : 'Healing Unites Families'}
           </h2>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto font-nunito">
+          <p className="text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto font-nunito">
             {language === 'gr' 
               ? 'Παιδιά, εφήβοι και γονείς - όλοι μαζί στο ταξίδι προς την ψυχική ευεξία. Η ολοκληρωμένη ψυχολογική φροντίδα ενδυναμώνει κάθε μέλος της οικογένειας, δημιουργώντας ένα περιβάλλον αγάπης, κατανόησης και αμοιβαίας υποστήριξης όπου όλοι μπορούν να ευδοκιμήσουν.'
               : 'Children, adolescents, and parents - all together on the journey to mental wellness. Comprehensive psychological care empowers every family member, creating an environment of love, understanding, and mutual support where everyone can thrive.'
@@ -32,7 +32,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({ language }) => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 max-w-6xl mx-auto"
         >
           {/* Πρώτο βίντεο - Kids */}
           <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-white p-2">

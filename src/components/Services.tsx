@@ -412,13 +412,13 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-black font-semibold text-2xl font-quicksand">{content[lang].title}</span>
-          <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
+          <span className="text-black font-semibold text-xl sm:text-2xl font-quicksand">{content[lang].title}</span>
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-6 font-poppins">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[lang].subtitle}
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-nunito">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-nunito">
             {content[lang].description}
           </p>
         </motion.div>
@@ -435,11 +435,11 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           <img
             src={happyImg}
             alt="Χαρούμενα παιδιά χαμογελούν και διασκεδάζουν μαζί"
-            className="w-full h-[500px] object-cover"
+            className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover"
           />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-20">
           {content[lang].services.map((service: Service, index: number) => {
             const IconComponent = icons[index];
             
@@ -451,7 +451,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="bg-blue-50 rounded-4xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500"
+                className="bg-blue-50 rounded-4xl p-6 sm:p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-500"
               >
                 {/* Icon */}
                     <motion.div 
@@ -462,7 +462,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                   <IconComponent className="h-8 w-8 text-white" />
                   </motion.div>
                   
-                <h3 className="text-xl font-bold text-gray-800 mb-4 font-poppins">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 font-poppins">
                     {service.title}
                   </h3>
                   

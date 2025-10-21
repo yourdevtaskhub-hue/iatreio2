@@ -114,16 +114,16 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
             <div className="absolute inset-0 border-4 border-white/30 rounded-t-2xl"></div>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-0">
             {teamMembers.slice(0, 2).map((member, index) => (
-              <div key={member.id} className={`p-8 ${index === 0 ? 'lg:pr-6' : 'lg:pl-6'} relative`}>
+              <div key={member.id} className={`p-4 sm:p-8 ${index === 0 ? 'lg:pr-6' : 'lg:pl-6'} relative`}>
                 {/* Όνομα */}
                 <motion.h3
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 + index * 0.3 }}
                   viewport={{ once: true }}
-                  className="text-center text-xl md:text-2xl font-bold text-gray-800 mb-6"
+                  className="text-center text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-6"
                 >
                   {member.name === 'Σοφία Σπυριάδου' ? (
                     <span className="underline">{member.name}</span>
@@ -145,7 +145,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
                   {member.bio.split('\n\n').map((paragraph, pIndex) => (
                     <p
                       key={pIndex}
-                      className="text-gray-700 leading-relaxed text-sm text-justify"
+                      className="text-gray-700 leading-relaxed text-xs sm:text-sm text-justify"
                       dangerouslySetInnerHTML={{
                         __html: paragraph.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-black">$1</span>')
                       }}

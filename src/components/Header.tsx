@@ -70,16 +70,16 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-24">
+        <div className="flex items-center justify-between h-20 sm:h-24">
           <motion.div 
             className="flex items-center space-x-3"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
           >
-            <img src={logoIatrio} alt="Logo" className="h-20 w-20" />
+            <img src={logoIatrio} alt="Logo" className="h-16 w-16 sm:h-20 sm:w-20" />
             <div>
-            <h1 className="font-bold text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
-              <p className="text-sm text-white/90 font-quicksand">
+            <h1 className="font-bold text-lg sm:text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
+              <p className="text-xs sm:text-sm text-white/90 font-quicksand">
                 {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου Ψυχοθεραπεύτρια' : 'Child & Adolescent Psychiatrist'}
               </p>
             </div>
@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                     key={`nav-${key}-${index}`}
                     whileHover={{ y: -2 }}
                     onClick={() => scrollToSection(key)}
-                    className="text-white hover:text-white/80 px-2 py-2 text-sm font-medium transition-colors font-quicksand text-center"
+                    className="text-white hover:text-white/80 px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center"
                   >
                     <div className="flex flex-col">
                       <span>{value}</span>
@@ -109,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setLanguage(language === 'gr' ? 'en' : 'gr')}
-                      className="flex items-center space-x-2 px-3 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300"
+                      className="flex items-center space-x-2 px-2 sm:px-3 py-2 sm:py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300"
                     >
                       <Globe className="h-4 w-4" />
                       <span className="text-sm font-medium">{language === 'gr' ? 'EN' : 'GR'}</span>
@@ -119,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => scrollToSection('contact')}
-                      className="bg-white text-rose-soft px-6 py-3 rounded-full text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins"
+                      className="bg-white text-rose-soft px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins"
                     >
                       {value}
                     </motion.button>
@@ -149,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             exit={{ opacity: 0, y: -20 }}
             className="lg:hidden bg-white/95 backdrop-blur-md rounded-3xl mt-4 shadow-xl border border-gray-100"
           >
-            <div className="px-6 py-4 space-y-3">
+            <div className="px-4 sm:px-6 py-4 space-y-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setLanguage(language === 'gr' ? 'en' : 'gr')}
@@ -165,7 +165,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                     key={key}
                     whileHover={{ x: 5 }}
                     onClick={() => scrollToSection(key)}
-                    className="block text-gray-700 hover:text-rose-soft px-3 py-2 text-base font-medium w-full text-left rounded-xl hover:bg-pastel-pink transition-all duration-200"
+                    className="block text-gray-700 hover:text-rose-soft px-3 py-2 text-sm sm:text-base font-medium w-full text-left rounded-xl hover:bg-pastel-pink transition-all duration-200"
                   >
                     {value}
                   </motion.button>
@@ -175,7 +175,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => scrollToSection('contact')}
-                    className="block bg-gradient-to-r from-rose-soft to-purple-soft text-white px-3 py-3 text-base font-medium rounded-xl mx-3 mt-4 text-center shadow-lg"
+                    className="block bg-gradient-to-r from-rose-soft to-purple-soft text-white px-3 py-3 text-sm sm:text-base font-medium rounded-xl mx-3 mt-4 text-center shadow-lg"
                   >
                     {value}
                   </motion.button>

@@ -779,7 +779,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
             <TimezoneInfo language={language} />
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="parentName" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
                     {content[language].parentName}
@@ -980,7 +980,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
               {formData.appointmentDate && (
                 <div className="col-span-2">
                   <div className="text-xs text-gray-500 mb-2 font-quicksand">{content[language].slotLegend}</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {slots.length===0 ? (
                       <div className="text-gray-500 col-span-full">{language==='gr'? 'Δεν υπάρχουν διαθέσιμα για την ημέρα.': 'No availability for the day.'}</div>
                     ) : (

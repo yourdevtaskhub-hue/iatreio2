@@ -99,7 +99,7 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {content[language].articles.map((article, index) => (
             <motion.article
               key={index}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Mail, MapPin, Shield, Phone, Clock, Instagram, Facebook } from 'lucide-react';
+import { Heart, Mail, MapPin, Shield, Phone, Instagram, Facebook } from 'lucide-react';
 
 interface FooterProps {
   language: string;
@@ -88,7 +88,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
   return (
     <footer className="bg-gradient-to-br from-gray-800 via-gray-900 to-purple-900 text-white py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <motion.div 

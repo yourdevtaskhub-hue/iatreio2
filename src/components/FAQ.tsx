@@ -88,12 +88,12 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-6 font-poppins">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[language].title}
             </span>
           </h2>
-          <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed font-nunito">
+          <p className="text-lg sm:text-xl text-black max-w-3xl mx-auto leading-relaxed font-nunito">
             <span className="font-bold">Βρείτε απαντήσεις</span> στις πιο συχνές ερωτήσεις που έχουν οι γονείς σχετικά με την ψυχική υγεία των παιδιών τους.
           </p>
         </motion.div>

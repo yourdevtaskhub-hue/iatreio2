@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, Globe } from 'lucide-react';
-import { getUserTimezone, getUserLocation, TIMEZONES } from '../lib/timezone';
+import { getUserTimezone, getUserLocation } from '../lib/timezone';
 
 interface TimezoneInfoProps {
   language: 'gr' | 'en';

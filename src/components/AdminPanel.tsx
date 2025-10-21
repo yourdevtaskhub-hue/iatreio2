@@ -277,12 +277,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           transition={{ duration: 0.8 }}
           className="mb-8"
         >
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-4 font-poppins">
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4 font-poppins">
                 {content[language].title}
               </h1>
-              <p className="text-xl text-gray-600 font-nunito">
+              <p className="text-lg sm:text-xl text-gray-600 font-nunito">
                 {content[language].subtitle}
               </p>
             </div>
@@ -291,7 +291,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onLogout}
-                className="bg-red-500 text-white px-6 py-3 rounded-xl hover:bg-red-600 transition-colors flex items-center space-x-2"
+                className="bg-red-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-red-600 transition-colors flex items-center space-x-2 text-sm sm:text-base"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -305,8 +305,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         {/* Tabs */}
         <div className="mb-4">
           <div className="inline-flex rounded-xl overflow-hidden bg-white shadow">
-            <button onClick={() => setActiveTab('reviews')} className={`px-4 py-2 font-semibold ${activeTab==='reviews'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>Κριτικές</button>
-            <button onClick={() => setActiveTab('appointments')} className={`px-4 py-2 font-semibold ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
+            <button onClick={() => setActiveTab('reviews')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='reviews'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>Κριτικές</button>
+            <button onClick={() => setActiveTab('appointments')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
           </div>
         </div>
 
@@ -325,7 +325,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                 <button
                   key={filterType}
                   onClick={() => setFilter(filterType)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl font-semibold transition-all duration-300 text-sm sm:text-base ${
                     filter === filterType
                       ? 'bg-gradient-to-r from-rose-soft to-purple-soft text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -338,7 +338,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
             <button
               onClick={fetchReviews}
               disabled={loading}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50"
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -364,25 +364,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].name}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].rating}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].topic}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].status}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].createdAt}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 font-poppins">
+                    <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 font-poppins">
                       {content[language].actions}
                     </th>
                   </tr>
@@ -395,44 +395,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                       animate={{ opacity: 1 }}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-800 font-poppins">
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="font-semibold text-gray-800 font-poppins text-sm sm:text-base">
                           {review.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-4">
                         <div className="flex items-center space-x-1">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`h-4 w-4 ${
+                              className={`h-3 w-3 sm:h-4 sm:w-4 ${
                                 i < review.rating
                                   ? 'text-yellow-500 fill-current'
                                   : 'text-gray-300'
                               }`}
                             />
                           ))}
-                          <span className="ml-2 text-sm text-gray-600 font-nunito">
+                          <span className="ml-2 text-xs sm:text-sm text-gray-600 font-nunito">
                             {review.rating}/5
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 font-nunito max-w-xs truncate">
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="text-xs sm:text-sm text-gray-600 font-nunito max-w-xs truncate">
                           {review.session_topic}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(review.status)}`}>
+                      <td className="px-3 sm:px-6 py-4">
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(review.status)}`}>
                           {getStatusText(review.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 font-nunito">
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="text-xs sm:text-sm text-gray-600 font-nunito">
                           {new Date(review.created_at).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-4">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => setSelectedReview(review)}
@@ -501,12 +501,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
             </div>
             <AppointmentsList language={language} />
             <AnnaAppointmentsList language={language} />
-            <div className="bg-white rounded-2xl shadow p-6 flex items-center justify-between">
+            <div className="bg-white rounded-2xl shadow p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <label className="flex items-center space-x-3">
                 <input type="checkbox" checked={settings.lock_half_hour} onChange={e=> setSettings({ ...settings, lock_half_hour: e.target.checked })} />
-                <span className="font-semibold">{apptContent[language].lockLabel}</span>
+                <span className="font-semibold text-sm sm:text-base">{apptContent[language].lockLabel}</span>
               </label>
-              <button disabled={isSavingSettings} onClick={async ()=>{ setIsSavingSettings(true); await supabaseAdmin.from('admin_settings').upsert({ id: 1, lock_half_hour: settings.lock_half_hour }); setIsSavingSettings(false); alert(apptContent[language].saved); }} className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-50">{apptContent[language].save}</button>
+              <button disabled={isSavingSettings} onClick={async ()=>{ setIsSavingSettings(true); await supabaseAdmin.from('admin_settings').upsert({ id: 1, lock_half_hour: settings.lock_half_hour }); setIsSavingSettings(false); alert(apptContent[language].saved); }} className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-50 text-sm sm:text-base">{apptContent[language].save}</button>
             </div>
           </motion.div>
         )}
@@ -516,13 +516,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50"
             onClick={() => setSelectedReview(null)}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="bg-white rounded-2xl p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-6">
@@ -639,19 +639,19 @@ const DoctorManager: React.FC<DoctorManagerProps> = ({ doctors, onChange }) => {
 
   return (
     <div>
-      <div className="flex gap-2 mb-4">
-        <input className="border rounded-xl px-3 py-2" placeholder="Όνομα" value={name} onChange={e=>setName(e.target.value)} />
-        <input className="border rounded-xl px-3 py-2" placeholder="Ειδικότητα" value={specialty} onChange={e=>setSpecialty(e.target.value)} />
-        <button disabled={saving} onClick={add} className="px-3 py-2 bg-green-600 text-white rounded-xl">Προσθήκη</button>
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <input className="border rounded-xl px-3 py-2 text-sm sm:text-base" placeholder="Όνομα" value={name} onChange={e=>setName(e.target.value)} />
+        <input className="border rounded-xl px-3 py-2 text-sm sm:text-base" placeholder="Ειδικότητα" value={specialty} onChange={e=>setSpecialty(e.target.value)} />
+        <button disabled={saving} onClick={add} className="px-3 py-2 bg-green-600 text-white rounded-xl text-sm sm:text-base">Προσθήκη</button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="text-left"><th className="p-2">Όνομα</th><th className="p-2">Ειδικότητα</th><th className="p-2">Ενεργός</th><th className="p-2">Ενέργειες</th></tr></thead>
+        <table className="w-full text-sm min-w-[400px]">
+          <thead><tr className="text-left"><th className="p-2 text-xs sm:text-sm">Όνομα</th><th className="p-2 text-xs sm:text-sm">Ειδικότητα</th><th className="p-2 text-xs sm:text-sm">Ενεργός</th><th className="p-2 text-xs sm:text-sm">Ενέργειες</th></tr></thead>
           <tbody>
             {(doctors||[]).map(d=> (
               <tr key={d.id} className="border-t">
-                <td className="p-2">{d.name}</td>
-                <td className="p-2">{d.specialty}</td>
+                <td className="p-2 text-xs sm:text-sm">{d.name}</td>
+                <td className="p-2 text-xs sm:text-sm">{d.specialty}</td>
                 <td className="p-2">
                   <input type="checkbox" checked={d.active} onChange={async (e)=>{
                     const { data } = await supabaseAdmin.from('doctors').update({ active: e.target.checked }).eq('id', d.id).select();
@@ -660,7 +660,7 @@ const DoctorManager: React.FC<DoctorManagerProps> = ({ doctors, onChange }) => {
                 </td>
                 <td className="p-2">
                   <button
-                    className="px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+                    className="px-2 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs sm:text-sm"
                     onClick={async ()=>{
                       if (!confirm('Διαγραφή γιατρού; Θα διαγραφούν και οι διαθεσιμότητες του.')) return;
                       // Διαγραφή availability του γιατρού για αποφυγή orphan slots
@@ -964,7 +964,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Αριστερά - Επιλογές */}
           <div className="space-y-4">
             {/* Γιατρός */}
@@ -1076,7 +1076,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           {/* Γιατρός */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">👨‍⚕️ Γιατρός</label>
@@ -1212,27 +1212,27 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
             </div>
           </div>
         </div>
-         <div className="grid grid-cols-7 gap-2 text-sm">
+         <div className="grid grid-cols-7 gap-1 sm:gap-2 text-xs sm:text-sm">
           {["Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο","Κυριακή"].map(h=> (
-            <div key={h} className="text-center font-bold text-gray-700 py-3 bg-gray-50 rounded-lg border border-gray-200">{h}</div>
+            <div key={h} className="text-center font-bold text-gray-700 py-2 sm:py-3 bg-gray-50 rounded-lg border border-gray-200 text-xs sm:text-sm">{h}</div>
           ))}
           {monthGrid.map((d,idx)=>{
-            if (!d) return <div key={idx} className="h-16 rounded-lg bg-gray-50 border border-gray-200" />;
+            if (!d) return <div key={idx} className="h-12 sm:h-16 rounded-lg bg-gray-50 border border-gray-200" />;
             const rawRanges = rangesByDate.get(d) || [];
             const ranges = rawRanges.slice().sort((a,b)=> toMinutes(a.start) - toMinutes(b.start));
             const has = ranges.length>0;
             return (
-              <div key={d} className={`min-h-[4rem] rounded-lg border-2 p-2 transition-all hover:shadow-md ${has? 'bg-green-50 border-green-300 hover:border-green-400':'bg-red-50 border-red-300 hover:border-red-400'}`} title={d}>
-                <div className="text-center text-sm font-bold text-gray-800 mb-2">{d.slice(-2)}</div>
+              <div key={d} className={`min-h-[3rem] sm:min-h-[4rem] rounded-lg border-2 p-1 sm:p-2 transition-all hover:shadow-md ${has? 'bg-green-50 border-green-300 hover:border-green-400':'bg-red-50 border-red-300 hover:border-red-400'}`} title={d}>
+                <div className="text-center text-xs sm:text-sm font-bold text-gray-800 mb-1 sm:mb-2">{d.slice(-2)}</div>
                 {has ? (
-                  <div className="flex flex-wrap gap-1 justify-center">
+                  <div className="flex flex-wrap gap-0.5 sm:gap-1 justify-center">
                     {ranges.map((r, i)=> {
                       const isBooked = isTimeSlotBooked(d, r.start, r.end);
                       return (
                         <button
                           key={i}
                           onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
-                          className={`px-2 py-1 rounded-lg text-white text-xs font-medium transition-all transform hover:scale-105 shadow-sm ${
+                          className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-white text-xs font-medium transition-all transform hover:scale-105 shadow-sm ${
                             isBooked 
                               ? 'bg-blue-500 hover:bg-blue-600 hover:shadow-lg' 
                               : 'bg-green-500 hover:bg-green-600 hover:shadow-lg'
@@ -1273,15 +1273,15 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
       </div>
       {/* 🚨 Modal Ακύρωσης - Βελτιωμένο */}
       {cancelTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" onClick={()=> !isCancelling && setCancelTarget(null)}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl border-2 border-red-200" onClick={(e)=> e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={()=> !isCancelling && setCancelTarget(null)}>
+          <div className="bg-white rounded-2xl p-4 sm:p-8 w-full max-w-lg shadow-2xl border-2 border-red-200" onClick={(e)=> e.stopPropagation()}>
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-red-600 text-2xl">⚠️</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Ακύρωση Διαθεσιμότητας</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Ακύρωση Διαθεσιμότητας</h3>
               <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <div className="text-lg font-semibold text-gray-800">{cancelTarget.date}</div>
+                <div className="text-base sm:text-lg font-semibold text-gray-800">{cancelTarget.date}</div>
                 <div className="text-sm text-gray-600">{formatGreekTime(cancelTarget.start)} – {formatGreekTime(cancelTarget.end)}</div>
               </div>
             </div>
@@ -1292,18 +1292,18 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
               </p>
             </div>
             
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
               <button 
                 disabled={isCancelling} 
                 onClick={()=> setCancelTarget(null)} 
-                className="px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-all"
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-all text-sm sm:text-base"
               >
                 Άκυρο
               </button>
               <button 
                 disabled={isCancelling} 
                 onClick={handleCancelAvailability} 
-                className="px-6 py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50 transition-all transform hover:scale-105 shadow-lg"
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50 transition-all transform hover:scale-105 shadow-lg text-sm sm:text-base"
               >
                 {isCancelling? '⏳ Ακύρωση...' : '🗑️ Ακύρωση Διαθεσιμότητας'}
               </button>
@@ -1387,7 +1387,7 @@ const BulkCancel: React.FC<BulkCancelProps> = ({ doctorId, onCancelled }) => {
 
   return (
     <div className="bg-white rounded-xl p-4 border border-red-200">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Από Ημερομηνία</label>
           <input 
@@ -1412,7 +1412,7 @@ const BulkCancel: React.FC<BulkCancelProps> = ({ doctorId, onCancelled }) => {
           <button 
             disabled={loading} 
             onClick={run} 
-            className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold py-3 rounded-xl hover:from-red-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
+            className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold py-2 sm:py-3 rounded-xl hover:from-red-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg text-sm sm:text-base"
           >
             {loading? '⏳ Ακύρωση...' : '🗑️ Μαζική Ακύρωση'}
           </button>
@@ -1550,44 +1550,44 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.map((a:any, index)=> (
               <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.date}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.time}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">{a.parent_name}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.child_age || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.phone || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.email}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.specialty || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.thematology || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.urgency || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.date}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.time}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">{a.parent_name}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.child_age || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.phone || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.email}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.specialty || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.thematology || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.urgency || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm">
                   <button
                     onClick={() => handleDelete(a.id)}
                     disabled={deleting === a.id}
-                    className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                    className="px-2 sm:px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
                     title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
                   >
                     {deleting === a.id ? (
@@ -1597,7 +1597,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     )}
-                    <span className="text-sm">
+                    <span className="text-xs sm:text-sm">
                       {language === 'gr' ? 'Διαγραφή' : 'Delete'}
                     </span>
                   </button>
@@ -1610,25 +1610,25 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
       
       {/* Pagination controls */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
+        <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs sm:text-sm text-gray-500">
             Εμφάνιση {startIndex + 1}-{Math.min(endIndex, items.length)} από {items.length} κρατήσεις
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Προηγούμενη
             </button>
-            <span className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
+            <span className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Επόμενη
             </button>
@@ -1762,44 +1762,44 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ώρα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Γιατρός</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Όνομα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ηλικία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Τηλέφωνο</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ειδικότητα</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Θεματολογία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Επείγον</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Πρώτη Συνεδρία</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ανησυχίες</th>
+              <th className="px-2 sm:px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ενέργειες</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.map((a:any, index)=> (
               <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.date}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.time}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">{a.parent_name}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.child_age || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.phone || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.email}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.specialty || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.thematology || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.urgency || '-'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.date}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.time}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">{a.parent_name}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.child_age || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.phone || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.email}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.specialty || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.thematology || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.urgency || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.is_first_session ? 'Ναι' : 'Όχι'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 max-w-xs truncate" title={a.concerns}>{a.concerns || '-'}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm">
                   <button
                     onClick={() => handleDelete(a.id)}
                     disabled={deleting === a.id}
-                    className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+                    className="px-2 sm:px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
                     title={language === 'gr' ? 'Διαγραφή κράτησης' : 'Delete appointment'}
                   >
                     {deleting === a.id ? (
@@ -1809,7 +1809,7 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     )}
-                    <span className="text-sm">
+                    <span className="text-xs sm:text-sm">
                       {language === 'gr' ? 'Διαγραφή' : 'Delete'}
                     </span>
                   </button>
@@ -1822,25 +1822,25 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
       
       {/* Pagination controls */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
+        <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs sm:text-sm text-gray-500">
             Εμφάνιση {startIndex + 1}-{Math.min(endIndex, items.length)} από {items.length} κρατήσεις
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Προηγούμενη
             </button>
-            <span className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
+            <span className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Επόμενη
             </button>
