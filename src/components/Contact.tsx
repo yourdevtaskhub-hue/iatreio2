@@ -4,6 +4,8 @@ import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook
 import profile2 from '../assets/profile2.png';
 import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
+import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
+import TimezoneInfo from './TimezoneInfo';
 
 interface ContactProps {
   language: 'gr' | 'en';
@@ -76,11 +78,11 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   const [slots, setSlots] = useState<SlotInfo[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const d = new Date();
+  const [calendarMonth] = useState(() => {
+    const d = getCurrentDateInTimezone(getUserTimezone());
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [availableDays, setAvailableDays] = useState<Record<string, boolean>>({});
+  // const [availableDays] = useState<Record<string, boolean>>({}); // Not used for now
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWaitlistPopup, setShowWaitlistPopup] = useState(false);
   const [waitlistFormData, setWaitlistFormData] = useState({
@@ -465,8 +467,8 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       console.log('[Contact] fetchMonth for', calendarMonth, 'doctor:', selectedDoctorId);
       const start = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
       const end = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth()+1, 0);
-      const s = start.toISOString().slice(0,10);
-      const e = end.toISOString().slice(0,10);
+      const s = toDateString(start, getUserTimezone());
+      const e = toDateString(end, getUserTimezone());
       const { data } = await supabase
         .from('availability')
         .select('date')
@@ -476,7 +478,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       console.log('[Contact] month availability rows:', data);
       const map: Record<string, boolean> = {};
       (data||[]).forEach((row: any) => { map[row.date] = true; });
-      setAvailableDays(map);
+      // setAvailableDays(map); // Commented out as availableDays is not used
     };
     fetchMonth();
   }, [calendarMonth, selectedDoctorId]);
@@ -773,6 +775,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
               </h3>
             </div>
             
+            {/* Timezone Information */}
+            <TimezoneInfo language={language} />
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -955,7 +960,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                   placeholder={content[language].appointmentDatePlaceholder}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())}
                   style={{ direction: 'ltr' }}
                 />
                 {/* Display appointment guidelines */}
@@ -1232,7 +1237,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                           value={waitlistFormData.preferredDate}
                           onChange={handleWaitlistInputChange}
                           className="px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
-                          min={new Date().toISOString().split('T')[0]}
+                          min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())}
                           style={{ direction: 'ltr' }}
                           placeholder="Ημερομηνία"
                         />

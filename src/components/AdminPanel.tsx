@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, CheckCircle, XCircle, Eye, EyeOff, RefreshCw, CalendarPlus, UserPlus, Settings } from 'lucide-react';
+import { Star, CheckCircle, XCircle, Eye, RefreshCw } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings } from '../types/appointments';
+import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 
 interface AdminPanelProps {
   language: 'gr' | 'en';
@@ -160,6 +161,41 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       console.error(e);
     }
   };
+
+  // Set up real-time subscription for all changes
+  useEffect(() => {
+    const channel = supabaseAdmin
+      .channel('admin_all_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        (payload) => {
+          console.log('Admin: Appointments change detected:', payload);
+          fetchAppointmentsMeta();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'availability'
+        },
+        (payload) => {
+          console.log('Admin: Availability change detected:', payload);
+          fetchAppointmentsMeta();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseAdmin.removeChannel(channel);
+    };
+  }, []);
 
   const fetchReviews = async () => {
     try {
@@ -653,18 +689,77 @@ type AvailabilityManagerProps = {
 
 const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, availability, onChange }) => {
   const [doctorId, setDoctorId] = useState<string>('');
-  const [date, setDate] = useState('');
+  // const [date, setDate] = useState(''); // Unused for now
   const [from, setFrom] = useState('09:00');
   const [to, setTo] = useState('17:00');
   const [inc, setInc] = useState<30|60>(30);
   const [saving, setSaving] = useState(false);
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0,7)); // YYYY-MM
+  const [month, setMonth] = useState(() => {
+    const now = getCurrentDateInTimezone(getUserTimezone());
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }); // YYYY-MM
   const [weekdays, setWeekdays] = useState<{[k:number]: boolean}>({1:true,2:true,3:true,4:true,5:true,6:false,0:false});
   const [singleDate, setSingleDate] = useState<string>('');
+
+  // Set up real-time subscription for availability changes
+  useEffect(() => {
+    const channel = supabaseAdmin
+      .channel('admin_availability_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'availability'
+        },
+        (payload) => {
+          console.log('Admin: Availability change detected:', payload);
+          // Refetch availability data
+          fetchAvailabilityData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseAdmin.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchAvailabilityData = async () => {
+    try {
+      const { data: availData } = await supabaseAdmin
+        .from('availability')
+        .select('*')
+        .order('date');
+      onChange(availData || []);
+    } catch (error) {
+      console.error('Error fetching availability:', error);
+    }
+  };
+  const [appointments, setAppointments] = useState<{date: string, time: string}[]>([]);
 
   useEffect(()=>{
     if (!doctorId && doctors && doctors.length>0) setDoctorId(doctors[0].id);
   },[doctors]);
+
+  // Fetch appointments for the current month
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!doctorId) return;
+      try {
+        const { data } = await supabaseAdmin
+          .from('appointments')
+          .select('date, time')
+          .eq('doctor_id', doctorId)
+          .gte('date', `${month}-01`)
+          .lte('date', `${month}-31`);
+        setAppointments(data || []);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+    fetchAppointments();
+  }, [doctorId, month]);
 
   // Μεμονωμένη καταχώρηση για συγκεκριμένη ημερομηνία
   const addSingle = async () => {
@@ -706,7 +801,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
       const d = new Date(y, m-1, day);
       const wd = d.getDay();
       if (enabled[wd]) {
-        results.push(d.toISOString().slice(0,10));
+        results.push(toDateString(d, getUserTimezone()));
       }
     }
     return results;
@@ -768,7 +863,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     const grid: Array<string|null> = [];
     for (let i=0;i<firstW;i++) grid.push(null);
     for (let d=1; d<=total; d++) {
-      const date = new Date(y, m-1, d).toISOString().slice(0,10);
+      const date = toDateString(new Date(y, m-1, d), getUserTimezone());
       grid.push(date);
     }
     while (grid.length % 7) grid.push(null);
@@ -797,6 +892,16 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     return `${hh}:${mStr} ${suffix}`;
   };
 
+  // Check if a specific time slot is booked
+  const isTimeSlotBooked = (date: string, startTime: string, endTime: string): boolean => {
+    return appointments.some(apt => {
+      const aptTime = apt.time.slice(0, 5); // Get HH:MM format
+      return apt.date === date && 
+             aptTime >= startTime && 
+             aptTime < endTime;
+    });
+  };
+
   const [cancelTarget, setCancelTarget] = useState<{id:string; date:string; start:string; end:string} | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -806,102 +911,358 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
       return;
     }
     setIsCancelling(true);
-    const { error } = await supabaseAdmin.from('availability').delete().eq('id', cancelTarget.id);
-    setIsCancelling(false);
-    if (error) {
+    
+    try {
+      // ΠΡΩΤΑ: Διαγραφή όλων των κρατήσεων που υπάρχουν σε αυτή τη διαθεσιμότητα
+      const { error: appointmentsError } = await supabaseAdmin
+        .from('appointments')
+        .delete()
+        .eq('date', cancelTarget.date)
+        .gte('time', cancelTarget.start)
+        .lte('time', cancelTarget.end);
+
+      if (appointmentsError) {
+        console.error('Error deleting appointments:', appointmentsError);
+        alert('Σφάλμα κατά τη διαγραφή των κρατήσεων');
+        return;
+      }
+
+      // ΔΕΥΤΕΡΑ: Διαγραφή διαθεσιμότητας
+      const { error } = await supabaseAdmin.from('availability').delete().eq('id', cancelTarget.id);
+      
+      if (error) {
+        alert('Σφάλμα κατά την ακύρωση διαθεσιμότητας');
+        return;
+      }
+
+      // Ενημέρωση local state
+      onChange((availability||[]).filter(a => a.id !== cancelTarget.id));
+      
+      console.log('Availability and related appointments cancelled successfully:', cancelTarget);
+      alert('Η διαθεσιμότητα και όλες οι σχετικές κρατήσεις ακυρώθηκαν επιτυχώς');
+      
+    } catch (error) {
+      console.error('Error cancelling availability:', error);
       alert('Σφάλμα κατά την ακύρωση διαθεσιμότητας');
-      return;
+    } finally {
+      setIsCancelling(false);
+      setCancelTarget(null);
     }
-    onChange((availability||[]).filter(a => a.id !== cancelTarget.id));
-    setCancelTarget(null);
   };
 
   return (
-    <div>
-      {/* Γρήγορη δημιουργία μηνιαίου προγράμματος */}
-      <div className="mb-6 p-4 rounded-xl border bg-gray-50">
-        <div className="flex flex-wrap gap-3 items-center">
-          <select className="border rounded-xl px-3 py-2" value={doctorId} onChange={e=>setDoctorId(e.target.value)}>
-            {(doctors||[]).map(d=> <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
-          </select>
-          <input type="month" className="border rounded-xl px-3 py-2" value={month} onChange={e=> setMonth(e.target.value)} />
-          <div className="flex items-center gap-2">
-            {[{l:'Δ',v:1},{l:'Τ',v:2},{l:'Τρ',v:3},{l:'Π',v:4},{l:'Πρ',v:5},{l:'Σ',v:6},{l:'Κ',v:0}].map(w=> (
-              <label key={w.v} className="flex items-center gap-1 text-sm">
-                <input type="checkbox" checked={!!weekdays[w.v]} onChange={()=>toggleWeekday(w.v)} /> {w.l}
-              </label>
-            ))}
+    <div className="space-y-6">
+      {/* 📅 Μηνιαίο Πρόγραμμα - Καθαρό και Οργανωμένο */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 border border-blue-200 shadow-sm">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center mr-3">
+            <span className="text-white text-lg">📅</span>
           </div>
-          <input type="time" className="border rounded-xl px-3 py-2" value={from} onChange={e=>setFrom(e.target.value)} />
-          <input type="time" className="border rounded-xl px-3 py-2" value={to} onChange={e=>setTo(e.target.value)} />
-          <select className="border rounded-xl px-3 py-2" value={inc} onChange={e=> setInc(Number(e.target.value) as 30|60)}>
-            <option value={30}>30</option>
-            <option value={60}>60</option>
-          </select>
-          <button disabled={saving} onClick={bulkCreate} className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-50">Δημιουργία Προγράμματος Μήνα</button>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800 font-poppins">Δημιουργία Μηνιαίου Προγράμματος</h3>
+            <p className="text-sm text-gray-600">Δημιουργήστε διαθεσιμότητες για όλο τον μήνα με μία κίνηση</p>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Επιλέξτε μήνα, ημέρες εβδομάδας και ώρες. Θα δημιουργηθούν διαθεσιμότητες για όλες τις αντίστοιχες ημέρες χωρίς να επηρεάσουν ήδη υπάρχουσες εγγραφές.</p>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Αριστερά - Επιλογές */}
+          <div className="space-y-4">
+            {/* Γιατρός */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">👨‍⚕️ Γιατρός</label>
+              <select 
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
+                value={doctorId} 
+                onChange={e=>setDoctorId(e.target.value)}
+              >
+                {(doctors||[]).map(d=> <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
+              </select>
+            </div>
+
+            {/* Μήνας */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">📆 Μήνας</label>
+              <input 
+                type="month" 
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
+                value={month} 
+                onChange={e=> setMonth(e.target.value)} 
+              />
+            </div>
+
+            {/* Ημέρες Εβδομάδας */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Ημέρες Εβδομάδας</label>
+              <div className="flex flex-wrap gap-2">
+                {[{l:'Δευτέρα',v:1},{l:'Τρίτη',v:2},{l:'Τετάρτη',v:3},{l:'Πέμπτη',v:4},{l:'Παρασκευή',v:5},{l:'Σάββατο',v:6},{l:'Κυριακή',v:0}].map(w=> (
+                  <label key={w.v} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-all">
+                    <input 
+                      type="checkbox" 
+                      checked={!!weekdays[w.v]} 
+                      onChange={()=>toggleWeekday(w.v)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    /> 
+                    <span className="text-sm font-medium">{w.l}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Δεξιά - Ώρες και Διάρκεια */}
+          <div className="space-y-4">
+            {/* Ώρες */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">🕘 Από</label>
+                <input 
+                  type="time" 
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
+                  value={from} 
+                  onChange={e=>setFrom(e.target.value)} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">🕘 Έως</label>
+                <input 
+                  type="time" 
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
+                  value={to} 
+                  onChange={e=>setTo(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            {/* Διάρκεια */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ Διάρκεια Συνεδρίας</label>
+              <select 
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" 
+                value={inc} 
+                onChange={e=> setInc(Number(e.target.value) as 30|60)}
+              >
+                <option value={30}>30 λεπτά</option>
+                <option value={60}>60 λεπτά</option>
+              </select>
+            </div>
+
+            {/* Κουμπί Δημιουργίας */}
+            <button 
+              disabled={saving} 
+              onClick={bulkCreate} 
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
+            >
+              {saving ? '⏳ Δημιουργία...' : '🚀 Δημιουργία Προγράμματος Μήνα'}
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Συμβουλή:</strong> Θα δημιουργηθούν διαθεσιμότητες για όλες τις επιλεγμένες ημέρες χωρίς να επηρεάσουν ήδη υπάρχουσες εγγραφές.
+          </p>
+        </div>
       </div>
 
-      {/* Ρυθμίσεις μαζικής δημιουργίας + μεμονωμένη καταχώρηση */}
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <select className="border rounded-xl px-3 py-2" value={doctorId} onChange={e=>setDoctorId(e.target.value)}>
-          {(doctors||[]).map(d=> <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
-        </select>
-        <input type="time" className="border rounded-xl px-3 py-2" value={from} onChange={e=>setFrom(e.target.value)} />
-        <input type="time" className="border rounded-xl px-3 py-2" value={to} onChange={e=>setTo(e.target.value)} />
-        <select className="border rounded-xl px-3 py-2" value={inc} onChange={e=> setInc(Number(e.target.value) as 30|60)}>
-          <option value={30}>30</option>
-          <option value={60}>60</option>
-        </select>
-        <input type="date" className="border rounded-xl px-3 py-2" value={singleDate} onChange={e=> setSingleDate(e.target.value)} placeholder="dd/mm/yyyy" />
-        <button disabled={saving || !singleDate} onClick={addSingle} className="px-3 py-2 bg-green-600 text-white rounded-xl disabled:opacity-50">Προσθήκη (μεμονωμένη)</button>
-      </div>
-      {/* Μηνιαίο Ημερολόγιο (compact, red->default, green->available) */}
-      <div className="rounded-2xl border p-4 bg-white">
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold">Πρόγραμμα Μήνα</div>
-          <div className="text-xs space-x-3">
-            <span className="inline-flex items-center"><span className="w-3 h-3 rounded-sm bg-green-500 mr-1"></span> Διαθέσιμη</span>
-            <span className="inline-flex items-center ml-3"><span className="w-3 h-3 rounded-sm bg-red-400 mr-1"></span> Μη διαθέσιμη</span>
+      {/* ➕ Μεμονωμένη Προσθήκη - Καθαρό και Απλό */}
+      <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 border border-green-200 shadow-sm">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center mr-3">
+            <span className="text-white text-lg">➕</span>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800 font-poppins">Προσθήκη Μεμονωμένης Συνεδρίας</h3>
+            <p className="text-sm text-gray-600">Προσθέστε διαθεσιμότητα για συγκεκριμένη ημερομηνία</p>
           </div>
         </div>
-         <div className="grid grid-cols-7 gap-1 text-[11px] md:text-xs">
-          {["Δευ","Τρι","Τετ","Πεμ","Παρ","Σαβ","Κυρ"].map(h=> (
-            <div key={h} className="text-center font-semibold text-gray-600 py-1">{h}</div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+          {/* Γιατρός */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">👨‍⚕️ Γιατρός</label>
+            <select 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" 
+              value={doctorId} 
+              onChange={e=>setDoctorId(e.target.value)}
+            >
+              {(doctors||[]).map(d=> <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
+            </select>
+          </div>
+
+          {/* Ώρα Έναρξης */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">🕘 Από</label>
+            <input 
+              type="time" 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" 
+              value={from} 
+              onChange={e=>setFrom(e.target.value)} 
+            />
+          </div>
+
+          {/* Ώρα Λήξης */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">🕘 Έως</label>
+            <input 
+              type="time" 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" 
+              value={to} 
+              onChange={e=>setTo(e.target.value)} 
+            />
+          </div>
+
+          {/* Διάρκεια */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">⏱️ Διάρκεια</label>
+            <select 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" 
+              value={inc} 
+              onChange={e=> setInc(Number(e.target.value) as 30|60)}
+            >
+              <option value={30}>30 λεπτά</option>
+              <option value={60}>60 λεπτά</option>
+            </select>
+          </div>
+
+          {/* Ημερομηνία */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Ημερομηνία</label>
+            <input 
+              type="date" 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" 
+              value={singleDate} 
+              onChange={e=> setSingleDate(e.target.value)} 
+              min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())} 
+            />
+          </div>
+        </div>
+
+        {/* Κουμπί Προσθήκης */}
+        <div className="mt-4">
+          <button 
+            disabled={saving || !singleDate} 
+            onClick={addSingle} 
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
+          >
+            {saving ? '⏳ Προσθήκη...' : '✅ Προσθήκη Μεμονωμένης Συνεδρίας'}
+          </button>
+        </div>
+      </div>
+      {/* 🗓️ Οδηγός Χρωμάτων - Βελτιωμένος */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 shadow-sm">
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <span className="text-white text-xl">🗓️</span>
+          </div>
+          <h4 className="text-xl font-bold text-gray-800 font-poppins">Οδηγός Χρωμάτων Ημερολογίου</h4>
+          <p className="text-sm text-gray-600 mt-1">Κατανοήστε τι σημαίνει κάθε χρώμα στο ημερολόγιο</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border-2 border-green-200 hover:border-green-300 transition-all">
+            <div className="flex items-center mb-2">
+              <span className="w-6 h-6 rounded-full bg-green-500 mr-3 flex-shrink-0"></span>
+              <span className="font-bold text-gray-800">🟢 Πράσινο</span>
+            </div>
+            <p className="text-sm text-gray-600">Διαθέσιμες συνεδρίες που μπορούν να κρατηθούν από χρήστες</p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-4 shadow-sm border-2 border-blue-200 hover:border-blue-300 transition-all">
+            <div className="flex items-center mb-2">
+              <span className="w-6 h-6 rounded-full bg-blue-500 mr-3 flex-shrink-0"></span>
+              <span className="font-bold text-gray-800">🔵 Μπλε</span>
+            </div>
+            <p className="text-sm text-gray-600">Κρατημένες συνεδρίες που έχουν ήδη κρατηθεί από χρήστες</p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-4 shadow-sm border-2 border-red-200 hover:border-red-300 transition-all">
+            <div className="flex items-center mb-2">
+              <span className="w-6 h-6 rounded-full bg-red-400 mr-3 flex-shrink-0"></span>
+              <span className="font-bold text-gray-800">🔴 Κόκκινο</span>
+            </div>
+            <p className="text-sm text-gray-600">Μη διαθέσιμες συνεδρίες (δεν υπάρχει πρόγραμμα)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 📅 Μηνιαίο Ημερολόγιο - Βελτιωμένο */}
+      <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center mr-3">
+              <span className="text-white text-lg">📅</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-800 font-poppins">Πρόγραμμα Μήνα</h3>
+              <p className="text-sm text-gray-600">Κλικ σε συνεδρία για ακύρωση διαθεσιμότητας</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+              <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+              <span className="font-medium text-gray-700">Διαθέσιμη</span>
+            </div>
+            <div className="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+              <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+              <span className="font-medium text-gray-700">Κρατημένη</span>
+            </div>
+            <div className="flex items-center bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+              <span className="w-3 h-3 rounded-full bg-red-400 mr-2"></span>
+              <span className="font-medium text-gray-700">Μη διαθέσιμη</span>
+            </div>
+          </div>
+        </div>
+         <div className="grid grid-cols-7 gap-2 text-sm">
+          {["Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο","Κυριακή"].map(h=> (
+            <div key={h} className="text-center font-bold text-gray-700 py-3 bg-gray-50 rounded-lg border border-gray-200">{h}</div>
           ))}
           {monthGrid.map((d,idx)=>{
-            if (!d) return <div key={idx} className="h-12 rounded-lg bg-gray-50" />;
+            if (!d) return <div key={idx} className="h-16 rounded-lg bg-gray-50 border border-gray-200" />;
             const rawRanges = rangesByDate.get(d) || [];
             const ranges = rawRanges.slice().sort((a,b)=> toMinutes(a.start) - toMinutes(b.start));
             const has = ranges.length>0;
             return (
-              <div key={d} className={`min-h-[3rem] rounded-lg border p-1 ${has? 'bg-green-50 border-green-500':'bg-red-50 border-red-400'}`} title={d}>
-                <div className="text-center text-xs font-semibold text-gray-700 mb-1">{d.slice(-2)}</div>
+              <div key={d} className={`min-h-[4rem] rounded-lg border-2 p-2 transition-all hover:shadow-md ${has? 'bg-green-50 border-green-300 hover:border-green-400':'bg-red-50 border-red-300 hover:border-red-400'}`} title={d}>
+                <div className="text-center text-sm font-bold text-gray-800 mb-2">{d.slice(-2)}</div>
                 {has ? (
                   <div className="flex flex-wrap gap-1 justify-center">
-                    {ranges.map((r, i)=> (
-                      <button
-                        key={i}
-                        onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
-                        className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] hover:bg-green-600 transition"
-                        title="Κλικ για ακύρωση διαθεσιμότητας"
-                      >
-                        {formatGreekTime(r.start)}–{formatGreekTime(r.end)}
-                      </button>
-                    ))}
+                    {ranges.map((r, i)=> {
+                      const isBooked = isTimeSlotBooked(d, r.start, r.end);
+                      return (
+                        <button
+                          key={i}
+                          onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
+                          className={`px-2 py-1 rounded-lg text-white text-xs font-medium transition-all transform hover:scale-105 shadow-sm ${
+                            isBooked 
+                              ? 'bg-blue-500 hover:bg-blue-600 hover:shadow-lg' 
+                              : 'bg-green-500 hover:bg-green-600 hover:shadow-lg'
+                          }`}
+                          title={isBooked ? "Κρατημένη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας" : "Διαθέσιμη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας"}
+                        >
+                          {formatGreekTime(r.start)}–{formatGreekTime(r.end)}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="text-center text-[10px] text-red-500">—</div>
+                  <div className="text-center text-xs text-red-500 font-medium">—</div>
                 )}
               </div>
             );
           })}
         </div>
       </div>
-      {/* Μαζική Ακύρωση Συνεδριών Προγράμματος */}
-      <div className="mt-4 p-4 rounded-2xl border bg-white">
-        <div className="font-semibold mb-3">Μαζική Ακύρωση Συνεδριών Προγράμματος</div>
+      {/* 🗑️ Μαζική Ακύρωση - Βελτιωμένο */}
+      <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-2xl border-2 border-red-200 shadow-lg p-6">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center mr-3">
+            <span className="text-white text-lg">🗑️</span>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800 font-poppins">Μαζική Ακύρωση Συνεδριών</h3>
+            <p className="text-sm text-gray-600">Ακυρώστε πολλές συνεδρίες ταυτόχρονα</p>
+          </div>
+        </div>
         <BulkCancel
           doctorId={doctorId}
           onCancelled={(deletedIds)=>{
@@ -910,19 +1271,41 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           }}
         />
       </div>
-      {/* Cancel Availability Modal (simple confirm overlay) */}
+      {/* 🚨 Modal Ακύρωσης - Βελτιωμένο */}
       {cancelTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={()=> !isCancelling && setCancelTarget(null)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={(e)=> e.stopPropagation()}>
-            <div className="mb-4">
-              <div className="text-lg font-bold mb-1">Ακύρωση διαθεσιμότητας</div>
-              <div className="text-sm text-gray-600">{cancelTarget.date} — {formatGreekTime(cancelTarget.start)}–{formatGreekTime(cancelTarget.end)}</div>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" onClick={()=> !isCancelling && setCancelTarget(null)}>
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl border-2 border-red-200" onClick={(e)=> e.stopPropagation()}>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-red-600 text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Ακύρωση Διαθεσιμότητας</h3>
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <div className="text-lg font-semibold text-gray-800">{cancelTarget.date}</div>
+                <div className="text-sm text-gray-600">{formatGreekTime(cancelTarget.start)} – {formatGreekTime(cancelTarget.end)}</div>
+              </div>
             </div>
-            <div className="text-sm text-gray-700 mb-6">Θέλετε σίγουρα να ακυρώσετε αυτή τη διαθέσιμη ώρα; Θα πάψει να εμφανίζεται στο ημερολόγιο των χρηστών.</div>
-            <div className="flex justify-end gap-2">
-              <button disabled={isCancelling} onClick={()=> setCancelTarget(null)} className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 disabled:opacity-50">Άκυρο</button>
-              <button disabled={isCancelling} onClick={handleCancelAvailability} className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
-                {isCancelling? 'Ακύρωση...' : 'Ακύρωση διαθέσιμου'}
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-700 font-medium">
+                ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι κρατήσεις που υπάρχουν σε αυτή τη διαθεσιμότητα και θα αφαιρεθεί από το ημερολόγιο των χρηστών.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button 
+                disabled={isCancelling} 
+                onClick={()=> setCancelTarget(null)} 
+                className="px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-all"
+              >
+                Άκυρο
+              </button>
+              <button 
+                disabled={isCancelling} 
+                onClick={handleCancelAvailability} 
+                className="px-6 py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50 transition-all transform hover:scale-105 shadow-lg"
+              >
+                {isCancelling? '⏳ Ακύρωση...' : '🗑️ Ακύρωση Διαθεσιμότητας'}
               </button>
             </div>
           </div>
@@ -949,39 +1332,98 @@ const BulkCancel: React.FC<BulkCancelProps> = ({ doctorId, onCancelled }) => {
     if (!confirm(`Θέλετε να ακυρώσετε όλες τις διαθέσιμες συνεδρίες για τον επιλεγμένο γιατρό από ${fromDate} έως ${toDate};`)) { return; }
 
     setLoading(true);
-    const { data: idsData } = await supabaseAdmin
-      .from('availability')
-      .select('id')
-      .eq('doctor_id', doctorId)
-      .gte('date', fromDate)
-      .lte('date', toDate);
-    const ids = (idsData||[]).map((r:any)=> r.id);
+    
+    try {
+      // Βρίσκουμε τα IDs των διαθεσιμοτήτων που θα διαγραφούν
+      const { data: idsData } = await supabaseAdmin
+        .from('availability')
+        .select('id')
+        .eq('doctor_id', doctorId)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+      const ids = (idsData||[]).map((r:any)=> r.id);
 
-    const { error } = await supabaseAdmin
-      .from('availability')
-      .delete()
-      .eq('doctor_id', doctorId)
-      .gte('date', fromDate)
-      .lte('date', toDate);
-    setLoading(false);
-    if (error) { alert('Σφάλμα κατά τη μαζική ακύρωση.'); return; }
-    onCancelled(ids);
-    alert('Η μαζική ακύρωση ολοκληρώθηκε.');
+      // ΠΡΩΤΑ: Διαγραφή όλων των κρατήσεων που επηρεάζονται
+      const { error: appointmentsError } = await supabaseAdmin
+        .from('appointments')
+        .delete()
+        .eq('doctor_id', doctorId)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+
+      if (appointmentsError) {
+        console.error('Error deleting appointments:', appointmentsError);
+        alert('Σφάλμα κατά τη διαγραφή των κρατήσεων');
+        return;
+      }
+
+      // ΔΕΥΤΕΡΑ: Διαγραφή διαθεσιμοτήτων
+      const { error } = await supabaseAdmin
+        .from('availability')
+        .delete()
+        .eq('doctor_id', doctorId)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+
+      if (error) { 
+        alert('Σφάλμα κατά τη μαζική ακύρωση.'); 
+        return; 
+      }
+
+      console.log('Bulk availability and appointments cancellation completed:', {
+        cancelledAvailabilityIds: ids
+      });
+
+      onCancelled(ids);
+      alert('Η μαζική ακύρωση διαθεσιμοτήτων και κρατήσεων ολοκληρώθηκε.');
+      
+    } catch (error) {
+      console.error('Error in bulk cancellation:', error);
+      alert('Σφάλμα κατά τη μαζική ακύρωση.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <div className="flex flex-col">
-        <label className="text-xs text-gray-600 mb-1">Από</label>
-        <input type="date" value={fromDate} onChange={e=> setFromDate(e.target.value)} className="border rounded-xl px-3 py-2" />
+    <div className="bg-white rounded-xl p-4 border border-red-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Από Ημερομηνία</label>
+          <input 
+            type="date" 
+            value={fromDate} 
+            onChange={e=> setFromDate(e.target.value)} 
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" 
+            min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())} 
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">📅 Μέχρι Ημερομηνία</label>
+          <input 
+            type="date" 
+            value={toDate} 
+            onChange={e=> setToDate(e.target.value)} 
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all" 
+            min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())} 
+          />
+        </div>
+        <div>
+          <button 
+            disabled={loading} 
+            onClick={run} 
+            className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold py-3 rounded-xl hover:from-red-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg"
+          >
+            {loading? '⏳ Ακύρωση...' : '🗑️ Μαζική Ακύρωση'}
+          </button>
+        </div>
       </div>
-      <div className="flex flex-col">
-        <label className="text-xs text-gray-600 mb-1">Μέχρι</label>
-        <input type="date" value={toDate} onChange={e=> setToDate(e.target.value)} className="border rounded-xl px-3 py-2" />
+      
+      <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+        <p className="text-sm text-red-700">
+          ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι κρατήσεις και διαθεσιμότητες στο επιλεγμένο εύρος ημερομηνιών.
+        </p>
       </div>
-      <button disabled={loading} onClick={run} className="px-4 py-2 bg-red-600 text-white rounded-xl disabled:opacity-50">
-        {loading? 'Ακύρωση...' : 'Μαζική ακύρωση συνεδριών προγράμματος'}
-      </button>
     </div>
   );
 };
@@ -1005,6 +1447,27 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
 
   useEffect(() => {
     fetchAppointments();
+
+    // Set up real-time subscription for appointments
+    const channel = supabaseAdmin
+      .channel('admin_appointments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        (payload) => {
+          console.log('Admin: Appointment change detected:', payload);
+          fetchAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseAdmin.removeChannel(channel);
+    };
   }, []);
 
   const handleDelete = async (appointmentId: string) => {

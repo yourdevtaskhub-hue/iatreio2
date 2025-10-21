@@ -38,12 +38,19 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, language }) => {
     }
   };
 
-  // Admin passwords - μπορείτε να τα αλλάξετε
-  const adminPasswords = [
-    'admin123',
-    'iatrio2024',
-    'psychology2024'
-  ];
+  // Admin και Doctor passwords
+  const passwords = {
+    admin: [
+      'admin123',
+      'iatrio2024',
+      'psychology2024'
+    ],
+    doctors: {
+      'eirini123@': 'eirini',
+      'ioanna22!': 'ioanna', 
+      'sofia12%': 'sofia'
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +60,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, language }) => {
     // Simulate loading delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (adminPasswords.includes(password)) {
+    // Check if it's an admin password
+    if (passwords.admin.includes(password)) {
       onLogin(true);
-    } else {
+    } 
+    // Check if it's a doctor password
+    else if (passwords.doctors[password as keyof typeof passwords.doctors]) {
+      const doctorType = passwords.doctors[password as keyof typeof passwords.doctors];
+      // Redirect to the specific doctor panel
+      window.location.href = `/${doctorType}`;
+    } 
+    else {
       setError(content[language].errorMessage);
     }
 

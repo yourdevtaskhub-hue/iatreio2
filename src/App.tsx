@@ -12,16 +12,25 @@ import Contact from './components/Contact';
 import TeamMembers from './components/TeamMembers';
 import Footer from './components/Footer';
 import Admin from './pages/Admin';
+import EiriniPanel from './components/EiriniPanel';
+import IoannaPanel from './components/IoannaPanel';
+import SofiaPanel from './components/SofiaPanel';
 
 function App() {
   const [language, setLanguage] = useState('gr');
   const [currentPage, setCurrentPage] = useState('home');
 
-  // Check URL for admin access
+  // Check URL for admin access and doctor panels
   React.useEffect(() => {
     const path = window.location.pathname;
     if (path === '/admin' || path === '/admin/') {
       setCurrentPage('admin');
+    } else if (path === '/eirini' || path === '/eirini/') {
+      setCurrentPage('eirini');
+    } else if (path === '/ioanna' || path === '/ioanna/') {
+      setCurrentPage('ioanna');
+    } else if (path === '/sofia' || path === '/sofia/') {
+      setCurrentPage('sofia');
     }
   }, []);
 
@@ -30,6 +39,12 @@ function App() {
     switch (currentPage) {
       case 'admin':
         return <Admin />;
+      case 'eirini':
+        return <EiriniPanel language={language} onLogout={() => setCurrentPage('home')} />;
+      case 'ioanna':
+        return <IoannaPanel language={language} onLogout={() => setCurrentPage('home')} />;
+      case 'sofia':
+        return <SofiaPanel language={language} onLogout={() => setCurrentPage('home')} />;
       default:
         return (
           <>

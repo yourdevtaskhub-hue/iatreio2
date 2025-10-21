@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight, Star, Trophy } from 'lucide-react';
 
 interface HeroProps {
   language: 'gr' | 'en';
@@ -48,26 +48,35 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       
       {/* Καμία διακόσμηση background: καθαρό λευκό */}
       
-      {/* Badge text with stars positioned left of title */}
+      {/* Post-it Note Effect - Μικρότερο και πιο ψηλά */}
       <motion.div
-        initial={{ opacity: 0, x: -50, y: -50 }}
-        animate={{ opacity: 1, x: 0, y: 0, rotate: -5 }}
+        initial={{ opacity: 0, x: -30, y: -30 }}
+        animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-[35%] left-48 z-10"
+        className="absolute top-[32%] left-32 z-10"
       >
-        <div className="bg-blue-50/90 rounded-2xl px-4 py-3 shadow-xl border border-blue-200">
-          <div className="text-gray-800 text-xs font-bold font-nunito leading-tight">
-            1ο Διαδικτυακό Ιατρείο<br />
-            Γονέων και Εφήβων στην<br />
-            Ευρώπη
+        {/* Post-it Note with realistic styling - Μικρότερο */}
+        <div className="relative">
+          {/* Main post-it note */}
+          <div className="bg-yellow-200 rounded-md px-4 py-3 shadow-xl border-2 border-yellow-300 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+            {/* Post-it tape effect at the top */}
+            <div className="absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-12 h-3 bg-gray-300 rounded-sm shadow-sm"></div>
+            
+            {/* Trophy icon */}
+            <div className="flex justify-center mb-2">
+              <Trophy className="h-5 w-5 text-yellow-600" fill="currentColor" />
+            </div>
+            
+            {/* Text content */}
+            <div className="text-gray-800 text-xs font-bold font-nunito leading-tight text-center">
+              Το 1ο Διαδικτυακό Ιατρείο<br />
+              Γονέων και Εφήβων στην<br />
+              Ευρώπη
+            </div>
           </div>
-          <div className="mt-2 flex justify-center space-x-1">
-            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
-            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
-            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
-            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
-            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" stroke="none" />
-          </div>
+          
+          {/* Shadow effect to make it look like it's stuck to wall */}
+          <div className="absolute inset-0 bg-black/10 rounded-md transform translate-x-0.5 translate-y-0.5 -z-10"></div>
         </div>
       </motion.div>
 

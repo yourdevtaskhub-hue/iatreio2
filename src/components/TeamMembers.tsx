@@ -1,5 +1,6 @@
 import React from 'react';
-import doctorsImg from '../assets/doctors.png';
+import sofiaImg from '../assets/Σοφία_Σπυριάδου.jpg';
+import ioannaImg from '../assets/Ιωάννα_Πισσάρη.jpg';
 import { motion } from 'framer-motion';
 
 interface TeamMembersProps {
@@ -73,7 +74,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
           </p>
         </motion.div>
 
-        {/* Ενιαίο μεγάλο πλαίσιο με τα δύο πρώτα βιογραφικά */}
+        {/* Ενιαίο μεγάλο πλαίσιο με δύο εικόνες στο πάνω μέρος */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +82,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
           viewport={{ once: true }}
           className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden mb-8"
         >
-          {/* Μεγάλη εικόνα στο πάνω μέρος */}
+          {/* Δύο εικόνες στο πάνω μέρος */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -89,13 +90,26 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
             viewport={{ once: true }}
             className="relative w-full h-[30rem] lg:h-[36rem] overflow-hidden bg-gray-50 flex items-center justify-center"
           >
-            <img
-              src={doctorsImg}
-              alt="Συνεργάτες"
-              className="w-full h-full object-cover object-[50%_22%] md:object-[50%_28%]"
-            />
-            {/* Overlay για καλύτερη αισθητική */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+            {/* Αριστερή εικόνα - Σοφία */}
+            <div className="w-1/2 h-full relative overflow-hidden">
+              <img
+                src={sofiaImg}
+                alt="Σοφία Σπυριάδου"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+            </div>
+            
+            {/* Δεξιά εικόνα - Ιωάννα */}
+            <div className="w-1/2 h-full relative overflow-hidden">
+              <img
+                src={ioannaImg}
+                alt="Ιωάννα Πισσάρη"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+            </div>
+            
             {/* Διακοσμητικό στοιχείο */}
             <div className="absolute inset-0 border-4 border-white/30 rounded-t-2xl"></div>
           </motion.div>
