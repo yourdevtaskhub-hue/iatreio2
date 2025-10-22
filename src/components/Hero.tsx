@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Trophy } from 'lucide-react';
+import { ArrowRight, Trophy, Pin } from 'lucide-react';
 
 interface HeroProps {
   language: 'gr' | 'en';
@@ -57,11 +57,13 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       >
         {/* Post-it Note with realistic styling - Μικρότερο */}
         <div className="relative">
+          {/* Pin icon at the top */}
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+            <Pin className="h-4 w-4 text-gray-600" fill="currentColor" />
+          </div>
+          
           {/* Main post-it note */}
-          <div className="bg-yellow-200 rounded-md px-4 py-3 shadow-xl border-2 border-yellow-300 transform rotate-1 hover:rotate-0 transition-transform duration-300">
-            {/* Post-it tape effect at the top */}
-            <div className="absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-12 h-3 bg-gray-300 rounded-sm shadow-sm"></div>
-            
+          <div className="bg-pink-100 rounded-md px-4 py-3 shadow-xl border-2 border-pink-200 transform rotate-1 hover:rotate-0 transition-transform duration-300">
             {/* Trophy icon */}
             <div className="flex justify-center mb-2">
               <Trophy className="h-5 w-5 text-yellow-600" fill="currentColor" />

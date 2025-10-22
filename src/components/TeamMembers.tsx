@@ -105,7 +105,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
               <img
                 src={ioannaImg}
                 alt="Ιωάννα Πισσάρη"
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-center scale-125"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
             </div>

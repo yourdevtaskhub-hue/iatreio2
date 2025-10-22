@@ -20,7 +20,6 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       team: 'Η ομάδας μας',
       testimonials: 'Αξιολογήσεις',
       faq: 'Συχνές Ερωτήσεις',
-      articles: 'Άρθρα',
       contact: 'Επικοινωνία',
       appointment: 'Κλείστε Ραντεβού'
     },
@@ -31,7 +30,6 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       team: 'Our Team',
       testimonials: 'Testimonials',
       faq: 'FAQ',
-      articles: 'Articles',
       contact: 'Contact',
       appointment: 'Book Appointment'
     }
@@ -79,9 +77,10 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             <img src={logoIatrio} alt="Logo" className="h-16 w-16 sm:h-20 sm:w-20" />
             <div>
             <h1 className="font-bold text-lg sm:text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
-              <p className="text-xs sm:text-sm text-white/90 font-quicksand">
-                {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου Ψυχοθεραπεύτρια' : 'Child & Adolescent Psychiatrist'}
-              </p>
+              <div className="text-xs sm:text-sm text-white/90 font-quicksand">
+                <div>Ψυχίατρος Παιδιού και Εφήβου</div>
+                <div>Ψυχοθεραπεύτρια</div>
+              </div>
             </div>
           </motion.div>
 
