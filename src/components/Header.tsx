@@ -98,7 +98,6 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                   >
                     <div className="flex flex-col">
                       <span>{value}</span>
-                      {key === 'about' && <span className="text-xs opacity-90">Δρ. Φύτρου</span>}
                     </div>
                   </motion.button>
                 ) : (
