@@ -857,13 +857,18 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
 
   const getMonthGrid = (yyyyMM: string): Array<string | null> => {
     const [y,m] = yyyyMM.split('-').map(Number);
+    const userTimezone = getUserTimezone();
+    
+    // Create first day of month in the user's timezone
     const first = new Date(y, m-1, 1);
-    const firstW = (first.getDay()+6)%7; // Monday=0
+    const firstInTimezone = new Date(first.toLocaleString('en-US', { timeZone: userTimezone }));
+    const firstW = (firstInTimezone.getDay()+6)%7; // Monday=0
     const total = daysInMonth(yyyyMM);
     const grid: Array<string|null> = [];
     for (let i=0;i<firstW;i++) grid.push(null);
     for (let d=1; d<=total; d++) {
-      const date = toDateString(new Date(y, m-1, d), getUserTimezone());
+      // Create date string directly in YYYY-MM-DD format
+      const date = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       grid.push(date);
     }
     while (grid.length % 7) grid.push(null);

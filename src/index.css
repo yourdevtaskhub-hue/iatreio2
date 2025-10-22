@@ -20,3 +20,50 @@
 .fonts-loaded .font-dancing-script {
   visibility: visible;
 }
+
+/* Fix image orientation issues across all browsers (especially Mac Safari/Firefox) */
+img {
+  image-orientation: from-image;
+  -webkit-transform: none;
+  -moz-transform: none;
+  -ms-transform: none;
+  transform: none;
+  /* Force proper image display on all platforms */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Prevent image rotation issues */
+  -webkit-transform-origin: center center;
+  transform-origin: center center;
+}
+
+/* Ensure proper object-fit behavior across browsers */
+.object-cover {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Cross-platform image fixes */
+img[src*="profile"] {
+  /* Specific fixes for profile images */
+  image-orientation: from-image;
+  -webkit-transform: none !important;
+  transform: none !important;
+  /* Force correct orientation on all platforms */
+  -webkit-transform-origin: center center;
+  transform-origin: center center;
+}
+
+/* Prevent image rotation on Mac Safari */
+@supports (-webkit-appearance: none) {
+  img {
+    -webkit-transform: none !important;
+    transform: none !important;
+  }
+}
+
+/* Force hardware acceleration for smooth rendering */
+img {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+}

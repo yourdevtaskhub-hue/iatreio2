@@ -84,14 +84,9 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h3 className="text-2xl font-semibold mb-4 font-quicksand">
+          <h2 className="text-4xl font-bold mb-6 font-poppins">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
               {content[language].title}
-            </span>
-          </h3>
-          <h2 className="text-4xl font-bold mt-2 mb-6 font-poppins">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
-              {content[language].subtitle}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-nunito">
@@ -99,7 +94,7 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {content[language].articles.map((article, index) => (
             <motion.article
               key={index}
@@ -108,7 +103,7 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
               transition={{ duration: 0.6, delay: index * 0.2 }}
               viewport={{ once: true }}
               whileHover={{ y: -10, scale: 1.02 }}
-              className="bg-gradient-to-br from-pastel-pink to-baby-blue rounded-4xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500"
+              className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500"
             >
               <div className="relative overflow-hidden">
                 <motion.img 
@@ -119,14 +114,14 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
                   className="w-full h-48 object-cover"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 font-quicksand">
+                  <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-medium font-quicksand">
                     {article.category}
                   </span>
                 </div>
                 <motion.div 
                   whileHover={{ scale: 1.1, rotate: 360 }}
                   transition={{ duration: 0.6 }}
-                  className="absolute top-4 right-4 bg-gradient-to-r from-rose-soft to-purple-soft p-2 rounded-full shadow-lg"
+                  className="absolute top-4 right-4 bg-purple-600 p-2 rounded-lg shadow-lg"
                 >
                   <BookOpen className="h-4 w-4 text-white" />
                 </motion.div>
@@ -149,7 +144,7 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
                     whileHover={{ scale: 1.05, x: 5 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => window.open(article.url, '_blank')}
-                    className="inline-flex items-center text-rose-soft hover:text-purple-soft font-medium text-sm transition-colors font-poppins cursor-pointer"
+                    className="inline-flex items-center text-red-500 hover:text-red-600 font-medium text-sm transition-colors font-poppins cursor-pointer"
                   >
                     {content[language].readMore}
                     <ArrowRight className="h-4 w-4 ml-1" />

@@ -22,7 +22,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language }) => {
 
   const content = {
     gr: {
-      title: 'Αφήστε την Αξιολόγησή σας',
+      title: 'Αφήστε την Αξιολόγηση σας',
       subtitle: 'Η γνώμη σας είναι σημαντική για εμάς',
       nameLabel: 'Όνομα',
       namePlaceholder: 'Το όνομά σας',

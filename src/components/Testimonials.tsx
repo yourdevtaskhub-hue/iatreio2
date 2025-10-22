@@ -210,7 +210,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
               <Heart className="h-8 w-8 text-rose-soft" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-800 mb-4 font-poppins">
-              {language === 'gr' ? 'Η Οικογένειά σας Αξίζει Υποστήριξη' : 'Your Family Deserves Support'}
+              {language === 'gr' ? 'Η Οικογένεια σας Αξίζει Υποστήριξη' : 'Your Family Deserves Support'}
             </h3>
             <p className="text-gray-600 font-nunito leading-relaxed">
               {language === 'gr' 
