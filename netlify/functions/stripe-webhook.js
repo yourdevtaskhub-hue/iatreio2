@@ -192,8 +192,7 @@ async function handleCheckoutSessionCompleted(session) {
         duration_minutes: 30,
         parent_name: parent_name,
         email: parent_email,
-        concerns: concerns || '',
-        payment_id: payment_id
+        concerns: concerns || ''
       })
       .select()
       .single();
