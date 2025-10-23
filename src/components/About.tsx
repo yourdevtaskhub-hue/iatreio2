@@ -192,45 +192,6 @@ const About: React.FC<AboutProps> = ({ language }) => {
               </motion.p>
             </div>
 
-            {/* Επαγγελματικές Συμμετοχές */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-12"
-            >
-              <div className="flex items-center mb-4">
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl mr-4 shadow-md"
-                >
-                  <Star className="h-5 w-5 text-gray-700" />
-                </motion.div>
-                <h3 className="font-bold text-lg text-gray-800 font-poppins">{content[language].memberships || 'Επαγγελματικές Συμμετοχές'}</h3>
-              </div>
-              <ul className="space-y-2">
-                {(content[language].membershipsList || []).map((membership: string, index: number) => (
-                  <motion.li 
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="flex items-start text-gray-700 font-nunito text-sm"
-                  >
-                    <motion.div 
-                      whileHover={{ scale: 1.5 }}
-                      className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3 mt-1 flex-shrink-0"
-                    />
-                    <span className="leading-relaxed">{membership}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-
             {/* Ψυχοθεραπευτική Εκπαίδευση */}
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -332,6 +293,45 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 );
               })}
             </div>
+
+            {/* Επαγγελματικές Συμμετοχές */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.02 }}
+              className="bg-white p-6 rounded-4xl shadow-xl border border-gray-100 mt-6"
+            >
+              <div className="flex items-center mb-4">
+                <motion.div
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl mr-4 shadow-md"
+                >
+                  <Star className="h-5 w-5 text-gray-700" />
+                </motion.div>
+                <h3 className="font-bold text-lg text-gray-800 font-poppins">{content[language].memberships || 'Επαγγελματικές Συμμετοχές'}</h3>
+              </div>
+              <ul className="space-y-2">
+                {(content[language].membershipsList || []).map((membership: string, index: number) => (
+                  <motion.li 
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="flex items-start text-gray-700 font-nunito text-sm"
+                  >
+                    <motion.div 
+                      whileHover={{ scale: 1.5 }}
+                      className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mr-3 mt-1 flex-shrink-0"
+                    />
+                    <span className="leading-relaxed">{membership}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
 
           </motion.div>
         </div>
