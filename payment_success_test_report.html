@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Success Popup Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+        .summary-card h3 { margin: 0 0 10px 0; color: #333; }
+        .summary-card .number { font-size: 2em; font-weight: bold; color: #007bff; }
+        .test-result { margin-bottom: 20px; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; }
+        .test-result.error { border-left-color: #dc3545; background: #f8d7da; }
+        .test-result.success { border-left-color: #28a745; background: #d4edda; }
+        .test-result.warning { border-left-color: #ffc107; background: #fff3cd; }
+        .test-name { font-weight: bold; margin-bottom: 5px; }
+        .test-message { margin-bottom: 10px; }
+        .test-details { font-size: 0.9em; color: #666; background: #f8f9fa; padding: 10px; border-radius: 4px; }
+        .timestamp { color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment Success Popup Test Report</h1>
+            <p class="timestamp">Generated on: 10/22/2025, 7:19:31 PM</p>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Total Tests</h3>
+                <div class="number">10</div>
+            </div>
+            <div class="summary-card">
+                <h3>Passed</h3>
+                <div class="number" style="color: #28a745;">10</div>
+            </div>
+            <div class="summary-card">
+                <h3>Warnings</h3>
+                <div class="number" style="color: #ffc107;">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Failed</h3>
+                <div class="number" style="color: #dc3545;">0</div>
+            </div>
+        </div>
+        
+        <h2>Test Results</h2>
+        
+            <div class="test-result passed">
+                <div class="test-name">PaymentSuccessPopup Component Exists</div>
+                <div class="test-message">PaymentSuccessPopup component is properly implemented</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundElements": [
+    "PaymentSuccessPopup",
+    "isVisible",
+    "onClose",
+    "sessionId",
+    "paymentId",
+    "Πληρωμή Επιτυχής",
+    "Σας περιμένουμε στο ιατρείο μας",
+    "AnimatePresence",
+    "motion.div"
+  ]
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">usePaymentSuccess Hook Exists</div>
+                <div class="test-message">usePaymentSuccess hook is properly implemented</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundElements": [
+    "usePaymentSuccess",
+    "sessionId",
+    "paymentId",
+    "isSuccess",
+    "payment-success",
+    "success",
+    "payment_status",
+    "URLSearchParams"
+  ]
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">App.tsx Integration</div>
+                <div class="test-message">App.tsx properly integrates PaymentSuccessPopup</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundElements": [
+    "PaymentSuccessPopup",
+    "usePaymentSuccess",
+    "showPaymentSuccess",
+    "setShowPaymentSuccess",
+    "paymentSuccess.isSuccess"
+  ]
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">URL Parameter Detection</div>
+                <div class="test-message">URL parameter detection coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundChecks": [
+    "session_id",
+    "payment_id",
+    "payment_status",
+    "success",
+    "payment-success",
+    "success",
+    "payment_success"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Popup Content and Messaging</div>
+                <div class="test-message">Popup message coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundMessages": [
+    "Πληρωμή Επιτυχής",
+    "Σας περιμένουμε στο ιατρείο μας",
+    "Η πληρωμή σας ολοκληρώθηκε με επιτυχία",
+    "Θα λάβετε email επιβεβαίωσης",
+    "Λεπτομέρειες Ραντεβού",
+    "Επικοινωνία",
+    "Κατάλαβα",
+    "Επικοινωνία"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Animation and UX Features</div>
+                <div class="test-message">UX feature coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundFeatures": [
+    "AnimatePresence",
+    "motion.div",
+    "initial",
+    "animate",
+    "exit",
+    "transition",
+    "spring",
+    "stiffness",
+    "damping",
+    "CheckCircle",
+    "Calendar",
+    "Clock",
+    "MapPin",
+    "Phone",
+    "Mail",
+    "X"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Auto-Close Functionality</div>
+                <div class="test-message">Auto-close functionality coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundFeatures": [
+    "useEffect",
+    "setTimeout",
+    "clearTimeout",
+    "10000",
+    "handleClose"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Test Page Exists</div>
+                <div class="test-message">Test page is properly implemented</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundElements": [
+    "testSuccessWithSession",
+    "testSuccessWithPayment",
+    "testSuccessWithBoth",
+    "testSuccessPage",
+    "updateURLIndicator",
+    "showPopup",
+    "closePopup"
+  ]
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Success URL Pattern Detection</div>
+                <div class="test-message">URL pattern detection coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundPatterns": [
+    "payment-success",
+    "success",
+    "payment_success",
+    "session_id",
+    "payment_id",
+    "payment_status",
+    "success",
+    "pathname.includes",
+    "urlParams.get"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+            <div class="test-result passed">
+                <div class="test-name">Responsive Design</div>
+                <div class="test-message">Responsive design coverage: 100.0%</div>
+                
+                    <div class="test-details">
+                        <pre>{
+  "foundClasses": [
+    "max-w-md",
+    "w-full",
+    "mx-4",
+    "p-4",
+    "p-6",
+    "space-y-4",
+    "flex",
+    "items-center",
+    "justify-center",
+    "text-center"
+  ],
+  "coverage": 100
+}</pre>
+                    </div>
+                
+            </div>
+        
+    </div>
+</body>
+</html>

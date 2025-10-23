@@ -9,6 +9,14 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Cross-platform font rendering fixes */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  /* Prevent font fallback issues on Mac */
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
 }
 
 /* Prevent FOUT (Flash of Unstyled Text) */
@@ -66,4 +74,110 @@ img {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   will-change: transform;
+}
+
+/* Cross-platform header alignment fixes */
+header nav {
+  /* Ensure consistent height across platforms */
+  min-height: 80px;
+}
+
+@media (min-width: 640px) {
+  header nav {
+    min-height: 96px;
+  }
+}
+
+/* Ensure proper vertical alignment in header */
+header .flex.items-center {
+  align-items: center !important;
+  min-height: inherit;
+}
+
+/* Fix for Mac Safari font rendering issues */
+@supports (-webkit-appearance: none) {
+  .font-dancing-script {
+    -webkit-font-smoothing: subpixel-antialiased;
+    -webkit-text-stroke: 0.01em transparent;
+  }
+}
+
+/* Windows font rendering fixes */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .font-dancing-script {
+    font-weight: 600;
+    text-rendering: geometricPrecision;
+  }
+}
+
+/* Firefox specific fixes */
+@-moz-document url-prefix() {
+  .font-dancing-script {
+    font-weight: 500;
+    text-rendering: optimizeSpeed;
+  }
+}
+
+/* Ensure consistent button heights across platforms */
+button {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fix for mobile Safari viewport issues */
+@supports (-webkit-touch-callout: none) {
+  .min-h-\[70vh\] {
+    min-height: 70vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  .min-h-\[80vh\] {
+    min-height: 80vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Mobile-first responsive design improvements */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Ensure proper spacing on mobile */
+  .space-x-2 > * + * {
+    margin-left: 0.5rem;
+  }
+  
+  /* Mobile button improvements */
+  button {
+    min-height: 44px; /* iOS recommended touch target size */
+  }
+  
+  /* Mobile text sizing */
+  .text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+/* Tablet responsive improvements */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .space-x-4 > * + * {
+    margin-left: 1rem;
+  }
+  
+  .text-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+/* Desktop responsive improvements */
+@media (min-width: 1024px) {
+  .space-x-6 > * + * {
+    margin-left: 1.5rem;
+  }
 }

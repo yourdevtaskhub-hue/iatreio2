@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Design Test - Online Parent Teen Clinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .font-dancing-script {
+            font-family: 'Dancing Script', 'Brush Script MT', 'Lucida Handwriting', cursive, serif !important;
+            font-display: swap;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .font-quicksand {
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .font-nunito {
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        /* Cross-platform fixes */
+        img {
+            image-orientation: from-image;
+            -webkit-transform: none;
+            -moz-transform: none;
+            -ms-transform: none;
+            transform: none;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-transform-origin: center center;
+            transform-origin: center center;
+        }
+        
+        /* Force hardware acceleration */
+        img {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            will-change: transform;
+        }
+        
+        /* Mac Safari specific fixes */
+        @supports (-webkit-appearance: none) {
+            img {
+                -webkit-transform: none !important;
+                transform: none !important;
+            }
+        }
+        
+        /* Custom gradient colors */
+        .from-rose-soft {
+            --tw-gradient-from: #fecaca;
+            --tw-gradient-to: rgba(254, 202, 202, 0);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        }
+        
+        .via-purple-soft {
+            --tw-gradient-to: rgba(196, 181, 253, 0);
+            --tw-gradient-stops: var(--tw-gradient-from), #c4b5fd, var(--tw-gradient-to);
+        }
+        
+        .to-blue-soft {
+            --tw-gradient-to: #a5b4fc;
+        }
+        
+        .bg-pink-100 {
+            background-color: #fce7f3;
+        }
+        
+        .border-pink-200 {
+            border-color: #fbcfe8;
+        }
+        
+        .text-yellow-600 {
+            color: #d97706;
+        }
+        
+        .text-gray-600 {
+            color: #4b5563;
+        }
+        
+        .text-gray-800 {
+            color: #1f2937;
+        }
+        
+        .text-gray-900 {
+            color: #111827;
+        }
+        
+        .text-white {
+            color: #ffffff;
+        }
+        
+        .text-white\/90 {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        }
+        
+        .bg-clip-text {
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        
+        .text-transparent {
+            color: transparent;
+        }
+        
+        /* Responsive breakpoints test */
+        .test-breakpoint {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Breakpoint indicator -->
+    <div class="test-breakpoint" id="breakpoint-indicator">
+        <span id="current-breakpoint">Loading...</span>
+    </div>
+
+    <!-- Header Component -->
+    <header class="fixed top-0 w-full z-50 bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20 sm:h-24">
+                <!-- Logo and Doctor Info -->
+                <div class="flex items-center space-x-3">
+                    <!-- Placeholder for logo -->
+                    <div class="h-16 w-16 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center">
+                        <span class="text-pink-500 font-bold text-lg">LOGO</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg sm:text-xl text-white font-dancing-script">Dr. Anna-Maria Fytrou</h1>
+                        <div class="text-xs sm:text-sm text-white/90 font-quicksand">
+                            <div>Ψυχίατρος Παιδιού και Εφήβου</div>
+                            <div>Ψυχοθεραπεύτρια</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:block">
+                    <div class="flex items-center space-x-6">
+                        <button class="text-white hover:text-white/80 px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center">
+                            <div class="flex flex-col">
+                                <span>Αρχική</span>
+                            </div>
+                        </button>
+                        <button class="text-white hover:text-white/80 px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center">
+                            <div class="flex flex-col">
+                                <span>Υπηρεσίες</span>
+                            </div>
+                        </button>
+                        <button class="text-white hover:text-white/80 px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center">
+                            <div class="flex flex-col">
+                                <span>Βιογραφία</span>
+                            </div>
+                        </button>
+                        <button class="flex items-center space-x-2 px-2 sm:px-3 py-2 sm:py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300">
+                            <span class="text-sm font-medium">EN</span>
+                        </button>
+                        <button class="bg-white text-rose-soft px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins">
+                            Κλείστε Ραντεβού
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button class="text-white hover:text-white/80 p-2 rounded-xl">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-20 pb-8 bg-white relative overflow-hidden">
+        <!-- Post-it Note Effect -->
+        <div class="absolute top-[32%] left-4 sm:left-8 md:left-16 lg:left-32 xl:left-40 z-10">
+            <div class="relative">
+                <!-- Pin icon at the top -->
+                <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+                    <svg class="h-4 w-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                </div>
+                
+                <!-- Main post-it note -->
+                <div class="bg-pink-100 rounded-md px-4 py-3 shadow-xl border-2 border-pink-200 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <!-- Trophy icon -->
+                    <div class="flex justify-center mb-2">
+                        <svg class="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Text content -->
+                    <div class="text-gray-800 text-xs font-bold font-nunito leading-tight text-center">
+                        Το 1ο Διαδικτυακό Ιατρείο<br />
+                        Γονέων και Εφήβων στην<br />
+                        Ευρώπη
+                    </div>
+                </div>
+                
+                <!-- Shadow effect -->
+                <div class="absolute inset-0 bg-black/10 rounded-md transform translate-x-0.5 translate-y-0.5 -z-10"></div>
+            </div>
+        </div>
+
+        <!-- Centered Content -->
+        <div class="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center min-h-[70vh]">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold mb-7 leading-tight font-poppins">
+                <span class="text-gray-900">
+                    Διαδικτυακό Ιατρείο
+                </span>
+                <br />
+                <span class="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent">
+                    Γονέων και Εφήβων
+                </span>
+            </h1>
+            
+            <p class="text-base sm:text-lg text-gray-900 mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center">
+                Υποστήριξη της Ψυχικής Υγείας των εφήβων και των γονέων τους με επαγγελματισμό, κατανόηση και πλήρη εχεμύθεια.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-2">
+                <button class="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins">
+                    <span>Κλείστε Ραντεβού</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                
+                <button class="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins">
+                    Μάθετε Περισσότερα
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Results Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-8">Cross-Platform Test Results</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Header Alignment</h3>
+                    <div id="header-test" class="text-sm text-gray-600">
+                        Testing header elements alignment...
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Font Rendering</h3>
+                    <div id="font-test" class="text-sm text-gray-600">
+                        Testing font rendering across platforms...
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Responsive Design</h3>
+                    <div id="responsive-test" class="text-sm text-gray-600">
+                        Testing responsive breakpoints...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Breakpoint detection
+        function updateBreakpoint() {
+            const width = window.innerWidth;
+            let breakpoint = 'xs';
+            
+            if (width >= 1536) breakpoint = '2xl';
+            else if (width >= 1280) breakpoint = 'xl';
+            else if (width >= 1024) breakpoint = 'lg';
+            else if (width >= 768) breakpoint = 'md';
+            else if (width >= 640) breakpoint = 'sm';
+            
+            document.getElementById('current-breakpoint').textContent = `${breakpoint} (${width}px)`;
+        }
+        
+        // Test functions
+        function testHeaderAlignment() {
+            const header = document.querySelector('header');
+            const logo = header.querySelector('.flex.items-center.space-x-3');
+            const nav = header.querySelector('.hidden.lg\\:block');
+            
+            const logoRect = logo.getBoundingClientRect();
+            const navRect = nav.getBoundingClientRect();
+            
+            const alignment = Math.abs(logoRect.top - navRect.top) < 5 ? 'Perfect' : 'Misaligned';
+            const verticalCenter = Math.abs(logoRect.top + logoRect.height/2 - navRect.top - navRect.height/2) < 10 ? 'Centered' : 'Off-center';
+            
+            document.getElementById('header-test').innerHTML = `
+                <div class="mb-2"><strong>Vertical Alignment:</strong> ${alignment}</div>
+                <div class="mb-2"><strong>Center Alignment:</strong> ${verticalCenter}</div>
+                <div class="mb-2"><strong>Logo Height:</strong> ${logoRect.height.toFixed(1)}px</div>
+                <div><strong>Nav Height:</strong> ${navRect.height.toFixed(1)}px</div>
+            `;
+        }
+        
+        function testFontRendering() {
+            const dancingScript = document.querySelector('.font-dancing-script');
+            const computedStyle = window.getComputedStyle(dancingScript);
+            const fontFamily = computedStyle.fontFamily;
+            
+            const isDancingScript = fontFamily.includes('Dancing Script');
+            const fontSize = computedStyle.fontSize;
+            const fontWeight = computedStyle.fontWeight;
+            
+            document.getElementById('font-test').innerHTML = `
+                <div class="mb-2"><strong>Dancing Script Loaded:</strong> ${isDancingScript ? 'Yes' : 'No'}</div>
+                <div class="mb-2"><strong>Font Size:</strong> ${fontSize}</div>
+                <div class="mb-2"><strong>Font Weight:</strong> ${fontWeight}</div>
+                <div><strong>Font Family:</strong> ${fontFamily}</div>
+            `;
+        }
+        
+        function testResponsiveDesign() {
+            const width = window.innerWidth;
+            const heroTitle = document.querySelector('h1');
+            const heroRect = heroTitle.getBoundingClientRect();
+            
+            const isResponsive = heroRect.width > 0 && heroRect.height > 0;
+            const textSize = window.getComputedStyle(heroTitle).fontSize;
+            
+            document.getElementById('responsive-test').innerHTML = `
+                <div class="mb-2"><strong>Screen Width:</strong> ${width}px</div>
+                <div class="mb-2"><strong>Title Rendered:</strong> ${isResponsive ? 'Yes' : 'No'}</div>
+                <div class="mb-2"><strong>Title Size:</strong> ${textSize}</div>
+                <div><strong>Title Width:</strong> ${heroRect.width.toFixed(1)}px</div>
+            `;
+        }
+        
+        // Run tests
+        function runAllTests() {
+            updateBreakpoint();
+            testHeaderAlignment();
+            testFontRendering();
+            testResponsiveDesign();
+        }
+        
+        // Run tests on load and resize
+        window.addEventListener('load', runAllTests);
+        window.addEventListener('resize', runAllTests);
+        
+        // Run tests every 2 seconds for continuous monitoring
+        setInterval(runAllTests, 2000);
+    </script>
+</body>
+</html>

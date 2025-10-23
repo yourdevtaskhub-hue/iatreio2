@@ -1,0 +1,191 @@
+{
+  "timestamp": "2025-10-23T02:19:31.049Z",
+  "tests": [
+    {
+      "name": "PaymentSuccessPopup Component Exists",
+      "status": "passed",
+      "message": "PaymentSuccessPopup component is properly implemented",
+      "details": {
+        "foundElements": [
+          "PaymentSuccessPopup",
+          "isVisible",
+          "onClose",
+          "sessionId",
+          "paymentId",
+          "Πληρωμή Επιτυχής",
+          "Σας περιμένουμε στο ιατρείο μας",
+          "AnimatePresence",
+          "motion.div"
+        ]
+      }
+    },
+    {
+      "name": "usePaymentSuccess Hook Exists",
+      "status": "passed",
+      "message": "usePaymentSuccess hook is properly implemented",
+      "details": {
+        "foundElements": [
+          "usePaymentSuccess",
+          "sessionId",
+          "paymentId",
+          "isSuccess",
+          "payment-success",
+          "success",
+          "payment_status",
+          "URLSearchParams"
+        ]
+      }
+    },
+    {
+      "name": "App.tsx Integration",
+      "status": "passed",
+      "message": "App.tsx properly integrates PaymentSuccessPopup",
+      "details": {
+        "foundElements": [
+          "PaymentSuccessPopup",
+          "usePaymentSuccess",
+          "showPaymentSuccess",
+          "setShowPaymentSuccess",
+          "paymentSuccess.isSuccess"
+        ]
+      }
+    },
+    {
+      "name": "URL Parameter Detection",
+      "status": "passed",
+      "message": "URL parameter detection coverage: 100.0%",
+      "details": {
+        "foundChecks": [
+          "session_id",
+          "payment_id",
+          "payment_status",
+          "success",
+          "payment-success",
+          "success",
+          "payment_success"
+        ],
+        "coverage": 100
+      }
+    },
+    {
+      "name": "Popup Content and Messaging",
+      "status": "passed",
+      "message": "Popup message coverage: 100.0%",
+      "details": {
+        "foundMessages": [
+          "Πληρωμή Επιτυχής",
+          "Σας περιμένουμε στο ιατρείο μας",
+          "Η πληρωμή σας ολοκληρώθηκε με επιτυχία",
+          "Θα λάβετε email επιβεβαίωσης",
+          "Λεπτομέρειες Ραντεβού",
+          "Επικοινωνία",
+          "Κατάλαβα",
+          "Επικοινωνία"
+        ],
+        "coverage": 100
+      }
+    },
+    {
+      "name": "Animation and UX Features",
+      "status": "passed",
+      "message": "UX feature coverage: 100.0%",
+      "details": {
+        "foundFeatures": [
+          "AnimatePresence",
+          "motion.div",
+          "initial",
+          "animate",
+          "exit",
+          "transition",
+          "spring",
+          "stiffness",
+          "damping",
+          "CheckCircle",
+          "Calendar",
+          "Clock",
+          "MapPin",
+          "Phone",
+          "Mail",
+          "X"
+        ],
+        "coverage": 100
+      }
+    },
+    {
+      "name": "Auto-Close Functionality",
+      "status": "passed",
+      "message": "Auto-close functionality coverage: 100.0%",
+      "details": {
+        "foundFeatures": [
+          "useEffect",
+          "setTimeout",
+          "clearTimeout",
+          "10000",
+          "handleClose"
+        ],
+        "coverage": 100
+      }
+    },
+    {
+      "name": "Test Page Exists",
+      "status": "passed",
+      "message": "Test page is properly implemented",
+      "details": {
+        "foundElements": [
+          "testSuccessWithSession",
+          "testSuccessWithPayment",
+          "testSuccessWithBoth",
+          "testSuccessPage",
+          "updateURLIndicator",
+          "showPopup",
+          "closePopup"
+        ]
+      }
+    },
+    {
+      "name": "Success URL Pattern Detection",
+      "status": "passed",
+      "message": "URL pattern detection coverage: 100.0%",
+      "details": {
+        "foundPatterns": [
+          "payment-success",
+          "success",
+          "payment_success",
+          "session_id",
+          "payment_id",
+          "payment_status",
+          "success",
+          "pathname.includes",
+          "urlParams.get"
+        ],
+        "coverage": 100
+      }
+    },
+    {
+      "name": "Responsive Design",
+      "status": "passed",
+      "message": "Responsive design coverage: 100.0%",
+      "details": {
+        "foundClasses": [
+          "max-w-md",
+          "w-full",
+          "mx-4",
+          "p-4",
+          "p-6",
+          "space-y-4",
+          "flex",
+          "items-center",
+          "justify-center",
+          "text-center"
+        ],
+        "coverage": 100
+      }
+    }
+  ],
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "warnings": 0
+  }
+}

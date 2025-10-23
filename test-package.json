@@ -1,0 +1,18 @@
+{
+  "name": "cross-platform-tests",
+  "version": "1.0.0",
+  "description": "Cross-platform compatibility tests for Online Parent Teen Clinic",
+  "main": "test_cross_platform.js",
+  "scripts": {
+    "test": "node test_cross_platform.js",
+    "test:responsive": "open test_responsive_design.html",
+    "install-deps": "npm install puppeteer"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "devDependencies": {},
+  "keywords": ["testing", "cross-platform", "responsive", "compatibility"],
+  "author": "Online Parent Teen Clinic",
+  "license": "MIT"
+}

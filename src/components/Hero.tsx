@@ -54,6 +54,12 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
         animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
         className="absolute top-[32%] left-4 sm:left-8 md:left-16 lg:left-32 xl:left-40 z-10"
+        style={{
+          WebkitTransform: 'none',
+          transform: 'none',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
+        }}
       >
         {/* Post-it Note with realistic styling - Μικρότερο */}
         <div className="relative">
@@ -83,12 +89,19 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       </motion.div>
 
       {/* Centered Content */}
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center min-h-[70vh] sm:min-h-[80vh] lg:min-h-[70vh]">
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold mb-7 leading-tight font-poppins"
+          style={{
+            textRendering: 'optimizeLegibility',
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            WebkitTextSizeAdjust: '100%',
+            textSizeAdjust: '100%'
+          }}
         >
           {language === 'gr' ? (
             <>
@@ -119,7 +132,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-base sm:text-lg text-gray-900 mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center"
+          className="text-sm sm:text-base md:text-lg text-gray-900 mb-6 sm:mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center px-4 sm:px-0"
         >
           {content[language].subtitle}
         </motion.p>
@@ -129,13 +142,13 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-2"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-2 px-4 sm:px-0"
         >
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToContact}
-            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins"
+            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins w-full sm:w-auto"
           >
             <span>{content[language].cta}</span>
             <ArrowRight className="h-5 w-5" />
@@ -145,7 +158,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToServices}
-            className="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins"
+            className="border-2 border-gray-300 text-gray-700 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins w-full sm:w-auto"
           >
             {content[language].learnMore}
           </motion.button>

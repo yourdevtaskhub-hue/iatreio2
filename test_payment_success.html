@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Payment Success - Online Parent Teen Clinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .font-dancing-script {
+            font-family: 'Dancing Script', 'Brush Script MT', 'Lucida Handwriting', cursive, serif !important;
+            font-display: swap;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .font-quicksand {
+            font-family: 'Quicksand', sans-serif;
+        }
+        
+        .font-nunito {
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        /* Test indicators */
+        .test-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 9999;
+            font-family: monospace;
+        }
+        
+        .test-buttons {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 9999;
+            font-family: monospace;
+            max-width: 200px;
+        }
+        
+        .test-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Test indicators -->
+    <div class="test-indicator" id="url-indicator">
+        <div>Current URL: <span id="current-url">Loading...</span></div>
+        <div>Payment Success: <span id="success-status">Checking...</span></div>
+    </div>
+    
+    <div class="test-buttons">
+        <div>Test Payment Success URLs:</div>
+        <button class="test-btn" onclick="testSuccessWithSession()">With Session ID</button>
+        <button class="test-btn" onclick="testSuccessWithPayment()">With Payment ID</button>
+        <button class="test-btn" onclick="testSuccessWithBoth()">With Both IDs</button>
+        <button class="test-btn" onclick="testSuccessPage()">Success Page</button>
+        <button class="test-btn" onclick="clearParams()">Clear</button>
+    </div>
+
+    <!-- Header Component -->
+    <header class="fixed top-0 w-full z-50 bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20 sm:h-24 min-h-[80px] sm:min-h-[96px]">
+                <!-- Logo and Doctor Info -->
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <!-- Placeholder for logo -->
+                    <div class="h-16 w-16 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-pink-500 font-bold text-lg">LOGO</span>
+                    </div>
+                    <div class="flex flex-col justify-center min-h-[64px] sm:min-h-[80px]">
+                        <h1 class="font-bold text-lg sm:text-xl text-white font-dancing-script leading-tight">
+                            Dr. Anna-Maria Fytrou
+                        </h1>
+                        <div class="text-xs sm:text-sm text-white/90 font-quicksand leading-tight">
+                            <div>Ψυχίατρος Παιδιού και Εφήβου</div>
+                            <div>Ψυχοθεραπεύτρια</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:block flex-shrink-0">
+                    <div class="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 h-full">
+                        <button class="text-white hover:text-white/80 px-1 sm:px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center flex items-center justify-center min-h-[40px]">
+                            <div class="flex flex-col justify-center">
+                                <span>Αρχική</span>
+                            </div>
+                        </button>
+                        <button class="text-white hover:text-white/80 px-1 sm:px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center flex items-center justify-center min-h-[40px]">
+                            <div class="flex flex-col justify-center">
+                                <span>Υπηρεσίες</span>
+                            </div>
+                        </button>
+                        <button class="text-white hover:text-white/80 px-1 sm:px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center flex items-center justify-center min-h-[40px]">
+                            <div class="flex flex-col justify-center">
+                                <span>Βιογραφία</span>
+                            </div>
+                        </button>
+                        <button class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 sm:py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300 min-h-[40px]">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                            </svg>
+                            <span class="text-sm font-medium">EN</span>
+                        </button>
+                        <button class="bg-white text-rose-soft px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins min-h-[40px] flex items-center justify-center">
+                            Κλείστε Ραντεβού
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button class="text-white hover:text-white/80 p-2 rounded-xl">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-20 pb-8 bg-white relative overflow-hidden">
+        <!-- Centered Content -->
+        <div class="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center min-h-[70vh] sm:min-h-[80vh] lg:min-h-[70vh]">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold mb-7 leading-tight font-poppins">
+                <span class="text-gray-900">
+                    Διαδικτυακό Ιατρείο
+                </span>
+                <br />
+                <span class="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent">
+                    Γονέων και Εφήβων
+                </span>
+            </h1>
+            
+            <p class="text-sm sm:text-base md:text-lg text-gray-900 mb-6 sm:mb-8 max-w-2xl mx-auto font-nunito font-medium italic text-center px-4 sm:px-0">
+                Υποστήριξη της Ψυχικής Υγείας των εφήβων και των γονέων τους με επαγγελματισμό, κατανόηση και πλήρη εχεμύθεια.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-2 px-4 sm:px-0">
+                <button class="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 font-poppins w-full sm:w-auto">
+                    <span>Κλείστε Ραντεβού</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                
+                <button class="border-2 border-gray-300 text-gray-700 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins w-full sm:w-auto">
+                    Μάθετε Περισσότερα
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Success Popup (Simulated) -->
+    <div id="payment-success-popup" class="fixed inset-0 z-[9999] hidden">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closePopup()"></div>
+        <div class="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+                <!-- Header with success icon -->
+                <div class="bg-gradient-to-r from-green-400 to-emerald-500 p-6 text-center">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4">
+                        <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold text-white mb-2">
+                        Πληρωμή Επιτυχής!
+                    </h2>
+                    
+                    <p class="text-white/90 text-lg">
+                        Σας περιμένουμε στο ιατρείο μας!
+                    </p>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <!-- Success message -->
+                        <div class="text-center">
+                            <p class="text-gray-700 text-lg font-medium mb-4">
+                                Η πληρωμή σας ολοκληρώθηκε με επιτυχία! 
+                            </p>
+                            <p class="text-gray-600">
+                                Θα λάβετε email επιβεβαίωσης με όλες τις λεπτομέρειες του ραντεβού σας.
+                            </p>
+                        </div>
+
+                        <!-- Appointment details -->
+                        <div class="bg-gray-50 rounded-2xl p-4 space-y-3">
+                            <h3 class="font-semibold text-gray-800 text-center mb-3">
+                                Λεπτομέρειες Ραντεβού
+                            </h3>
+                            
+                            <div class="flex items-center space-x-3 text-gray-700">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-sm">Ημερομηνία: Θα επιβεβαιωθεί με email</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 text-gray-700">
+                                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm">Ώρα: Θα επιβεβαιωθεί με email</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 text-gray-700">
+                                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span class="text-sm">Τοποθεσία: Online (Διαδικτυακό Ιατρείο)</span>
+                            </div>
+                        </div>
+
+                        <!-- Contact info -->
+                        <div class="bg-blue-50 rounded-2xl p-4">
+                            <h4 class="font-semibold text-blue-800 mb-3 text-center">
+                                Επικοινωνία
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-3 text-blue-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                    </svg>
+                                    <span class="text-sm">+41 21 123 4567</span>
+                                </div>
+                                <div class="flex items-center space-x-3 text-blue-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span class="text-sm">info@onlineparentteenclinic.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="flex space-x-3 mt-6">
+                        <button onclick="closePopup()" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            Κατάλαβα
+                        </button>
+                        
+                        <button onclick="closePopup()" class="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            Επικοινωνία
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Close button -->
+                <button onclick="closePopup()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL detection and testing functions
+        function updateURLIndicator() {
+            const currentURL = window.location.href;
+            document.getElementById('current-url').textContent = currentURL;
+            
+            // Check for payment success indicators
+            const urlParams = new URLSearchParams(window.location.search);
+            const pathname = window.location.pathname;
+            
+            const sessionId = urlParams.get('session_id');
+            const paymentId = urlParams.get('payment_id');
+            const paymentStatus = urlParams.get('payment_status');
+            const success = urlParams.get('success');
+            
+            const isSuccessPage = pathname.includes('payment-success') || 
+                                 pathname.includes('success') ||
+                                 pathname.includes('payment_success');
+            
+            const hasSuccessParams = sessionId || paymentId || 
+                                   paymentStatus === 'success' || 
+                                   success === 'true' ||
+                                   success === '1';
+            
+            const isSuccess = isSuccessPage || hasSuccessParams;
+            
+            document.getElementById('success-status').textContent = isSuccess ? '✅ YES' : '❌ NO';
+            
+            // Show popup if success detected
+            if (isSuccess) {
+                showPopup();
+            }
+        }
+        
+        function showPopup() {
+            document.getElementById('payment-success-popup').classList.remove('hidden');
+        }
+        
+        function closePopup() {
+            document.getElementById('payment-success-popup').classList.add('hidden');
+        }
+        
+        // Test functions
+        function testSuccessWithSession() {
+            const url = new URL(window.location);
+            url.searchParams.set('session_id', 'cs_test_a1MdSOLB4wi9a8prqyrEgOy4qV72DdOaLvXWWjq5vBYaLVSsiWvjhdzeXn');
+            window.history.pushState({}, '', url);
+            updateURLIndicator();
+        }
+        
+        function testSuccessWithPayment() {
+            const url = new URL(window.location);
+            url.searchParams.set('payment_id', '91eaca6b-56f6-4e9d-8ff3-cc9708faef4c');
+            window.history.pushState({}, '', url);
+            updateURLIndicator();
+        }
+        
+        function testSuccessWithBoth() {
+            const url = new URL(window.location);
+            url.searchParams.set('session_id', 'cs_test_a1MdSOLB4wi9a8prqyrEgOy4qV72DdOaLvXWWjq5vBYaLVSsiWvjhdzeXn');
+            url.searchParams.set('payment_id', '91eaca6b-56f6-4e9d-8ff3-cc9708faef4c');
+            window.history.pushState({}, '', url);
+            updateURLIndicator();
+        }
+        
+        function testSuccessPage() {
+            const url = new URL(window.location);
+            url.pathname = '/payment-success';
+            url.searchParams.set('session_id', 'cs_test_a1MdSOLB4wi9a8prqyrEgOy4qV72DdOaLvXWWjq5vBYaLVSsiWvjhdzeXn');
+            url.searchParams.set('payment_id', '91eaca6b-56f6-4e9d-8ff3-cc9708faef4c');
+            window.history.pushState({}, '', url);
+            updateURLIndicator();
+        }
+        
+        function clearParams() {
+            const url = new URL(window.location);
+            url.pathname = '/';
+            url.search = '';
+            window.history.pushState({}, '', url);
+            updateURLIndicator();
+        }
+        
+        // Initialize
+        updateURLIndicator();
+        
+        // Listen for URL changes
+        window.addEventListener('popstate', updateURLIndicator);
+    </script>
+</body>
+</html>

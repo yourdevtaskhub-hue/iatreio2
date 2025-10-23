@@ -15,10 +15,16 @@ import Admin from './pages/Admin';
 import EiriniPanel from './components/EiriniPanel';
 import IoannaPanel from './components/IoannaPanel';
 import SofiaPanel from './components/SofiaPanel';
+import PaymentSuccessPopup from './components/PaymentSuccessPopup';
+import { usePaymentSuccess } from './hooks/usePaymentSuccess';
 
 function App() {
   const [language, setLanguage] = useState('gr');
   const [currentPage, setCurrentPage] = useState('home');
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  
+  // Check for payment success
+  const paymentSuccess = usePaymentSuccess();
 
   // Check URL for admin access and doctor panels
   React.useEffect(() => {
@@ -33,6 +39,13 @@ function App() {
       setCurrentPage('sofia');
     }
   }, []);
+
+  // Show payment success popup when payment is successful
+  React.useEffect(() => {
+    if (paymentSuccess.isSuccess) {
+      setShowPaymentSuccess(true);
+    }
+  }, [paymentSuccess.isSuccess]);
 
   // Simple routing
   const renderPage = () => {
@@ -67,6 +80,14 @@ function App() {
   return (
     <div className="min-h-screen bg-white font-nunito">
       {renderPage()}
+      
+      {/* Payment Success Popup */}
+      <PaymentSuccessPopup
+        isVisible={showPaymentSuccess}
+        onClose={() => setShowPaymentSuccess(false)}
+        sessionId={paymentSuccess.sessionId}
+        paymentId={paymentSuccess.paymentId}
+      />
       
       {/* Admin Panel Access Button - Only show on home page */}
       {currentPage === 'home' && (
