@@ -30,7 +30,7 @@ exports.handler = async (event, context) => {
 
   try {
     const sig = event.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_7j2pwxIom2pTU84KLRUi0UqQln5IctLf';
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_0idYvHmURXcSL9x8zaYUnMjmXJ6a54Yc';
 
     console.log('🔍 [DEBUG] Verifying webhook signature...');
     console.log('🔍 [DEBUG] Signature:', sig);

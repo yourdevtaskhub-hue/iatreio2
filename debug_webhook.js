@@ -34,7 +34,7 @@ async function testWebhookEndpoint() {
   const postData = JSON.stringify(testData);
   
   const options = {
-    hostname: 'onlineparentteenclinic.netlify.app', // Αλλάξε με το σωστό domain
+    hostname: 'onlineparentteenclinic.netlify.app',
     port: 443,
     path: '/.netlify/functions/stripe-webhook',
     method: 'POST',
