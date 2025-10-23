@@ -128,13 +128,15 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
           .from('appointments')
           .insert({
             doctor_id: doctor_id,
-            date: appointment_date,
-            time: appointment_time,
+            appointment_date: appointment_date,
+            appointment_time: appointment_time,
             duration_minutes: 30,
             parent_name: parent_name,
-            email: parent_email,
+            parent_email: parent_email,
             concerns: concerns,
-            payment_status: 'completed',
+            status: 'confirmed',
+            payment_id: payment_id,
+            notes: `Session with ${doctor_name} - Paid via Stripe`
           })
           .select()
           .single();

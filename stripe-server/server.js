@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51SEsJ3AwY6mf2WfLrr3Tjc1Hbb6bR49JI9zC0HiHCGTkH8x8vsVlwwnhqIa2YcPKaIbu2yHq5TW8xHH7VY00wffc00XP4PZdP8', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-06-20',
 });
 
@@ -88,7 +88,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 // Stripe Webhook
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_7j2pwxIom2pTU84KLRUi0UqQln5IctLf';
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
   let event;
 

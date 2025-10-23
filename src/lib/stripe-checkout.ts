@@ -56,45 +56,62 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
 
     console.log('✅ [SUCCESS] Payment record created:', paymentData.id);
 
-    // Create Stripe Payment Link (Simple Solution)
-    console.log('🔍 [DEBUG] Creating Stripe Payment Link...');
+    // Create Stripe Checkout Session via server
+    console.log('🔍 [DEBUG] Creating Stripe Checkout Session via server...');
     
-    // Create Stripe Payment Link based on doctor
-    let stripePaymentLink = '';
-    
-    // Map doctor names to their Stripe Payment Links
-    switch (data.doctorName) {
-      case 'Dr. Άννα Μαρία Φύτρου':
-        stripePaymentLink = 'https://buy.stripe.com/test_ANNA_MARIA_LINK'; // Αντικατέστησε με το πραγματικό URL
-        break;
-      case 'Ιωάννα Πισσάρη':
-        stripePaymentLink = 'https://buy.stripe.com/test_IOANNA_LINK'; // Αντικατέστησε με το πραγματικό URL
-        break;
-      case 'Σοφία Σπυριάδου':
-        stripePaymentLink = 'https://buy.stripe.com/test_SOFIA_LINK'; // Αντικατέστησε με το πραγματικό URL
-        break;
-      case 'Ειρήνη Στεργίου':
-        stripePaymentLink = 'https://buy.stripe.com/test_EIRINI_LINK'; // Αντικατέστησε με το πραγματικό URL
-        break;
-      default:
-        stripePaymentLink = 'https://buy.stripe.com/test_general';
-    }
-    
-    console.log('✅ [SUCCESS] Stripe Payment Link created:', stripePaymentLink);
-    
-    // Show confirmation and redirect
-    const confirmed = confirm(`Πληρωμή δημιουργήθηκε επιτυχώς!\n\nΓιατρός: ${data.doctorName}\nΠοσό: €${(data.amountCents / 100).toFixed(2)}\n\nΘέλετε να μεταφερθείτε στο Stripe Checkout για πληρωμή;`);
-    
-    if (confirmed) {
-      // Redirect to Stripe Payment Link
-      window.open(stripePaymentLink, '_blank');
-    }
+    try {
+      const response = await fetch('http://localhost:3001/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          doctorId: data.doctorId,
+          doctorName: data.doctorName,
+          parentName: data.parentName,
+          parentEmail: data.parentEmail,
+          appointmentDate: data.appointmentDate,
+          appointmentTime: data.appointmentTime,
+          concerns: data.concerns || '',
+          amountCents: data.amountCents,
+          priceId: stripeProduct.stripe_price_id
+        })
+      });
 
-    return {
-      sessionId: `cs_simulated_${Date.now()}`,
-      paymentId: paymentData.id,
-      success: true
-    };
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const { sessionId } = await response.json();
+      console.log('✅ [SUCCESS] Checkout session created:', sessionId);
+
+      // Show confirmation and redirect
+      const confirmed = confirm(`Πληρωμή δημιουργήθηκε επιτυχώς!\n\nΓιατρός: ${data.doctorName}\nΠοσό: €${(data.amountCents / 100).toFixed(2)}\n\nΘέλετε να μεταφερθείτε στο Stripe Checkout για πληρωμή;`);
+
+      if (confirmed) {
+        // Redirect to Stripe Checkout
+        const stripe = await getStripe();
+        if (stripe) {
+          const { error } = await stripe.redirectToCheckout({
+            sessionId: sessionId
+          });
+
+          if (error) {
+            console.error('❌ [ERROR] Stripe redirect failed:', error);
+            throw error;
+          }
+        }
+      }
+
+      return {
+        sessionId: sessionId,
+        paymentId: paymentData.id,
+        success: true
+      };
+    } catch (error) {
+      console.error('❌ [ERROR] Failed to create checkout session:', error);
+      throw error;
+    }
 
   } catch (error: any) {
     console.error('❌ [ERROR] Real Stripe checkout failed:', error);
