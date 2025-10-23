@@ -68,6 +68,7 @@ exports.handler = async (event, context) => {
 
 async function handleCheckoutSessionCompleted(session) {
   console.log('🔍 [DEBUG] Processing checkout session completed:', session.id);
+  console.log('🔍 [DEBUG] Full session object:', JSON.stringify(session, null, 2));
 
   const {
     doctor_id,
@@ -93,6 +94,12 @@ async function handleCheckoutSessionCompleted(session) {
     amount_cents
   });
 
+  // Validate required metadata
+  if (!doctor_id || !payment_id || !parent_name || !parent_email || !appointment_date || !appointment_time) {
+    console.error('❌ [ERROR] Missing required metadata in session');
+    throw new Error('Missing required metadata in session');
+  }
+
   try {
     // Update payment status
     console.log('🔍 [DEBUG] Updating payment status...');
@@ -113,29 +120,39 @@ async function handleCheckoutSessionCompleted(session) {
 
     // Create appointment
     console.log('🔍 [DEBUG] Creating appointment...');
+    console.log('🔍 [DEBUG] Appointment data:', {
+      doctor_id,
+      appointment_date,
+      appointment_time,
+      parent_name,
+      parent_email,
+      concerns,
+      payment_id
+    });
+
     const { data: appointmentData, error: appointmentError } = await supabase
       .from('appointments')
       .insert({
         doctor_id: doctor_id,
-        appointment_date: appointment_date,
-        appointment_time: appointment_time,
+        date: appointment_date,
+        time: appointment_time,
         duration_minutes: 30,
         parent_name: parent_name,
-        parent_email: parent_email,
-        concerns: concerns,
-        status: 'confirmed',
-        payment_id: payment_id,
-        notes: `Session with ${doctor_name} - Paid via Stripe`
+        email: parent_email,
+        concerns: concerns || '',
+        payment_id: payment_id
       })
       .select()
       .single();
 
     if (appointmentError) {
       console.error('❌ [ERROR] Error creating appointment:', appointmentError);
+      console.error('❌ [ERROR] Full error details:', JSON.stringify(appointmentError, null, 2));
       throw appointmentError;
     }
 
     console.log(`✅ [SUCCESS] Payment ${payment_id} and Appointment ${appointmentData.id} completed successfully.`);
+    console.log('🔍 [DEBUG] Created appointment:', JSON.stringify(appointmentData, null, 2));
 
   } catch (dbError) {
     console.error('❌ [ERROR] Database update failed for checkout.session.completed:', dbError);
