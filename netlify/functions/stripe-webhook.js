@@ -14,10 +14,17 @@ const supabase = createClient(
 );
 
 exports.handler = async (event, context) => {
+  console.log('🚀 [WEBHOOK] ===== STRIPE WEBHOOK CALLED =====');
   console.log('🔍 [DEBUG] Stripe Webhook received:', event.httpMethod);
   console.log('🔍 [DEBUG] Event headers:', JSON.stringify(event.headers, null, 2));
   console.log('🔍 [DEBUG] Event body length:', event.body ? event.body.length : 0);
+  console.log('🔍 [DEBUG] Context:', JSON.stringify(context, null, 2));
   console.log('🔍 [DEBUG] Full event:', JSON.stringify(event, null, 2));
+  console.log('🔍 [DEBUG] Environment variables:');
+  console.log('  - STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'NOT SET');
+  console.log('  - STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'SET' : 'NOT SET');
+  console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
+  console.log('  - SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'SET' : 'NOT SET');
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -163,6 +170,7 @@ async function handleCheckoutSessionCompleted(session) {
 
     console.log(`✅ [SUCCESS] Payment ${payment_id} and Appointment ${appointmentData.id} completed successfully.`);
     console.log('🔍 [DEBUG] Created appointment:', JSON.stringify(appointmentData, null, 2));
+    console.log('🎉 [SUCCESS] ===== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY =====');
 
   } catch (dbError) {
     console.error('❌ [ERROR] Database update failed for checkout.session.completed:', dbError);

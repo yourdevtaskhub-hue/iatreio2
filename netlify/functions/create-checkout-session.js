@@ -118,8 +118,8 @@ exports.handler = async (event, context) => {
         },
       ],
       mode: 'payment',
-      success_url: `${event.headers.origin || 'https://your-site.netlify.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
-      cancel_url: `${event.headers.origin || 'https://your-site.netlify.app'}/contact?status=cancelled`,
+      success_url: `${event.headers.origin || 'https://onlineparentteenclinic.netlify.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
+      cancel_url: `${event.headers.origin || 'https://onlineparentteenclinic.netlify.app'}/contact?status=cancelled`,
       customer_email: parentEmail,
       metadata: {
         doctor_id: doctorId,
