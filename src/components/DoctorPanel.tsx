@@ -4,6 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Appointment } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
+import { usePayments } from '../hooks/usePayments';
 
 interface DoctorPanelProps {
   doctorName: string;
@@ -16,6 +17,9 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'appointments' | 'wallet'>('appointments');
+  
+  // Use payments hook for wallet data
+  const { payments, stats, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = usePayments(doctorName);
 
   const content = {
     gr: {
@@ -169,59 +173,19 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
 
   const handleRefresh = () => {
     fetchAppointments();
+    refetchPayments();
   };
 
-  // Mock data for wallet
-  const walletData = {
-    totalEarnings: 12500,
-    thisMonth: 3200,
-    lastMonth: 2800,
-    totalSessions: 45,
-    completedSessions: 42,
-    pendingSessions: 3,
-    averageSession: 278,
-    transactions: [
-      {
-        id: 1,
-        date: '2024-01-15',
-        time: '10:00',
-        parentName: 'Μαρία Παπαδοπούλου',
-        sessionFee: 80,
-        status: 'completed'
-      },
-      {
-        id: 2,
-        date: '2024-01-15',
-        time: '11:30',
-        parentName: 'Γιάννης Κωνσταντίνου',
-        sessionFee: 80,
-        status: 'completed'
-      },
-      {
-        id: 3,
-        date: '2024-01-16',
-        time: '09:00',
-        parentName: 'Ελένη Δημητρίου',
-        sessionFee: 80,
-        status: 'pending'
-      },
-      {
-        id: 4,
-        date: '2024-01-16',
-        time: '14:00',
-        parentName: 'Αλέξανδρος Γεωργίου',
-        sessionFee: 80,
-        status: 'completed'
-      },
-      {
-        id: 5,
-        date: '2024-01-17',
-        time: '16:30',
-        parentName: 'Σοφία Αντωνίου',
-        sessionFee: 80,
-        status: 'completed'
-      }
-    ]
+  // Format payments for display
+  const formatPayments = (payments: any[]) => {
+    return payments.map(payment => ({
+      id: payment.id,
+      date: payment.appointment_date,
+      time: payment.appointment_time,
+      parentName: payment.parent_name,
+      sessionFee: Math.round(payment.amount_cents / 100), // Convert cents to euros
+      status: payment.status
+    }));
   };
 
   return (
@@ -483,7 +447,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div className="text-right">
                     <p className="text-green-100 text-sm font-medium">{content[language].totalEarnings}</p>
-                    <p className="text-3xl font-bold">€{walletData.totalEarnings.toLocaleString()}</p>
+                    <p className="text-3xl font-bold">€{Math.round(stats.totalEarnings / 100).toLocaleString()}</p>
                   </div>
                 </div>
               </motion.div>
@@ -501,7 +465,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div className="text-right">
                     <p className="text-blue-100 text-sm font-medium">{content[language].thisMonth}</p>
-                    <p className="text-3xl font-bold">€{walletData.thisMonth.toLocaleString()}</p>
+                    <p className="text-3xl font-bold">€{Math.round(stats.thisMonth / 100).toLocaleString()}</p>
                   </div>
                 </div>
               </motion.div>
@@ -519,7 +483,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div className="text-right">
                     <p className="text-purple-100 text-sm font-medium">{content[language].totalSessions}</p>
-                    <p className="text-3xl font-bold">{walletData.totalSessions}</p>
+                    <p className="text-3xl font-bold">{stats.totalSessions}</p>
                   </div>
                 </div>
               </motion.div>
@@ -537,7 +501,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div className="text-right">
                     <p className="text-orange-100 text-sm font-medium">{content[language].averageSession}</p>
-                    <p className="text-3xl font-bold">€{walletData.averageSession}</p>
+                    <p className="text-3xl font-bold">€{Math.round(stats.averageSession / 100)}</p>
                   </div>
                 </div>
               </motion.div>
@@ -557,7 +521,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-800">{content[language].completedSessions}</h3>
-                    <p className="text-2xl font-bold text-green-600">{walletData.completedSessions}</p>
+                    <p className="text-2xl font-bold text-green-600">{stats.completedSessions}</p>
                   </div>
                 </div>
               </motion.div>
@@ -574,7 +538,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-800">{content[language].pendingSessions}</h3>
-                    <p className="text-2xl font-bold text-yellow-600">{walletData.pendingSessions}</p>
+                    <p className="text-2xl font-bold text-yellow-600">{stats.pendingSessions}</p>
                   </div>
                 </div>
               </motion.div>
@@ -597,14 +561,14 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                       {content[language].recentTransactions}
                     </h2>
                     <p className="text-gray-100 text-sm">
-                      {walletData.transactions.length} {content[language].recentTransactions.toLowerCase()}
+                      {payments.length} {content[language].recentTransactions.toLowerCase()}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-6">
-                {walletData.transactions.length === 0 ? (
+                {payments.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-gray-400 text-2xl">📋</span>
@@ -613,7 +577,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {walletData.transactions.map((transaction, index) => (
+                    {formatPayments(payments).map((transaction, index) => (
                       <motion.div
                         key={transaction.id}
                         initial={{ opacity: 0, y: 20 }}

@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 import TimezoneInfo from './TimezoneInfo';
+import StripeCheckout from './StripeCheckout';
 
 interface ContactProps {
   language: 'gr' | 'en';
@@ -94,6 +95,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     preferredTime: ''
   });
   const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -154,58 +157,10 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       alert(language==='gr' ? 'Επιλέξτε ειδικότητα, γιατρό, ημερομηνία και ώρα.' : 'Select specialty, doctor, date and time.');
       return;
     }
-    // Προσομοίωση online πληρωμής
-    const approved = confirm(language==='gr' ? 'Προσομοίωση πληρωμής: Θέλετε να συνεχίσετε;' : 'Simulate payment: proceed?');
-    if (!approved) return;
-
-    setIsSubmitting(true);
-    console.log('[Contact] booking insert →', { doctor_id: selectedDoctorId, date: formData.appointmentDate, time: selectedTime });
-    const { error } = await supabase.from('appointments').insert({
-      doctor_id: selectedDoctorId,
-      date: formData.appointmentDate,
-      time: selectedTime,
-      duration_minutes: 30,
-      parent_name: formData.parentName,
-      child_age: formData.childAge,
-      email: formData.email,
-      phone: formData.phone,
-      concerns: formData.message,
-      specialty: selectedSpecialty,
-      thematology: selectedThematology,
-      urgency: formData.urgency,
-      is_first_session: formData.isFirstSession === 'yes'
-    }).single();
-    console.log('[Contact] booking insert result error:', error);
-    // Αν η εισαγωγή αποτύχει λόγω unique index, ενημερώνουμε τον χρήστη
-    if (error && (error as any).code === '23505') {
-      setIsSubmitting(false);
-      alert(language==='gr' ? 'Η ώρα μόλις κλείστηκε από άλλον χρήστη. Παρακαλώ επιλέξτε άλλη ώρα.' : 'This time was just booked by someone else. Please select another time.');
-      // Ανανεώνουμε slots
-      const { data: bookedNow } = await supabase
-        .from('appointments')
-        .select('time')
-        .eq('doctor_id', selectedDoctorId)
-        .eq('date', formData.appointmentDate);
-      const setNow = new Set<string>((bookedNow||[]).map((b:any)=> (b.time||'').slice(0,5)));
-      setSlots(prev => prev.map(s => ({ ...s, available: !setNow.has(s.time) })));
-      return;
-    }
-    // Αμέσως μετά την επιτυχή καταχώρηση, ανανέωση λίστας booked για να εξαφανιστεί το slot
-    const { data: bookedAfter } = await supabase
-      .from('appointments')
-      .select('time')
-      .eq('doctor_id', selectedDoctorId)
-      .eq('date', formData.appointmentDate);
-    console.log('[Contact] booked after insert:', bookedAfter);
-    const bookedSetAfter = new Set<string>((bookedAfter||[]).map((b:any)=> (b.time||'').slice(0,5)));
-    setSlots(prev => prev.map(s => ({ ...s, available: !bookedSetAfter.has(s.time) })));
-    setIsSubmitting(false);
-    if (error) {
-      console.error(error);
-      alert(language==='gr'? 'Αποτυχία καταχώρησης ραντεβού.' : 'Failed to book appointment.');
-      return;
-    }
-    alert(language==='gr'? 'Το ραντεβού καταχωρήθηκε και η πληρωμή ολοκληρώθηκε!' : 'Appointment booked and payment completed!');
+    
+    // Show Stripe Checkout instead of simulation
+    setShowStripeCheckout(true);
+    setStripeError(null);
   };
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
@@ -1111,6 +1066,94 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                 }
               </motion.button>
             </form>
+
+            {/* Stripe Checkout Modal */}
+            <AnimatePresence>
+              {showStripeCheckout && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                  onClick={() => setShowStripeCheckout(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-6">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-2xl font-bold text-gray-800 font-poppins">
+                          💳 Πληρωμή Ραντεβού
+                        </h3>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setShowStripeCheckout(false)}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                          <X className="h-6 w-6 text-gray-500" />
+                        </motion.button>
+                      </div>
+
+                      {/* Stripe Checkout Component */}
+                      <StripeCheckout
+                        doctorId={selectedDoctorId}
+                        doctorName={doctors.find(d => d.id === selectedDoctorId)?.name || ''}
+                        parentName={formData.parentName}
+                        parentEmail={formData.email}
+                        appointmentDate={formData.appointmentDate}
+                        appointmentTime={selectedTime}
+                        concerns={formData.message}
+                        onSuccess={() => {
+                          setShowStripeCheckout(false);
+                          // Reset form
+                          setFormData({
+                            parentName: '',
+                            childAge: '',
+                            email: '',
+                            phone: '',
+                            urgency: '',
+                            message: '',
+                            appointmentDate: '',
+                            privacyAccepted: false,
+                            recordingPolicyAccepted: false,
+                            parentalConsentAccepted: false,
+                            isFirstSession: ''
+                          });
+                          setSelectedSpecialty('');
+                          setSelectedThematology('');
+                          setSelectedDoctorId('');
+                          setSelectedTime('');
+                          setMessageLength(0);
+                        }}
+                        onError={(error) => {
+                          setStripeError(error);
+                        }}
+                        language={language}
+                      />
+
+                      {/* Error Display */}
+                      {stripeError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl"
+                        >
+                          <p className="text-red-700 font-medium">
+                            Σφάλμα: {stripeError}
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <motion.div 
               whileHover={{ scale: 1.02 }}

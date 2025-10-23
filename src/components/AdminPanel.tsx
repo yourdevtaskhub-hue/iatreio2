@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, CheckCircle, XCircle, Eye, RefreshCw } from 'lucide-react';
+import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings } from '../types/appointments';
@@ -19,11 +19,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   // Appointments state
-  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'wallet'>('reviews');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  
+  // Wallet state
+  const [payments, setPayments] = useState<any[]>([]);
+  const [walletStats, setWalletStats] = useState({
+    totalRevenue: 0,
+    thisMonth: 0,
+    lastMonth: 0,
+    totalSessions: 0,
+    completedSessions: 0,
+    pendingSessions: 0,
+    averageSession: 0
+  });
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const content = {
     gr: {
@@ -56,7 +69,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       close: 'Κλείσιμο',
       createdAt: 'Δημιουργήθηκε',
       updatedAt: 'Ενημερώθηκε',
-      logout: 'Αποσύνδεση'
+      logout: 'Αποσύνδεση',
+      // Wallet content
+      wallet: 'Το Ταμείο μου',
+      totalRevenue: 'Συνολικά Έσοδα',
+      thisMonth: 'Αυτόν τον Μήνα',
+      lastMonth: 'Προηγούμενος Μήνας',
+      totalSessions: 'Συνολικές Συνεδρίες',
+      completedSessions: 'Ολοκληρωμένες',
+      pendingSessions: 'Εκκρεμείς',
+      averageSession: 'Μέσο Εισόδημα/Συνεδρία',
+      recentTransactions: 'Πρόσφατες Συναλλαγές',
+      noTransactions: 'Δεν υπάρχουν συναλλαγές'
     },
     en: {
       title: 'Ιατρείο Panel - Reviews Management',
@@ -88,7 +112,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       close: 'Close',
       createdAt: 'Created',
       updatedAt: 'Updated',
-      logout: 'Logout'
+      logout: 'Logout',
+      // Wallet content
+      wallet: 'My Wallet',
+      totalRevenue: 'Total Revenue',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+      totalSessions: 'Total Sessions',
+      completedSessions: 'Completed',
+      pendingSessions: 'Pending',
+      averageSession: 'Average per Session',
+      recentTransactions: 'Recent Transactions',
+      noTransactions: 'No transactions found'
     }
   };
 
@@ -164,6 +199,64 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
+  const fetchWalletData = async () => {
+    try {
+      setWalletLoading(true);
+      
+      // Fetch all payments
+      const { data: paymentsData, error: paymentsError } = await supabaseAdmin
+        .from('payments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (paymentsError) {
+        throw paymentsError;
+      }
+
+      setPayments(paymentsData || []);
+
+      // Calculate stats
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+      const totalRevenue = paymentsData
+        ?.filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+
+      const thisMonthRevenue = paymentsData
+        ?.filter(p => p.status === 'completed' && new Date(p.created_at) >= thisMonth)
+        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+
+      const lastMonthRevenue = paymentsData
+        ?.filter(p => p.status === 'completed' && 
+          new Date(p.created_at) >= lastMonth && 
+          new Date(p.created_at) <= lastMonthEnd)
+        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+
+      const totalSessions = paymentsData?.length || 0;
+      const completedSessions = paymentsData?.filter(p => p.status === 'completed').length || 0;
+      const pendingSessions = paymentsData?.filter(p => p.status === 'pending').length || 0;
+      const averageSession = completedSessions > 0 ? totalRevenue / completedSessions : 0;
+
+      setWalletStats({
+        totalRevenue,
+        thisMonth: thisMonthRevenue,
+        lastMonth: lastMonthRevenue,
+        totalSessions,
+        completedSessions,
+        pendingSessions,
+        averageSession
+      });
+
+    } catch (error) {
+      console.error('Error fetching wallet data:', error);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
   // Set up real-time subscription for all changes
   useEffect(() => {
     const channel = supabaseAdmin
@@ -219,6 +312,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   useEffect(() => {
     fetchReviews();
     fetchAppointmentsMeta();
+    fetchWalletData();
   }, []);
 
   const handleStatusUpdate = async (reviewId: string, newStatus: 'approved' | 'rejected') => {
@@ -307,6 +401,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           <div className="inline-flex rounded-xl overflow-hidden bg-white shadow">
             <button onClick={() => setActiveTab('reviews')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='reviews'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>Κριτικές</button>
             <button onClick={() => setActiveTab('appointments')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
+            <button onClick={() => setActiveTab('wallet')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='wallet'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>💰 {content[language].wallet}</button>
           </div>
         </div>
 
@@ -508,6 +603,169 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
               </label>
               <button disabled={isSavingSettings} onClick={async ()=>{ setIsSavingSettings(true); await supabaseAdmin.from('admin_settings').upsert({ id: 1, lock_half_hour: settings.lock_half_hour }); setIsSavingSettings(false); alert(apptContent[language].saved); }} className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-50 text-sm sm:text-base">{apptContent[language].save}</button>
             </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'wallet' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            {/* 💰 Main Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total Revenue */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <DollarSign className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-100 text-sm font-medium">{content[language].totalRevenue}</p>
+                    <p className="text-3xl font-bold">€{Math.round(walletStats.totalRevenue / 100).toLocaleString()}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* This Month */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-blue-100 text-sm font-medium">{content[language].thisMonth}</p>
+                    <p className="text-3xl font-bold">€{Math.round(walletStats.thisMonth / 100).toLocaleString()}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Total Sessions */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 text-white shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-purple-100 text-sm font-medium">{content[language].totalSessions}</p>
+                    <p className="text-3xl font-bold">{walletStats.totalSessions}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Average per Session */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl">⚡</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-orange-100 text-sm font-medium">{content[language].averageSession}</p>
+                    <p className="text-3xl font-bold">€{Math.round(walletStats.averageSession / 100)}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* 📋 Recent Transactions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-gray-500 to-gray-600 px-8 py-6">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                    <span className="text-white text-xl">📋</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white font-poppins">
+                      {content[language].recentTransactions}
+                    </h2>
+                    <p className="text-gray-100 text-sm">
+                      {payments.length} {content[language].recentTransactions.toLowerCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {walletLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-soft mx-auto mb-4"></div>
+                    <p className="text-gray-600 font-nunito">Φόρτωση...</p>
+                  </div>
+                ) : payments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-gray-400 text-2xl">📋</span>
+                    </div>
+                    <p className="text-gray-600 font-nunito text-lg">{content[language].noTransactions}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {payments.slice(0, 10).map((payment, index) => (
+                      <motion.div
+                        key={payment.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                            payment.status === 'completed' 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-yellow-100 text-yellow-600'
+                          }`}>
+                            <span className="text-xl">
+                              {payment.status === 'completed' ? '✅' : '⏳'}
+                            </span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-800">{payment.parent_name}</h4>
+                            <p className="text-sm text-gray-600">{payment.doctor_name}</p>
+                            <p className="text-sm text-gray-600">{payment.appointment_date} - {payment.appointment_time}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-800">€{Math.round(payment.amount_cents / 100)}</p>
+                          <p className={`text-sm font-medium ${
+                            payment.status === 'completed' 
+                              ? 'text-green-600' 
+                              : 'text-yellow-600'
+                          }`}>
+                            {payment.status === 'completed' ? 'Ολοκληρώθηκε' : 'Εκκρεμεί'}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </motion.div>
         )}
 
