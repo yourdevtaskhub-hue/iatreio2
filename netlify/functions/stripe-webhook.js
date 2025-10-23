@@ -91,13 +91,17 @@ async function handleCheckoutSessionCompleted(session) {
     doctor_id,
     payment_id,
     parent_name,
-    parent_email,
     appointment_date,
     appointment_time,
     doctor_name,
     concerns,
     amount_cents
   } = session.metadata || {};
+
+  // Get parent_email from multiple sources with fallback
+  const parent_email = session.metadata?.parent_email || 
+                      session.customer_details?.email || 
+                      session.customer_email;
 
   console.log('🔍 [DEBUG] Session metadata:', {
     doctor_id,
@@ -111,9 +115,24 @@ async function handleCheckoutSessionCompleted(session) {
     amount_cents
   });
 
+  console.log('🔍 [DEBUG] Email sources:', {
+    'metadata.parent_email': session.metadata?.parent_email,
+    'customer_details.email': session.customer_details?.email,
+    'customer_email': session.customer_email,
+    'final_parent_email': parent_email
+  });
+
   // Validate required metadata
   if (!doctor_id || !payment_id || !parent_name || !parent_email || !appointment_date || !appointment_time) {
     console.error('❌ [ERROR] Missing required metadata in session');
+    console.error('❌ [ERROR] Missing fields:', {
+      doctor_id: !doctor_id,
+      payment_id: !payment_id,
+      parent_name: !parent_name,
+      parent_email: !parent_email,
+      appointment_date: !appointment_date,
+      appointment_time: !appointment_time
+    });
     throw new Error('Missing required metadata in session');
   }
 
