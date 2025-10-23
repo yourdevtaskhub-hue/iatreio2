@@ -15,9 +15,13 @@ const supabase = createClient(
 
 exports.handler = async (event, context) => {
   console.log('🔍 [DEBUG] Stripe Webhook received:', event.httpMethod);
+  console.log('🔍 [DEBUG] Event headers:', JSON.stringify(event.headers, null, 2));
+  console.log('🔍 [DEBUG] Event body length:', event.body ? event.body.length : 0);
+  console.log('🔍 [DEBUG] Full event:', JSON.stringify(event, null, 2));
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.log('❌ [ERROR] Method not allowed:', event.httpMethod);
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method Not Allowed' }),
@@ -29,12 +33,18 @@ exports.handler = async (event, context) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_7j2pwxIom2pTU84KLRUi0UqQln5IctLf';
 
     console.log('🔍 [DEBUG] Verifying webhook signature...');
+    console.log('🔍 [DEBUG] Signature:', sig);
+    console.log('🔍 [DEBUG] Webhook secret:', webhookSecret ? 'SET' : 'NOT SET');
+    console.log('🔍 [DEBUG] Event body type:', typeof event.body);
+    console.log('🔍 [DEBUG] Event body preview:', event.body ? event.body.substring(0, 200) + '...' : 'NO BODY');
 
     let event_data;
     try {
       event_data = stripe.webhooks.constructEvent(event.body, sig, webhookSecret);
+      console.log('✅ [SUCCESS] Webhook signature verified successfully');
     } catch (err) {
       console.error('❌ [ERROR] Webhook signature verification failed:', err.message);
+      console.error('❌ [ERROR] Full error:', JSON.stringify(err, null, 2));
       return {
         statusCode: 400,
         body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
