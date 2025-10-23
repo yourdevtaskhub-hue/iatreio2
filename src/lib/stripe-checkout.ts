@@ -111,23 +111,15 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
       const { sessionId } = responseData;
       console.log('✅ [SUCCESS] Checkout session created:', sessionId);
 
-      // Show confirmation and redirect
-      const confirmed = confirm(`Πληρωμή δημιουργήθηκε επιτυχώς!\n\nΓιατρός: ${data.doctorName}\nΠοσό: €${(data.amountCents / 100).toFixed(2)}\n\nΘέλετε να μεταφερθείτε στο Stripe Checkout για πληρωμή;`);
-
-      if (confirmed) {
-        // Redirect to Stripe Checkout
-        const stripe = await getStripe();
-        if (stripe) {
-          const { error } = await stripe.redirectToCheckout({
-            sessionId: sessionId
-          });
-
-          if (error) {
-            console.error('❌ [ERROR] Stripe redirect failed:', error);
-            throw error;
-          }
-        }
-      }
+      // Redirect directly to Stripe Checkout without confirmation
+      console.log('🔍 [DEBUG] Redirecting to Stripe Checkout...');
+      
+      // Use window.location.href for direct redirect instead of stripe.redirectToCheckout
+      const checkoutUrl = `https://checkout.stripe.com/pay/${sessionId}`;
+      console.log('🔍 [DEBUG] Checkout URL:', checkoutUrl);
+      
+      // Redirect immediately
+      window.location.href = checkoutUrl;
 
       return {
         sessionId: sessionId,

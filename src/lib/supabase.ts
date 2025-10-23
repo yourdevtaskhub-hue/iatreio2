@@ -15,7 +15,8 @@ const getSupabase = () => {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined
       }
     });
   }
@@ -25,7 +26,13 @@ const getSupabase = () => {
 const getSupabaseAdmin = () => {
   if (!supabaseAdminInstance) {
     console.log('🔍 [DEBUG] Creating new Supabase Admin client instance');
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseAdminKey);
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseAdminKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    });
   }
   return supabaseAdminInstance;
 };
