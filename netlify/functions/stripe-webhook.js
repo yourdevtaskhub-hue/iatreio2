@@ -63,7 +63,9 @@ exports.handler = async (event, context) => {
     // Handle the event
     switch (event_data.type) {
       case 'checkout.session.completed':
+        console.log('🔍 [DEBUG] About to call handleCheckoutSessionCompleted...');
         await handleCheckoutSessionCompleted(event_data.data.object);
+        console.log('🔍 [DEBUG] handleCheckoutSessionCompleted completed successfully');
         break;
       default:
         console.warn(`⚠️ [WARNING] Unhandled event type: ${event_data.type}`);
