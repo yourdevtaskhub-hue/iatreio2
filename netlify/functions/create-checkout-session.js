@@ -134,11 +134,15 @@ exports.handler = async (event, context) => {
     });
 
     console.log('✅ [SUCCESS] Stripe Checkout Session created:', session.id);
+    console.log('🔍 [DEBUG] Session URL:', session.url);
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ sessionId: session.id }),
+      body: JSON.stringify({ 
+        sessionId: session.id,
+        checkoutUrl: session.url 
+      }),
     };
 
   } catch (error) {

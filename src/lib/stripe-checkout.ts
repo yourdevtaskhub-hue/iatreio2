@@ -108,18 +108,21 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
       const responseData = await response.json();
       console.log('🔍 [DEBUG] Response data:', responseData);
       
-      const { sessionId } = responseData;
+      const { sessionId, checkoutUrl } = responseData;
       console.log('✅ [SUCCESS] Checkout session created:', sessionId);
 
       // Redirect directly to Stripe Checkout without confirmation
       console.log('🔍 [DEBUG] Redirecting to Stripe Checkout...');
       
-      // Use window.location.href for direct redirect instead of stripe.redirectToCheckout
-      const checkoutUrl = `https://checkout.stripe.com/pay/${sessionId}`;
-      console.log('🔍 [DEBUG] Checkout URL:', checkoutUrl);
-      
-      // Redirect immediately
-      window.location.href = checkoutUrl;
+      if (checkoutUrl) {
+        console.log('🔍 [DEBUG] Using Stripe checkout URL:', checkoutUrl);
+        window.location.href = checkoutUrl;
+      } else {
+        // Fallback: construct the URL manually
+        const fallbackUrl = `https://checkout.stripe.com/c/pay/${sessionId}`;
+        console.log('🔍 [DEBUG] Using fallback URL:', fallbackUrl);
+        window.location.href = fallbackUrl;
+      }
 
       return {
         sessionId: sessionId,
