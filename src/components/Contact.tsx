@@ -9,7 +9,7 @@ import TimezoneInfo from './TimezoneInfo';
 import StripeCheckout from './StripeCheckout';
 
 interface ContactProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const Contact: React.FC<ContactProps> = ({ language }) => {
@@ -98,6 +98,54 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
 
+  // Function to translate doctor names for display only (UI)
+  const getDoctorDisplayName = (doctor: Doctor) => {
+    if (language === 'en') {
+      // Map Greek names to English display names
+      const nameMap: { [key: string]: string } = {
+        'Δρ. Άννα Μαρία Φύτρου': 'Dr. Anna-Maria Fytrou',
+        'Dr. Άννα Μαρία Φύτρου': 'Dr. Anna-Maria Fytrou', // Alternative format
+        'Σοφία Σπυριάδου': 'Sofia Spyriadou',
+        'Ιωάννα Πισσάρη': 'Ioanna Pissari',
+        'Ειρήνη Στεργίου': 'Eirini Stergiou'
+      };
+      
+      const specialtyMap: { [key: string]: string } = {
+        'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια': 'Child and Adolescent Psychiatrist & Psychotherapist',
+        'Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Child Psychologist & Psychotherapist',
+        'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Clinical Child Psychologist & Psychotherapist'
+      };
+      
+      const displayName = nameMap[doctor.name] || doctor.name;
+      const displaySpecialty = specialtyMap[doctor.specialty] || doctor.specialty;
+      
+      return `${displayName} — ${displaySpecialty}`;
+    } else if (language === 'fr') {
+      // Map Greek names to French display names
+      const nameMap: { [key: string]: string } = {
+        'Δρ. Άννα Μαρία Φύτρου': 'Dr. Anna-Maria Fytrou',
+        'Dr. Άννα Μαρία Φύτρου': 'Dr. Anna-Maria Fytrou', // Alternative format
+        'Σοφία Σπυριάδου': 'Sofia Spyriadou',
+        'Ιωάννα Πισσάρη': 'Ioanna Pissari',
+        'Ειρήνη Στεργίου': 'Eirini Stergiou'
+      };
+      
+      const specialtyMap: { [key: string]: string } = {
+        'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια': 'Psychiatre pour Enfants et Adolescents & Psychothérapeute',
+        'Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Psychologue pour Enfants & Psychothérapeute',
+        'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Psychologue Clinique pour Enfants & Psychothérapeute'
+      };
+      
+      const displayName = nameMap[doctor.name] || doctor.name;
+      const displaySpecialty = specialtyMap[doctor.specialty] || doctor.specialty;
+      
+      return `${displayName} — ${displaySpecialty}`;
+    }
+    
+    // For Greek, return original
+    return `${doctor.name} — ${doctor.specialty}`;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
@@ -121,7 +169,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     if (!formData.privacyAccepted) {
       alert(language === 'gr' 
         ? 'Παρακαλώ αποδεχτείτε τους όρους ιδιωτικότητας για να συνεχίσετε.'
-        : 'Please accept the privacy terms to continue.'
+        : language === 'en' 
+        ? 'Please accept the privacy terms to continue.'
+        : 'Veuillez accepter les conditions de confidentialité pour continuer.'
       );
       return;
     }
@@ -130,7 +180,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     if (!formData.recordingPolicyAccepted) {
       alert(language === 'gr' 
         ? 'Παρακαλώ αποδεχτείτε την πολιτική ηχογράφησης για να συνεχίσετε.'
-        : 'Please accept the recording policy to continue.'
+        : language === 'en' 
+        ? 'Please accept the recording policy to continue.'
+        : 'Veuillez accepter la politique d\'enregistrement pour continuer.'
       );
       return;
     }
@@ -139,7 +191,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     if (!formData.parentalConsentAccepted) {
       alert(language === 'gr' 
         ? 'Παρακαλώ αποδεχτείτε τη γονεϊκή συναίνεση για να συνεχίσετε.'
-        : 'Please accept the parental consent to continue.'
+        : language === 'en' 
+        ? 'Please accept the parental consent to continue.'
+        : 'Veuillez accepter le consentement parental pour continuer.'
       );
       return;
     }
@@ -148,13 +202,17 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     if (formData.message.length > 200) {
       alert(language === 'gr' 
         ? 'Το μήνυμά σας υπερβαίνει το όριο των 200 χαρακτήρων.'
-        : 'Your message exceeds the 200 character limit.'
+        : language === 'en' 
+        ? 'Your message exceeds the 200 character limit.'
+        : 'Votre message dépasse la limite de 200 caractères.'
       );
       return;
     }
     
     if (!selectedSpecialty || !selectedDoctorId || !formData.appointmentDate || !selectedTime) {
-      alert(language==='gr' ? 'Επιλέξτε ειδικότητα, γιατρό, ημερομηνία και ώρα.' : 'Select specialty, doctor, date and time.');
+      alert(language==='gr' ? 'Επιλέξτε ειδικότητα, γιατρό, ημερομηνία και ώρα.' : 
+            language==='en' ? 'Select specialty, doctor, date and time.' : 
+            'Sélectionnez spécialité, médecin, date et heure.');
       return;
     }
     
@@ -167,7 +225,9 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     e.preventDefault();
     
     if (!waitlistFormData.name || !waitlistFormData.email) {
-      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε τουλάχιστον το όνομά σας και το email σας.' : 'Please fill in at least your name and email.');
+      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε τουλάχιστον το όνομά σας και το email σας.' : 
+        language === 'en' ? 'Please fill in at least your name and email.' :
+        'Veuillez remplir au moins votre nom et votre email.');
       return;
     }
 
@@ -199,7 +259,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       
       alert(language === 'gr' 
         ? 'Ανοίχθηκε το email client σας με προ-συμπληρωμένο μήνυμα. Παρακαλώ στείλτε το email για να εγγραφείτε στη λίστα αναμονής.'
-        : 'Your email client has opened with a pre-filled message. Please send the email to join the waitlist.'
+        : language === 'en'
+        ? 'Your email client has opened with a pre-filled message. Please send the email to join the waitlist.'
+        : 'Votre client email s\'est ouvert avec un message pré-rempli. Veuillez envoyer l\'email pour rejoindre la liste d\'attente.'
       );
       
       // Επαναφορά φόρμας
@@ -217,7 +279,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       console.error('Error opening email client:', error);
       alert(language === 'gr' 
         ? 'Υπήρξε πρόβλημα με το άνοιγμα του email client. Παρακαλώ επικοινωνήστε μαζί μας απευθείας στο iatreiodrfytrou@gmail.com'
-        : 'There was a problem opening your email client. Please contact us directly at iatreiodrfytrou@gmail.com'
+        : language === 'en'
+        ? 'There was a problem opening your email client. Please contact us directly at iatreiodrfytrou@gmail.com'
+        : 'Il y a eu un problème avec l\'ouverture de votre client email. Veuillez nous contacter directement à iatreiodrfytrou@gmail.com'
       );
     } finally {
       setIsSubmittingWaitlist(false);
@@ -290,12 +354,16 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       slotLegend: 'Διαθεσιμότητα: Πράσινο διαθέσιμο, Κόκκινο μη διαθέσιμο',
       appointmentDatePlaceholder: 'Επιλέξτε την ημερομηνία που σας ενδιαφέρει',
       privacy: 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.',
+      recordingPolicy: 'Πολιτική ηχογράφησης & καταγραφής: Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.',
+      parentalConsent: 'Ως γονεϊκό ζευγάρι αποδεχόμαστε ο/η ιατρός και η ομάδα του/της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.',
       sendMessage: 'Αποστολή Μηνύματος',
       privacyGuaranteed: 'Εγγυημένη Ιδιωτικότητα',
       privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.',
       waitlistButton: 'Λίστα Αναμονής',
       waitlistTitle: 'Εγγραφή στη Λίστα Αναμονής',
-      waitlistDescription: 'Σε περίπτωση που δεν βρήκατε ωρα συνευριας με την γιατρο η τους κλινικους παιδοψυχολογους μας, παρακαλώ αφηστε μας συντομο μυνημα για να μπειτε στην λιστα αναμονης των περιστατικών τους.',
+      waitlistDateTimeLabel: 'Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού',
+      scheduleInfo: 'Οι πρωινές ώρες προορίζονται για γονείς (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών. Παρακαλώ σεβαστείτε τις αρχές του ιατρείου.',
+      waitlistDescription: 'Σε περίπτωση που δεν βρήκατε ώρα συνεδρίας με τη γιατρό ή τους κλινικούς παιδοψυχολόγους μας, παρακαλώ αφήστε μας σύντομο μήνυμα για να μπείτε στη λίστα αναμονής των περιστατικών τους.',
       waitlistName: 'Όνομα Γονέα/Κηδεμόνα',
       waitlistEmail: 'Email',
       waitlistPhone: 'Τηλέφωνο',
@@ -365,18 +433,100 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
       slotLegend: 'Availability: Green available, Red unavailable',
       appointmentDatePlaceholder: 'Select your preferred date',
       privacy: 'I understand that this form is not for emergency situations. For immediate help, please contact emergency services or go to your nearest emergency room.',
+      recordingPolicy: 'Recording & Archiving Policy: For reasons of privacy and ethics, recording and/or videotaping of sessions is strictly prohibited. In case of violation of this policy, penalties will be imposed.',
+      parentalConsent: 'As a parental couple, we accept that the doctor and their team examine and conduct sessions with our child.',
       sendMessage: 'Send Message',
       privacyGuaranteed: 'Privacy Guaranteed',
       privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.',
       waitlistButton: 'Waitlist',
       waitlistTitle: 'Join Waitlist',
-      waitlistDescription: 'If you could not find an available appointment time with our doctor or clinical child psychologists, please leave us a brief message to be added to our waitlist.',
+      waitlistDateTimeLabel: 'Date and Time I would like to book an appointment',
+      scheduleInfo: 'Morning hours are reserved for parents (first appointments, counseling and supervision) while afternoon hours are for children\'s psychotherapy. Please respect the clinic\'s principles.',
+      waitlistDescription: 'In case you did not find an appointment time with the doctor or our clinical child psychologists, please leave us a short message to be added to their patient waiting list.',
       waitlistName: 'Parent/Guardian Name',
       waitlistEmail: 'Email',
       waitlistPhone: 'Phone',
       waitlistMessage: 'Brief Message (optional)',
       waitlistSubmit: 'Submit Request',
       waitlistCancel: 'Cancel'
+    },
+    fr: {
+      title: 'Contact',
+      subtitle: 'Prêt à Commencer Votre Voyage?',
+      description: 'Faire le premier pas vers le soutien en santé mentale peut sembler accablant. Nous sommes là pour le rendre aussi confortable et simple que possible.',
+      contactInfo: 'Informations de Contact',
+      email: 'Email',
+      emailDesc: 'Nous répondons généralement dans les 24 heures',
+      location: 'Localisation',
+      locationDesc: 'Consultations en ligne disponibles dans le monde entier',
+      hours: 'Heures de Consultation',
+      hoursDesc: 'Consultations d\'urgence disponibles',
+      expectTitle: 'À Quoi S\'attendre',
+      expectations: [
+        'Évaluation complète et planification thérapeutique',
+        'Options de planification flexibles incluant les sessions en ligne',
+        'Confidentialité complète et protection de la vie privée'
+      ],
+      formTitle: 'Envoyer un Message',
+      parentName: 'Nom du Parent/Tuteur *',
+      childAge: 'Âge de l\'Enfant',
+      emailAddress: 'Adresse Email *',
+      phoneNumber: 'Numéro de Téléphone',
+      urgency: 'Niveau d\'Urgence',
+      urgencyOptions: {
+        routine: 'Conseil de routine',
+        urgent: 'Urgent (dans la semaine)',
+        emergency: 'Urgence (attention immédiate)'
+      },
+      concerns: 'Brève Description des Préoccupations',
+      concernsPlaceholder: 'Veuillez décrire brièvement vos préoccupations ou ce que vous aimeriez discuter pendant la consultation...',
+      appointmentDate: 'Date de Rendez-vous',
+      isFirstSession: 'Est-ce votre première session?',
+      isFirstSessionOptions: {
+        yes: 'C\'est ma première session.',
+        no: 'Je suis déjà patient de la clinique.'
+      },
+      specialty: 'Spécialité',
+      selectSpecialty: 'Sélectionnez une spécialité',
+      specialtyOptions: {
+        psychiatrist: 'Psychiatre pour Enfants et Adolescents & Psychothérapeute',
+        psychologist: 'Psychologue pour Enfants & Psychothérapeute',
+        clinicalPsychologist: 'Psychologue Clinique pour Enfants & Psychothérapeute'
+      },
+      thematologies: 'Thématiques',
+      selectThematology: 'Sélectionnez une thématique',
+      thematologyOptions: {
+        firstSession: 'Première session (Discussion de référence & historique du patient)',
+        parentCounseling: 'Conseil parental',
+        childExamPsychologist: 'Examen de l\'enfant par psychologue',
+        childExamPsychiatrist: 'Examen de l\'enfant par psychiatre',
+        childTherapyPsychiatrist: 'Psychothérapie de l\'enfant avec psychiatre',
+        childTherapyPsychologist: 'Psychothérapie de l\'enfant avec psychologue',
+        supervision: 'Supervision de spécialistes',
+        medicationAdjustment: 'Ajustement médicamenteux',
+        scientificSupervision: 'Édition scientifique de livre/site/jeu'
+      },
+      doctor: 'Médecin',
+      selectDoctor: 'Sélectionnez un médecin',
+      slotLegend: 'Disponibilité: Vert disponible, Rouge non disponible',
+      appointmentDatePlaceholder: 'Sélectionnez la date qui vous intéresse',
+      privacy: 'Je comprends que ce formulaire n\'est pas pour les situations d\'urgence. Pour une aide immédiate, veuillez contacter les services d\'urgence ou aller au service d\'urgence le plus proche.',
+      recordingPolicy: 'Politique d\'enregistrement & d\'archivage: Pour des raisons de confidentialité et d\'éthique, l\'enregistrement et/ou la vidéosurveillance des sessions est strictement interdite. En cas de violation de cette politique, des sanctions seront imposées.',
+      parentalConsent: 'En tant que couple parental, nous acceptons que le médecin et son équipe examinent et mènent des sessions avec notre enfant.',
+      sendMessage: 'Envoyer le Message',
+      privacyGuaranteed: 'Confidentialité Garantie',
+      privacyDesc: 'Toutes les communications sont confidentielles et protégées par le secret médical.',
+      waitlistButton: 'Liste d\'Attente',
+      waitlistTitle: 'Rejoindre la Liste d\'Attente',
+      waitlistDateTimeLabel: 'Date et Heure où j\'aimerais prendre rendez-vous',
+      scheduleInfo: 'Les heures du matin sont réservées aux parents (premiers rendez-vous, conseil et supervision) tandis que les heures de l\'après-midi sont pour la psychothérapie des enfants. Veuillez respecter les principes de la clinique.',
+      waitlistDescription: 'Au cas où vous n\'auriez pas trouvé d\'heure de rendez-vous avec le médecin ou nos psychologues cliniques pour enfants, veuillez nous laisser un bref message pour être ajouté à leur liste d\'attente des patients.',
+      waitlistName: 'Nom du Parent/Tuteur',
+      waitlistEmail: 'Email',
+      waitlistPhone: 'Téléphone',
+      waitlistMessage: 'Message Bref (optionnel)',
+      waitlistSubmit: 'Soumettre la Demande',
+      waitlistCancel: 'Annuler'
     }
   };
 
@@ -536,7 +686,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
             >
               <img 
                 src={profile2} 
-                alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 'Doctor profile'} 
+                alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 
+                  language === 'en' ? 'Doctor profile' : 
+                  'Photo du médecin'} 
                 className="w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 object-cover"
               />
             </motion.div>
@@ -654,7 +806,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].location}</h4>
                     <p className="text-gray-700 font-nunito">
-                      {language === 'gr' ? 'Λωζάνη, Ελβετία' : 'Lausanne, Switzerland'}
+                      {language === 'gr' ? 'Λωζάνη, Ελβετία' : 
+                        language === 'en' ? 'Lausanne, Switzerland' : 
+                        'Lausanne, Suisse'}
                     </p>
                     <p className="text-sm text-gray-600 mt-1 font-quicksand">{content[language].locationDesc}</p>
                   </div>
@@ -670,7 +824,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].hours}</h4>
                     <div className="space-y-1 text-gray-700 font-nunito">
-                      <p>{language === 'gr' ? 'Ραντεβού κατόπιν διαθεσιμότητας' : 'Appointments upon availability'}</p>
+                      <p>{language === 'gr' ? 'Ραντεβού κατόπιν διαθεσιμότητας' : 
+                        language === 'en' ? 'Appointments upon availability' : 
+                        'Rendez-vous selon disponibilité'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -747,7 +903,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                     value={formData.parentName}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
-                    placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 'Your full name'}
+                    placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 
+                      language === 'en' ? 'Your full name' : 
+                      'Votre nom complet'}
                     required
                   />
                 </div>
@@ -763,7 +921,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                     value={formData.childAge}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
-                    placeholder={language === 'gr' ? 'Ηλικία' : 'Age'}
+                    placeholder={language === 'gr' ? 'Ηλικία' : 
+                      language === 'en' ? 'Age' : 
+                      'Âge'}
                   />
                 </div>
               </div>
@@ -813,7 +973,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                 >
-                  <option value="">{language === 'gr' ? 'Επιλέξτε επίπεδο επείγοντος' : 'Select urgency level'}</option>
+                  <option value="">{language === 'gr' ? 'Επιλέξτε επίπεδο επείγοντος' : 
+                    language === 'en' ? 'Select urgency level' : 
+                    'Sélectionnez le niveau d\'urgence'}</option>
                   <option value="routine">{content[language].urgencyOptions.routine}</option>
                   <option value="urgent">{content[language].urgencyOptions.urgent}</option>
                   <option value="emergency">{content[language].urgencyOptions.emergency}</option>
@@ -832,7 +994,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                 >
-                  <option value="">{language === 'gr' ? 'Επιλέξτε επιλογή' : 'Select option'}</option>
+                  <option value="">{language === 'gr' ? 'Επιλέξτε επιλογή' : 
+                    language === 'en' ? 'Select option' : 
+                    'Sélectionnez une option'}</option>
                   <option value="yes">{content[language].isFirstSessionOptions.yes}</option>
                   <option value="no">{content[language].isFirstSessionOptions.no}</option>
                 </motion.select>
@@ -869,7 +1033,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   <option value="">
                     {selectedSpecialty 
                       ? content[language].selectThematology 
-                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 'First select specialty')
+                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 
+                        language === 'en' ? 'First select specialty' : 
+                        'Sélectionnez d\'abord une spécialité')
                     }
                   </option>
                   {getAvailableThematologies().map(thematologyKey => (
@@ -893,11 +1059,13 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   <option value="">
                     {selectedSpecialty 
                       ? content[language].selectDoctor 
-                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 'First select specialty')
+                      : (language === 'gr' ? 'Πρώτα επιλέξτε ειδικότητα' : 
+                        language === 'en' ? 'First select specialty' : 
+                        'Sélectionnez d\'abord une spécialité')
                     }
                   </option>
                   {filteredDoctors.map(d=> (
-                    <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
+                    <option key={d.id} value={d.id}>{getDoctorDisplayName(d)}</option>
                   ))}
                 </select>
               </div>
@@ -924,7 +1092,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                     <div className="flex items-start space-x-2">
                       <span className="text-blue-500 text-sm">ℹ️</span>
                       <span>
-                        Οι <span className="font-bold text-black">πρωινές ώρες προορίζονται για γονείς</span> (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών. Παρακαλώ σεβαστείτε τις αρχές του ιατρείου.
+                        {content[language].scheduleInfo}
                       </span>
                     </div>
                   </div>
@@ -950,7 +1118,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   {/* Waitlist Description και Button - εμφανίζονται μόνο όταν έχει επιλεγεί ημερομηνία */}
                   <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-200 rounded-2xl">
                     <p className="text-sm text-gray-700 mb-3 font-nunito leading-relaxed">
-                      Σε περίπτωση που δεν βρήκατε ώρα συνεδρίας με τη γιατρό ή τους κλινικούς παιδοψυχολόγους μας, παρακαλώ αφήστε μας σύντομο μήνυμα για να μπείτε στη λίστα αναμονής των περιστατικών τους.
+                      {content[language].waitlistDescription}
                     </p>
                     <motion.button
                       type="button"
@@ -993,11 +1161,15 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                 ></motion.textarea>
                 <div className="flex justify-between items-center mt-2">
                   <div className={`text-xs font-quicksand ${messageLength > 160 ? 'text-orange-500' : 'text-gray-500'}`}>
-                    {messageLength}/200 χαρακτήρες
+                    {messageLength}/200 {language === 'gr' ? 'χαρακτήρες' : 
+                      language === 'en' ? 'characters' : 
+                      'caractères'}
                   </div>
                   {messageLength > 180 && (
                     <div className="text-xs text-red-500 font-quicksand">
-                      Σχεδόν στο όριο!
+                      {language === 'gr' ? 'Σχεδόν στο όριο!' : 
+                        language === 'en' ? 'Almost at limit!' : 
+                        'Presque à la limite!'}
                     </div>
                   )}
                 </div>
@@ -1014,7 +1186,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   required
                 />
                 <label htmlFor="privacy" className="text-sm text-red-600 font-nunito">
-                  <strong>Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις.</strong> Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.
+                  <strong>{content[language].privacy}</strong>
                 </label>
               </div>
 
@@ -1029,7 +1201,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   required
                 />
                 <label htmlFor="recordingPolicy" className="text-sm text-red-600 font-nunito">
-                  <strong>Πολιτική ηχογράφησης & καταγραφής:</strong> Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.
+                  <strong>{content[language].recordingPolicy}</strong>
                 </label>
               </div>
 
@@ -1044,7 +1216,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                   required
                 />
                 <label htmlFor="parentalConsent" className="text-sm text-red-600 font-nunito">
-                  <strong>Ως γονεϊκό ζευγάρι αποδεχόμαστε ο/η ιατρός και η ομάδα του/της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.</strong>
+                  <strong>{content[language].parentalConsent}</strong>
                 </label>
               </div>
 
@@ -1061,7 +1233,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
               >
                 <Calendar className="inline-block h-5 w-5 mr-2" />
                 {isSubmitting 
-                  ? (language === 'gr' ? 'Αποστολή...' : 'Sending...')
+                  ? (language === 'gr' ? 'Αποστολή...' : 
+                    language === 'en' ? 'Sending...' : 
+                    'Envoi...')
                   : content[language].sendMessage
                 }
               </motion.button>
@@ -1229,7 +1403,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                         value={waitlistFormData.name}
                         onChange={handleWaitlistInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
-                        placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 'Your full name'}
+                        placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 
+                      language === 'en' ? 'Your full name' : 
+                      'Votre nom complet'}
                         required
                       />
                     </div>
@@ -1269,7 +1445,7 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3 font-quicksand">
-                        Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού
+                        {content[language].waitlistDateTimeLabel}
                       </label>
                       <div className="grid grid-cols-2 gap-3">
                         <motion.input
@@ -1310,7 +1486,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                         value={waitlistFormData.message}
                         onChange={handleWaitlistInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 resize-none font-nunito"
-                        placeholder={language === 'gr' ? 'Επιπλέον πληροφορίες ή προτιμήσεις...' : 'Additional information or preferences...'}
+                        placeholder={language === 'gr' ? 'Επιπλέον πληροφορίες ή προτιμήσεις...' : 
+                          language === 'en' ? 'Additional information or preferences...' : 
+                          'Informations supplémentaires ou préférences...'}
                       />
                     </div>
 
@@ -1338,7 +1516,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                       >
                         <Send className="inline-block h-4 w-4 mr-2" />
                         {isSubmittingWaitlist 
-                          ? (language === 'gr' ? 'Αποστολή...' : 'Sending...')
+                          ? (language === 'gr' ? 'Αποστολή...' : 
+                    language === 'en' ? 'Sending...' : 
+                    'Envoi...')
                           : content[language].waitlistSubmit
                         }
                       </motion.button>

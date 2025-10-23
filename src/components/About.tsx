@@ -5,7 +5,7 @@ import { GraduationCap, Award, Users, Clock, Star } from 'lucide-react';
 import happyTeen from '../assets/happyteen.jpg';
 
 interface AboutProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const About: React.FC<AboutProps> = ({ language }) => {
@@ -62,6 +62,60 @@ const About: React.FC<AboutProps> = ({ language }) => {
         'Συμμετοχή στο 11ο Πανελλήνιο Παιδοψυχιατρικό Συνέδριο με τίτλο «Θεωρία και κλινική στην Ψυχιατρική Παιδιού και Εφήβου: Ανιχνεύοντας τις νέες ψυχοπαθολογίες» (Αθήνα, Ιούνιος 2019)',
         'Συμμετοχή στο 12ο Πανελλήνιο Παιδοψυχιατρικό Συνέδριο με θέμα το ψυχικό τραύμα (Αθήνα, Νοέμβρης 2021)',
         'Συμμετοχή στο 21ο Διεθνές Συνέδριο Παιδοψυχιατρικής (Στρασβούργο, Ιούνιος 2025)'
+      ]
+    },
+    fr: {
+      title: 'À propos du Dr Fytrou',
+      subtitle: 'Dédiée au Bien-être Mental de votre Enfant et au vôtre,',
+      description1: 'la riche et internationale expérience de la Psychiatre a soutenu des centaines de familles grecques et suisses.',
+      description2: 'Son approche combine la sécurité de la formation médicale sophistiquée, la compréhension et le regard tendre de la psychothérapie psychodynamique.',
+      description3: 'Elle a créé la Première Clinique Psychiatrique en ligne pour Parents et Adolescents afin que les parents et adolescents puissent trouver un soutien et des soins immédiats pour les difficultés de l\'ère moderne. Après tout, les problèmes modernes doivent être abordés avec des méthodes modernes.',
+      description4: 'Les parents sur notre plateforme trouvent un moyen direct de communiquer avec le spécialiste de n\'importe où. De la maison, du chalet, d\'un hôtel, de la voiture même d\'un banc de parc, ils peuvent accéder à notre clinique en ligne en appuyant sur un bouton de leur mobile.',
+      quote: 'D.W.Winnicott avait dit "C\'est une joie d\'être caché mais un désastre de ne pas être trouvé" et dans cette phrase se cache tout le sens de la psychiatrie de l\'enfant. L\'inconscient cache souvent nos traumatismes, utilise nos défenses et teste notre propre endurance ainsi que celle de notre environnement. En tant que psychiatre pour enfants, j\'ai le rôle du spécialiste qui note l\'évident et en tant que psychothérapeute, j\'explore simultanément le bien caché qui cause la difficulté. Puis avec amour pour l\'enfant et l\'institution de la famille, nous travaillons ensemble pour surmonter toute difficulté qui est devenue un obstacle à leur développement.',
+      qualifications: [
+        {
+          title: 'Psychiatrie de l\'Enfant et de l\'Adolescent',
+          description: 'La spécialiste s\'est formée pour l\'acquisition de sa spécialité dans les meilleurs Hôpitaux Universitaires Européens et non-européens tels que:',
+          details: [
+            'Hôpital Universitaire de Lausanne (CHUV)',
+            'Hôpital Général Universitaire Attikon',
+            'Hôpital Général des Enfants de Penteli',
+            'Hôpital Général Konstantopoulio',
+            'Fondation de Nant, Secteur psychiatrique (FDN)',
+            'Les Toises – Centre de psychiatrie et psychothérapie'
+          ]
+        },
+        {
+          title: 'Certifications',
+          description: 'La spécialiste a un Diplôme de Médecine reconnu et a une Licence d\'Exercice Professionnel en tant que Psychiatre Spécialiste pour Enfants et Adolescents et Psychothérapeute en Grèce et en Suisse.'
+        },
+        {
+          title: 'Formation Psychothérapeutique',
+          description: 'La spécialiste s\'est formée:',
+          details: [
+            'en Thérapie Psychodynamique Familiale du FDN de Suisse',
+            'Formation pour la période périnatale (Fantasme, formation de la période périnatale) Lausanne, Hôpital Nestlé du Centre Hospitalier Universitaire (Hôpital Nestlé du CHUV)',
+            'Programme Éducatif de Deux Ans "Introduction à la Théorie et Technique Psychanalytique" (Département de Psychothérapie Psychanalytique de la 1ère Clinique Psychiatrique de l\'Université Nationale et Kapodistrienne d\'Athènes - Hôpital Aeginiteio)',
+            'Programme Éducatif de Deux Ans "Avaton" Clinique Psychodynamique de la Maladie Psychosomatique (Institut de Santé Mentale: "GALINOS")',
+            'Programme Éducatif de 5 mois (156 heures) "Psychopathologie des nourrissons, enfants et adolescents" (Université Nationale et Kapodistrienne d\'Athènes)',
+            'Programme de Formation Complémentaire à Distance de 5 mois "Gestion de la Séparation Parentale - Divorce" (Université Nationale et Kapodistrienne d\'Athènes)'
+          ]
+        },
+        {
+          title: 'Langues',
+          description: 'La spécialiste parle couramment les langues suivantes:',
+          details: [
+            'Grec',
+            'Anglais',
+            'Français'
+          ]
+        }
+      ],
+      memberships: 'Participations Professionnelles',
+      membershipsList: [
+        'Participation au 11ème Congrès Panhellénique de Psychiatrie de l\'Enfant avec le titre "Théorie et clinique en Psychiatrie de l\'Enfant et de l\'Adolescent: Explorer les nouvelles psychopathologies" (Athènes, Juin 2019)',
+        'Participation au 12ème Congrès Panhellénique de Psychiatrie de l\'Enfant sur le thème du traumatisme psychologique (Athènes, Novembre 2021)',
+        'Participation au 21ème Congrès International de Psychiatrie de l\'Enfant (Strasbourg, Juin 2025)'
       ]
     },
     en: {
@@ -141,7 +195,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                 viewport={{ once: true }}
                 className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 font-semibold text-lg font-quicksand"
               >
-                Σχετικά με την <span className="text-2xl">Δρ. Φύτρου</span>
+{content[language].title}
               </motion.span>
               <motion.h2 
                 initial={{ opacity: 0, y: 30 }}

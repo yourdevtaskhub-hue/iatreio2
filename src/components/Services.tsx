@@ -4,7 +4,7 @@ import { Brain, MessageSquare, Smile, BookOpen, Pill, Home, X, Users } from 'luc
 import happyImg from '../assets/happy.jpg';
 
 interface ServicesProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const Services: React.FC<ServicesProps> = ({ language }) => {
@@ -392,6 +392,209 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
         }
       ],
       notListed: 'Don\'t see your specific concern listed? Please reach out - we\'re here to help with any mental health challenges your child may be facing.'
+    },
+    fr: {
+      title: 'Services',
+      subtitle: 'Soins Complets pour la Famille',
+      description: 'Dans notre Clinique en ligne, nous offrons un spectre complet de services diagnostiques et thérapeutiques conçus pour soutenir les adolescents et leurs familles à chaque étape de leur développement psychosocial.',
+      services: [
+        {
+          title: 'Évaluation Psychiatrique',
+          description: 'Évaluation complète et diagnostic des conditions de santé mentale chez les enfants et adolescents.',
+          features: ['Entretiens cliniques détaillés et examens', 'Tests psychologiques', 'Formulation diagnostique', 'Planification thérapeutique']
+        },
+        {
+          title: 'Psychothérapie Individuelle',
+          description: 'Approche Psychothérapeutique Personnalisée basée sur la recherche clinique et les besoins de chaque adolescent et de sa famille.',
+          features: ['Psychothérapie Psychodynamique de l\'Adolescent', 'Thérapie Cognitivo-Comportementale de l\'Adolescent', 'Psychothérapie Psychodynamique Familiale', 'Techniques de Thérapie Cognitivo-Comportementale', 'Techniques d\'Amélioration des Compétences Sociales', 'Thérapie de Mentalisation', 'Gestion du Divorce']
+        },
+        {
+          title: 'Thérapie Familiale',
+          description: 'Travail avec tout le système familial pour améliorer la communication et renforcer les relations.',
+          features: ['Psychothérapie Psychodynamique Familiale', 'Gestion du Divorce', 'Conseil Familial', 'Conseil Parental', 'Intervention dans le Cadre Scolaire']
+        },
+        {
+          title: 'Support Pharmacologique',
+          description: 'Conseil et soutien pour le traitement pharmacologique des adolescents avec troubles mentaux.',
+          features: ['Planification du Traitement Pharmacologique', 'Discussion des Protocoles Thérapeutiques avec collègues', 'Formation Analytique des Parents et Adolescents au Traitement Pharmacologique']
+        },
+        {
+          title: 'Supervisions',
+          description: 'Supervision professionnelle et soutien pour psychiatres et psychologues en psychiatrie de l\'enfant et de l\'adolescent.',
+          features: ['Supervision Individuelle des Psychiatres en Formation', 'Supervision Individuelle des Psychologues Cliniques', 'Supervision de Groupe des Psychiatres en Formation', 'Supervision de Groupe des Psychologues']
+        },
+        {
+          title: 'Édition Scientifique de Livres, Contes, Jeux pour Enfants',
+          description: 'Conseil et édition scientifique de livres et contes pour enfants avec thèmes de santé mentale.',
+          features: ['Exactitude du contenu', 'Langage approprié pour les âges', 'Valeur éducative', 'Évaluation professionnelle']
+        }
+      ],
+      conditionsTitle: 'Diagnostics Nécessitant un Traitement',
+      conditionsDescription: 'Ci-dessous vous trouverez certains des symptômes courants des troubles mais leurs critères ne sont pas mentionnés en détail pour des raisons de protection des patients.',
+      conditions: [
+        {
+          name: 'Troubles d\'Anxiété',
+          definition: 'Les troubles d\'anxiété se caractérisent par une anxiété et une inquiétude persistantes.',
+          symptoms: [
+            'Évitement d\'activités et/ou d\'école et/ou de personnes',
+            'Tristesse et/ou irritabilité',
+            'Évitement de rester seul(e)',
+            'Difficulté de sommeil',
+            'Présence de tics'
+          ]
+        },
+        {
+          name: 'Dépression',
+          definition: 'La dépression se manifeste différemment de la dépression des adultes.',
+          symptoms: [
+            'Tristesse intense',
+            'Explosions de colère',
+            'Culpabilité intense',
+            'Difficulté de sommeil',
+            'Évitement d\'activités',
+            'Isolement',
+            'Automutilation',
+            'Pensées sombres',
+            'Désespoir pour le présent/l\'avenir'
+          ]
+        },
+        {
+          name: 'TDAH',
+          definition: 'Le TDAH présente comme symptômes nucléaires la distraction de l\'attention, l\'hyperactivité et l\'impulsivité.',
+          symptoms: [
+            'Difficulté de concentration',
+            'Distraction',
+            'Difficulté de sommeil',
+            'Difficulté à attendre son tour',
+            'Agitation',
+            'Jeu dangereux'
+          ]
+        },
+        {
+          name: 'TSA',
+          definition: 'Troubles du Spectre de l\'Autisme',
+          symptoms: [
+            'Modèles comportementaux répétitifs',
+            'Mouvements répétitifs',
+            'Difficulté dans la communication non verbale',
+            'Difficulté dans le développement et la compréhension des relations',
+            'Intérêts extrêmement limités',
+            'Hyper/Hypo-réactivité aux informations sensorielles'
+          ]
+        },
+        {
+          name: 'Troubles de l\'Alimentation',
+          definition: 'Les troubles de l\'alimentation affectent la relation avec la nourriture et l\'image corporelle.',
+          symptoms: [
+            'Restriction alimentaire sévère',
+            'Épisodes de suralimentation',
+            'Comportements compensatoires',
+            'Préoccupation excessive avec le poids',
+            'Image corporelle déformée',
+            'Évitement de situations sociales impliquant la nourriture'
+          ]
+        },
+        {
+          name: 'Troubles de la Conduite',
+          definition: 'Remplacement des Problèmes Comportementaux Antisociaux',
+          symptoms: [
+            'Humeur en colère/irritable',
+            'Comportement de défi',
+            'Comportement explosif',
+            'Vindictivité',
+            'Violations de règles',
+            'Indifférence aux sentiments des autres',
+            'Destruction de biens',
+            'Tromperie/Vol'
+          ]
+        },
+        {
+          name: 'Troubles du Sommeil',
+          definition: 'Les troubles du sommeil affectent la qualité et la quantité du sommeil.',
+          symptoms: [
+            'Difficulté à s\'endormir',
+            'Réveils fréquents pendant la nuit',
+            'Réveil précoce',
+            'Somnolence diurne excessive',
+            'Cauchemars récurrents',
+            'Terreurs nocturnes',
+            'Syndrome d\'Apnée du Sommeil: Interruptions respiratoires pendant le sommeil'
+          ]
+        },
+        {
+          name: 'Trouble de Stress Post-Traumatique',
+          definition: 'Le Trouble de Stress Post-Traumatique peut se développer après une ou des expériences traumatiques.',
+          symptoms: [
+            'Souvenirs récurrents et pénibles',
+            'Rêves récurrents et pénibles',
+            'Flashbacks',
+            'Évitement des indices, situations, personnes liés',
+            'Hypervigilance',
+            'Difficultés de sommeil',
+            'Tristesse',
+            'Incapacité de se souvenir d\'informations importantes sur le traumatisme',
+            'Automutilation',
+            'Irritabilité'
+          ]
+        },
+        {
+          name: 'Troubles de l\'Humeur',
+          definition: 'Les troubles de l\'humeur incluent la dépression, le trouble bipolaire et d\'autres troubles similaires.',
+          symptoms: [
+            'Sauts d\'humeur intenses (tristesse insupportable ou joie excessive)',
+            'Fluctuations d\'énergie intenses (beaucoup ou peu d\'énergie)',
+            'Estime de soi gonflée',
+            'Pensées grandioses',
+            'Performance scolaire réduite',
+            'Difficulté de concentration',
+            'Évitement ou engagement intense avec les activités',
+            'Comportement dangereux',
+            'Impolitesse',
+            'Difficultés de sommeil'
+          ]
+        },
+        {
+          name: 'Tics',
+          definition: 'Les tics (spasmes musculaires) sont des mouvements moteurs ou expressions vocales soudains, rapides, répétitifs, non rythmiques.',
+          symptoms: [
+            'Tics moteurs: Clignement, hochement de tête, haussement d\'épaules',
+            'Tics vocaux: Toux, raclement de gorge, grognement, répétition de mots'
+          ]
+        },
+        {
+          name: 'Psychoses',
+          definition: 'Les psychoses sont des troubles mentaux graves caractérisés par une perte de contact avec la réalité.',
+          symptoms: [
+            'Idées délirantes (ex: persécution, grandeur, contrôle)',
+            'Hallucinations (auditives, visuelles, tactiles)',
+            'Pensée désorganisée',
+            'Parole désorganisée',
+            'Comportement désorganisé ou catatonique',
+            'Manque de conscience du trouble'
+          ]
+        },
+        {
+          name: 'Trouble Obsessionnel-Compulsif (TOC)',
+          definition: 'Trouble mental avec pensées récurrentes et indésirables (obsessions) et comportements compulsifs.',
+          symptoms: [
+            'Pensées récurrentes qui causent de l\'anxiété (ex: germes, symétrie)',
+            'Actions ritualistes pour réduire l\'anxiété (ex: se laver/se lécher/se frotter les mains, organiser l\'espace, couvrir, jouer avec les portes/fenêtres)',
+            'Le souffrant reconnaît la nature irrationnelle de ses pensées'
+          ]
+        },
+        {
+          name: 'Troubles du Sommeil-Éveil',
+          definition: 'Groupe de troubles qui affectent la qualité, la quantité ou le moment du sommeil.',
+          symptoms: [
+            'Insomnie: Difficulté à initier/maintenir le sommeil',
+            'Hypersomnie: Somnolence diurne excessive',
+            'Troubles du rythme circadien: Sommeil aux mauvais moments',
+            'Parasomnies: Cauchemars, somnambulisme, terreurs nocturnes',
+            'Syndrome d\'Apnée du Sommeil: Interruptions respiratoires pendant le sommeil'
+          ]
+        }
+      ],
+      notListed: 'Vous ne voyez pas votre préoccupation spécifique listée? N\'hésitez pas à nous contacter - nous sommes là pour aider avec tous les défis de santé mentale que votre enfant pourrait affronter.'
     }
   } as const;
 
@@ -509,7 +712,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
             )}
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             {content[lang].conditions.map((condition, index: number) => (
               <motion.button 
                 key={index}
@@ -581,7 +784,9 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                   {selectedCondition.definition && (
                     <div>
                       <h4 className="text-lg font-semibold text-gray-700 font-quicksand mb-3">
-                        {language === 'gr' ? 'Ορισμός:' : 'Definition:'}
+                        {language === 'gr' ? 'Ορισμός:' : 
+                          language === 'en' ? 'Definition:' : 
+                          'Définition:'}
                       </h4>
                       <p className="text-gray-600 font-nunito leading-relaxed bg-gray-50 p-4 rounded-lg">
                         {selectedCondition.definition}
@@ -591,7 +796,9 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                   
                   <div>
                   <h4 className="text-lg font-semibold text-gray-700 font-quicksand mb-3">
-                      {language === 'gr' ? 'Συμπτώματα:' : 'Symptoms:'}
+                      {language === 'gr' ? 'Συμπτώματα:' : 
+                        language === 'en' ? 'Symptoms:' : 
+                        'Symptômes:'}
                   </h4>
                   <ul className="space-y-3">
                       {selectedCondition.symptoms.map((symptom: string, index: number) => (

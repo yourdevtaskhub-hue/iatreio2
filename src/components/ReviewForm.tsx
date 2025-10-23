@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ReviewSubmission } from '../types/reviews';
 
 interface ReviewFormProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ language }) => {
@@ -56,6 +56,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language }) => {
       errorMessage: 'There was an error submitting. Please try again.',
       required: 'Required',
       ratingRequired: 'Please select a rating'
+    },
+    fr: {
+      title: 'Laissez votre Avis',
+      subtitle: 'Votre opinion est importante pour nous',
+      nameLabel: 'Nom',
+      namePlaceholder: 'Votre nom',
+      sessionTopicLabel: 'Sujet de Session',
+      sessionTopicPlaceholder: 'ex. Anxiété, Relations Interpersonnelles, Difficultés Scolaires',
+      ratingLabel: 'Évaluation',
+      textLabel: 'Votre Avis',
+      textPlaceholder: 'Décrivez votre expérience...',
+      submitButton: 'Soumettre l\'Avis',
+      submitting: 'Soumission...',
+      successTitle: 'Merci!',
+      successMessage: 'Votre avis a été soumis avec succès et sera examiné sous peu.',
+      errorMessage: 'Il y a eu une erreur lors de la soumission. Veuillez réessayer.',
+      required: 'Requis',
+      ratingRequired: 'Veuillez sélectionner une note'
     }
   };
 
@@ -145,7 +163,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language }) => {
           onClick={() => setIsSubmitted(false)}
           className="mt-6 bg-green-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-green-700 transition-colors"
         >
-          {language === 'gr' ? 'Νέα Αξιολόγηση' : 'New Review'}
+          {language === 'gr' ? 'Νέα Αξιολόγηση' : 
+            language === 'en' ? 'New Review' : 
+            'Nouvel Avis'}
         </motion.button>
       </motion.div>
     );

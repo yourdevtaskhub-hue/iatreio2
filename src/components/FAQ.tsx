@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus, HelpCircle, Heart } from 'lucide-react';
 
 interface FAQProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const FAQ: React.FC<FAQProps> = ({ language }) => {
@@ -71,6 +71,37 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
           answer: 'Yes, all sessions are strictly confidential. However, for children and adolescents, there are certain exceptions when there\'s risk of harm. We\'ll discuss these confidentiality limits with you and your child from the beginning.'
         }
       ]
+    },
+    fr: {
+      title: 'QUESTIONS FRÉQUENTES DES PARENTS',
+      subtitle: '',
+      description: 'Trouvez des réponses aux questions les plus fréquentes que les parents se posent concernant la santé mentale de leurs enfants.',
+      faqs: [
+        {
+          question: 'Quand dois-je chercher de l\'aide pour mon enfant?',
+          answer: 'Cherchez de l\'aide lorsque vous observez des changements significatifs dans le comportement, l\'humeur ou les performances de votre enfant qui durent. Cela peut inclure l\'isolement de l\'enfant, une anxiété intense, la tristesse, des changements dans le sommeil ou l\'appétit, ou des difficultés à l\'école.'
+        },
+        {
+          question: 'Comment fonctionnent les sessions en ligne?',
+          answer: 'Les sessions en ligne se déroulent via une plateforme sécurisée d\'appel vidéo. Votre enfant peut participer depuis le confort de son domicile, ou depuis un autre endroit sûr et calme, ce qui l\'aide souvent à se sentir plus à l\'aise. Nous fournissons toutes les instructions nécessaires pour la connexion et l\'utilisation de la plateforme.'
+        },
+        {
+          question: 'Combien de temps dure généralement la thérapie?',
+          answer: 'La durée de la thérapie dépend des besoins individuels de votre enfant. Certains problèmes peuvent s\'améliorer en quelques semaines, tandis que d\'autres peuvent nécessiter des mois. Nous évaluons régulièrement les progrès et ajustons le plan de traitement en conséquence. Chaque session dure 45-60 minutes.'
+        },
+        {
+          question: 'À quoi dois-je m\'attendre de la première rencontre?',
+          answer: 'La première rencontre se fait généralement avec le médecin et les parents, où ils discutent des préoccupations et des objectifs qu\'ils ont pour leur enfant. Dans l\'environnement sûr de la session, nous expliquons les conditions pour le traitement de l\'enfant et planifions le prochain rendez-vous avec l\'enfant qui écoutera ses propres préoccupations et ses propres objectifs.'
+        },
+        {
+          question: 'Comment les parents sont-ils impliqués dans la thérapie?',
+          answer: 'Les parents sont des partenaires essentiels dans le processus thérapeutique. Nous fournissons des mises à jour régulières, des conseils à domicile et des stratégies que vous pouvez mettre en œuvre pour soutenir votre enfant. Nous offrons également des sessions de thérapie familiale lorsque nécessaire.'
+        },
+        {
+          question: 'Les sessions sont-elles confidentielles?',
+          answer: 'Oui, toutes les sessions sont strictement confidentielles. Cependant, pour les enfants et adolescents, il y a certaines exceptions lorsqu\'il y a un risque d\'automutilation ou d\'hétéro-agression. Nous discuterons de ces limites de confidentialité avec vous et votre enfant dès le début.'
+        }
+      ]
     }
   };
 
@@ -94,7 +125,7 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
             </span>
           </h2>
           <p className="text-lg sm:text-xl text-black max-w-3xl mx-auto leading-relaxed font-nunito">
-            <span className="font-bold">Βρείτε απαντήσεις</span> στις πιο συχνές ερωτήσεις που έχουν οι γονείς σχετικά με την ψυχική υγεία των παιδιών τους.
+            {content[language].description}
           </p>
         </motion.div>
 
@@ -176,25 +207,33 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
               <Heart className="h-8 w-8 text-white" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-800 mb-4 font-poppins">
-              {language === 'gr' ? 'Έχετε Άλλες Ερωτήσεις;' : 'Have More Questions?'}
+              {language === 'gr' ? 'Έχετε Άλλες Ερωτήσεις;' : 
+               language === 'en' ? 'Have More Questions?' : 
+               'Avez-vous d\'autres Questions?'}
             </h3>
             <p className="text-gray-600 font-nunito leading-relaxed mb-6">
               {language === 'gr' 
                 ? 'Μη διστάσετε να επικοινωνήσετε μαζί μας. Είμαστε εδώ για να απαντήσουμε σε όλες τις ερωτήσεις σας και να σας βοηθήσουμε να κάνετε το καλύτερο για το παιδί σας.'
-                : 'Don\'t hesitate to reach out to us. We\'re here to answer all your questions and help you do what\'s best for your child.'
+                : language === 'en'
+                ? 'Don\'t hesitate to reach out to us. We\'re here to answer all your questions and help you do what\'s best for your child.'
+                : 'N\'hésitez pas à nous contacter. Nous sommes là pour répondre à toutes vos questions et vous aider à faire ce qui est le mieux pour votre enfant.'
               }
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const element = document.getElementById('contact');
-                if (element) element.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 font-poppins"
-            >
-              {language === 'gr' ? 'Επικοινωνήστε Μαζί Μας' : 'Contact Us'}
-            </motion.button>
+            <div className="flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const element = document.getElementById('contact');
+                  if (element) element.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 font-poppins"
+              >
+                {language === 'gr' ? 'Επικοινωνήστε Μαζί Μας' : 
+                 language === 'en' ? 'Contact Us' : 
+                 'Contactez-nous'}
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       </div>

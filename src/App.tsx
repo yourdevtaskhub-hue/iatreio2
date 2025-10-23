@@ -87,6 +87,7 @@ function App() {
         onClose={() => setShowPaymentSuccess(false)}
         sessionId={paymentSuccess.sessionId}
         paymentId={paymentSuccess.paymentId}
+        language={language}
       />
       
       {/* Admin Panel Access Button - Only show on home page */}

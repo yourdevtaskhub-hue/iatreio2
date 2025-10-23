@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { BookOpen, Clock, ArrowRight } from 'lucide-react';
 
 interface ArticlesProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const Articles: React.FC<ArticlesProps> = ({ language }) => {
@@ -67,6 +67,38 @@ const Articles: React.FC<ArticlesProps> = ({ language }) => {
           excerpt: 'Latest scientific studies and findings regarding children\'s mental health and wellbeing.',
           readTime: '6 min read',
           category: 'Research',
+          image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://pubmed.ncbi.nlm.nih.gov/38748300/?utm_source='
+        }
+      ]
+    },
+    fr: {
+      title: 'Articles & Conseils',
+      subtitle: 'Informations Utiles pour les Parents',
+      description: 'Découvrez des conseils utiles et des informations pour soutenir la santé mentale de votre enfant.',
+      readMore: 'Lire Plus',
+      articles: [
+        {
+          title: 'Les enfants éprouvent des difficultés de bien-être après la pandémie',
+          excerpt: 'La Grèce se trouve en dehors du top 20 des pays pour le bonheur des enfants selon le rapport UNICEF 2025.',
+          readTime: '5 min de lecture',
+          category: 'Santé Mentale',
+          image: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://neoskosmos.com/en/2025/08/08/news/greece/greek-children-struggle-with-wellbeing-post-pandemic-unicef-report-says/?utm_source'
+        },
+        {
+          title: 'Pourquoi les mamans ne se sentent jamais assez: La pression psychologique d\'être "la maman parfaite"',
+          excerpt: 'La pression psychologique que subissent les mères pour être "parfaites" chaque jour et comment y faire face.',
+          readTime: '7 min de lecture',
+          category: 'Parentalité',
+          image: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          url: 'https://www.themamagers.gr/family/500293/giati-oi-mamades-den-niothoun-pote-arketes-i-psuxologiki-piesi-na-eisai-i-teleia-mama-kathe-mera?utm_source=chatgpt.com'
+        },
+        {
+          title: 'Recherche scientifique sur la santé mentale des enfants',
+          excerpt: 'Dernières études scientifiques et découvertes concernant la santé mentale et le bien-être des enfants.',
+          readTime: '6 min de lecture',
+          category: 'Recherche',
           image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
           url: 'https://pubmed.ncbi.nlm.nih.gov/38748300/?utm_source='
         }

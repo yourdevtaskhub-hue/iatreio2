@@ -32,6 +32,16 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       faq: 'FAQ',
       contact: 'Contact',
       appointment: 'Book Appointment'
+    },
+    fr: {
+      home: 'Accueil',
+      services: 'Services',
+      about: 'À propos',
+      team: 'Notre équipe',
+      testimonials: 'Témoignages',
+      faq: 'FAQ',
+      contact: 'Contact',
+      appointment: 'Prendre rendez-vous'
     }
   };
 
@@ -93,8 +103,16 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                 Dr. Anna-Maria Fytrou
               </h1>
               <div className="text-xs sm:text-sm text-white/90 font-quicksand leading-tight">
-                <div>Ψυχίατρος Παιδιού και Εφήβου</div>
-                <div>Ψυχοθεραπεύτρια</div>
+                <div>
+                  {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου' : 
+                   language === 'en' ? 'Child and Adolescent Psychiatrist' : 
+                   'Psychiatre pour enfants et adolescents'}
+                </div>
+                <div>
+                  {language === 'gr' ? 'Ψυχοθεραπεύτρια' : 
+                   language === 'en' ? 'Psychotherapist' : 
+                   'Psychothérapeute'}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -121,11 +139,17 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                       key={`lang-${key}-${index}`}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setLanguage(language === 'gr' ? 'en' : 'gr')}
+                      onClick={() => {
+                        if (language === 'gr') setLanguage('en');
+                        else if (language === 'en') setLanguage('fr');
+                        else setLanguage('gr');
+                      }}
                       className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 sm:py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300 min-h-[40px]"
                     >
                       <Globe className="h-4 w-4" />
-                      <span className="text-sm font-medium">{language === 'gr' ? 'EN' : 'GR'}</span>
+                      <span className="text-sm font-medium">
+                        {language === 'gr' ? 'EN' : language === 'en' ? 'FR' : 'GR'}
+                      </span>
                     </motion.button>
                     <motion.button
                       key={`appointment-${key}-${index}`}
@@ -165,11 +189,17 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             <div className="px-4 sm:px-6 py-4 space-y-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
-                onClick={() => setLanguage(language === 'gr' ? 'en' : 'gr')}
+                onClick={() => {
+                  if (language === 'gr') setLanguage('en');
+                  else if (language === 'en') setLanguage('fr');
+                  else setLanguage('gr');
+                }}
                 className="flex items-center space-x-2 w-full px-3 py-2 rounded-xl bg-gradient-to-r from-baby-blue to-mint-green text-gray-700"
               >
                 <Globe className="h-4 w-4" />
-                <span className="text-sm font-medium">{language === 'gr' ? 'English' : 'Ελληνικά'}</span>
+                <span className="text-sm font-medium">
+                  {language === 'gr' ? 'English' : language === 'en' ? 'Français' : 'Ελληνικά'}
+                </span>
               </motion.button>
               
               {Object.entries(content[language as keyof typeof content]).map(([key, value]) => (

@@ -7,15 +7,59 @@ interface PaymentSuccessPopupProps {
   onClose: () => void;
   sessionId?: string;
   paymentId?: string;
+  language?: 'gr' | 'en' | 'fr';
 }
 
 const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
   isVisible,
   onClose,
   sessionId,
-  paymentId
+  paymentId,
+  language = 'gr'
 }) => {
   const [isClosing, setIsClosing] = useState(false);
+
+  const content = {
+    gr: {
+      title: 'Πληρωμή Επιτυχής!',
+      subtitle: 'Σας περιμένουμε στο ιατρείο μας!',
+      successMessage: 'Η πληρωμή σας ολοκληρώθηκε με επιτυχία!',
+      emailConfirmation: 'Θα λάβετε email επιβεβαίωσης με όλες τις λεπτομέρειες του ραντεβού σας.',
+      appointmentDetails: 'Λεπτομέρειες Ραντεβού',
+      date: 'Ημερομηνία: Θα επιβεβαιωθεί με email',
+      time: 'Ώρα: Θα επιβεβαιωθεί με email',
+      location: 'Τοποθεσία: Online (Διαδικτυακό Ιατρείο)',
+      contact: 'Επικοινωνία',
+      understood: 'Κατάλαβα',
+      contactButton: 'Επικοινωνία'
+    },
+    en: {
+      title: 'Payment Successful!',
+      subtitle: 'We look forward to seeing you at our clinic!',
+      successMessage: 'Your payment has been completed successfully!',
+      emailConfirmation: 'You will receive a confirmation email with all the details of your appointment.',
+      appointmentDetails: 'Appointment Details',
+      date: 'Date: Will be confirmed by email',
+      time: 'Time: Will be confirmed by email',
+      location: 'Location: Online (Online Clinic)',
+      contact: 'Contact',
+      understood: 'Understood',
+      contactButton: 'Contact'
+    },
+    fr: {
+      title: 'Paiement Réussi!',
+      subtitle: 'Nous avons hâte de vous voir à notre clinique!',
+      successMessage: 'Votre paiement a été complété avec succès!',
+      emailConfirmation: 'Vous recevrez un email de confirmation avec tous les détails de votre rendez-vous.',
+      appointmentDetails: 'Détails du Rendez-vous',
+      date: 'Date: Sera confirmée par email',
+      time: 'Heure: Sera confirmée par email',
+      location: 'Lieu: En ligne (Clinique en ligne)',
+      contact: 'Contact',
+      understood: 'Compris',
+      contactButton: 'Contact'
+    }
+  };
 
   const handleClose = () => {
     setIsClosing(true);
@@ -87,7 +131,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                   transition={{ delay: 0.3 }}
                   className="text-2xl font-bold text-white mb-2"
                 >
-                  Πληρωμή Επιτυχής!
+                  {content[language].title}
                 </motion.h2>
                 
                 <motion.p
@@ -96,7 +140,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                   transition={{ delay: 0.4 }}
                   className="text-white/90 text-lg"
                 >
-                  Σας περιμένουμε στο ιατρείο μας!
+                  {content[language].subtitle}
                 </motion.p>
               </div>
 
@@ -111,39 +155,39 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                   {/* Success message */}
                   <div className="text-center">
                     <p className="text-gray-700 text-lg font-medium mb-4">
-                      Η πληρωμή σας ολοκληρώθηκε με επιτυχία! 
+                      {content[language].successMessage}
                     </p>
                     <p className="text-gray-600">
-                      Θα λάβετε email επιβεβαίωσης με όλες τις λεπτομέρειες του ραντεβού σας.
+                      {content[language].emailConfirmation}
                     </p>
                   </div>
 
                   {/* Appointment details */}
                   <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
                     <h3 className="font-semibold text-gray-800 text-center mb-3">
-                      Λεπτομέρειες Ραντεβού
+                      {content[language].appointmentDetails}
                     </h3>
                     
                     <div className="flex items-center space-x-3 text-gray-700">
                       <Calendar className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm">Ημερομηνία: Θα επιβεβαιωθεί με email</span>
+                      <span className="text-sm">{content[language].date}</span>
                     </div>
                     
                     <div className="flex items-center space-x-3 text-gray-700">
                       <Clock className="w-5 h-5 text-green-500" />
-                      <span className="text-sm">Ώρα: Θα επιβεβαιωθεί με email</span>
+                      <span className="text-sm">{content[language].time}</span>
                     </div>
                     
                     <div className="flex items-center space-x-3 text-gray-700">
                       <MapPin className="w-5 h-5 text-red-500" />
-                      <span className="text-sm">Τοποθεσία: Online (Διαδικτυακό Ιατρείο)</span>
+                      <span className="text-sm">{content[language].location}</span>
                     </div>
                   </div>
 
                   {/* Contact info */}
                   <div className="bg-blue-50 rounded-2xl p-4">
                     <h4 className="font-semibold text-blue-800 mb-3 text-center">
-                      Επικοινωνία
+                      {content[language].contact}
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3 text-blue-700">
@@ -179,7 +223,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                     onClick={handleClose}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
-                    Κατάλαβα
+                    {content[language].understood}
                   </button>
                   
                   <button
@@ -193,7 +237,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                     }}
                     className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
-                    Επικοινωνία
+                    {content[language].contactButton}
                   </button>
                 </motion.div>
               </div>

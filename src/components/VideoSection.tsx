@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface VideoSectionProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const VideoSection: React.FC<VideoSectionProps> = ({ language }) => {
@@ -17,12 +17,16 @@ const VideoSection: React.FC<VideoSectionProps> = ({ language }) => {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-6 font-poppins">
-            {language === 'gr' ? 'Η Θεραπεία Ενώνει Οικογένειες' : 'Healing Unites Families'}
+            {language === 'gr' ? 'Η Θεραπεία Ενώνει Οικογένειες' : 
+             language === 'en' ? 'Healing Unites Families' : 
+             'La Thérapie Unit les Familles'}
           </h2>
           <p className="text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto font-nunito">
             {language === 'gr' 
               ? 'Παιδιά, εφήβοι και γονείς - όλοι μαζί στο ταξίδι προς την ψυχική ευεξία. Η ολοκληρωμένη ψυχολογική φροντίδα ενδυναμώνει κάθε μέλος της οικογένειας, δημιουργώντας ένα περιβάλλον αγάπης, κατανόησης και αμοιβαίας υποστήριξης όπου όλοι μπορούν να ευδοκιμήσουν.'
-              : 'Children, adolescents, and parents - all together on the journey to mental wellness. Comprehensive psychological care empowers every family member, creating an environment of love, understanding, and mutual support where everyone can thrive.'
+              : language === 'en'
+              ? 'Children, adolescents, and parents - all together on the journey to mental wellness. Comprehensive psychological care empowers every family member, creating an environment of love, understanding, and mutual support where everyone can thrive.'
+              : 'Enfants, adolescents et parents - tous ensemble dans le voyage vers le bien-être mental. Les soins psychologiques complets autonomisent chaque membre de la famille, créant un environnement d\'amour, de compréhension et de soutien mutuel où chacun peut s\'épanouir.'
             }
           </p>
         </motion.div>

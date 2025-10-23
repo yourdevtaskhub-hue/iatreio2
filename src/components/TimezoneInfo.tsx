@@ -3,7 +3,7 @@ import { Clock, Globe } from 'lucide-react';
 import { getUserTimezone, getUserLocation } from '../lib/timezone';
 
 interface TimezoneInfoProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const TimezoneInfo: React.FC<TimezoneInfoProps> = ({ language }) => {
@@ -28,6 +28,15 @@ const TimezoneInfo: React.FC<TimezoneInfoProps> = ({ language }) => {
       switzerland: 'Switzerland',
       other: 'Other Country',
       note: 'Dates are displayed in your local time'
+    },
+    fr: {
+      timezoneInfo: 'Informations de Fuseau Horaire',
+      currentTimezone: 'Fuseau Horaire Actuel',
+      location: 'Localisation',
+      greece: 'Grèce',
+      switzerland: 'Suisse',
+      other: 'Autre Pays',
+      note: 'Les dates sont affichées dans votre heure locale'
     }
   };
 

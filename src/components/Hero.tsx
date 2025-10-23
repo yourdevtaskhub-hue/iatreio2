@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Trophy, Pin } from 'lucide-react';
 
 interface HeroProps {
-  language: 'gr' | 'en';
-  setLanguage: (lang: 'gr' | 'en') => void;
+  language: 'gr' | 'en' | 'fr';
+  setLanguage: (lang: 'gr' | 'en' | 'fr') => void;
 }
 
 const Hero: React.FC<HeroProps> = ({ language }) => {
@@ -26,6 +26,15 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       experience: 'Years Experience',
       families: 'Families',
       location: 'Lausanne, Switzerland'
+    },
+    fr: {
+      title: 'Clinique en ligne Parents et Adolescents',
+      subtitle: 'Soutien pour la Santé Mentale des adolescents et de leurs parents avec professionnalisme, compréhension et confidentialité totale.',
+      cta: 'Prendre rendez-vous',
+      learnMore: 'En savoir plus',
+      experience: 'Années d\'expérience',
+      families: 'Familles',
+      location: 'Lausanne, Suisse'
     }
   } as const;
 
@@ -77,9 +86,12 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             
             {/* Text content */}
             <div className="text-gray-800 text-xs font-bold font-nunito leading-tight text-center">
-              Το 1ο Διαδικτυακό Ιατρείο<br />
-              Γονέων και Εφήβων στην<br />
-              Ευρώπη
+              {language === 'gr' 
+                ? <>Το 1ο Διαδικτυακό Ιατρείο<br />Γονέων και Εφήβων στην<br />Ευρώπη</>
+                : language === 'en' 
+                ? <>The 1st Online Clinic<br />for Parents and Adolescents<br />in Europe</>
+                : <>La 1ère Clinique en ligne<br />pour Parents et Adolescents<br />en Europe</>
+              }
             </div>
           </div>
           
@@ -113,7 +125,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
                 Γονέων και Εφήβων
               </span>
             </>
-          ) : (
+          ) : language === 'en' ? (
             <div className="flex flex-col items-center w-full">
               <span className="text-gray-900 block">
                 Online
@@ -123,6 +135,18 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
               </span>
               <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent block">
                 Clinic
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center w-full">
+              <span className="text-gray-900 block">
+                Clinique
+              </span>
+              <span className="text-gray-900 block">
+                Parents et
+              </span>
+              <span className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-soft bg-clip-text text-transparent block">
+                Adolescents
               </span>
             </div>
           )}

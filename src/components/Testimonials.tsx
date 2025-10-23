@@ -6,7 +6,7 @@ import { Review } from '../types/reviews';
 import ReviewForm from './ReviewForm';
 
 interface TestimonialsProps {
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
@@ -60,6 +60,31 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Helen M.',
           role: 'Mother of 13-year-old',
           text: 'Online therapy was a lifesaver for us. Our teenager was quite sad but Dr. Fytrou managed to create a good relationship with her and show her the way to find new ways to be happier and more calm.',
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+        }
+      ]
+    },
+    fr: {
+      title: 'Témoignages de Parents et Adolescents',
+      subtitle: 'Histoires d\'Espoir et de Guérison',
+      description: 'Écoutez les familles qui ont trouvé soutien, compréhension et guérison grâce à nos soins.',
+      testimonials: [
+        {
+          name: 'Marie K.',
+          role: 'Mère d\'un enfant de 12 ans',
+          text: 'Dr Fytrou a changé la vie de notre famille. Ma fille qui luttait contre l\'anxiété est maintenant plus confiante et heureuse. Son approche est si chaleureuse et compréhensive.',
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+        },
+        {
+          name: 'Jean P.',
+          role: 'Père d\'un adolescent',
+          text: 'Mon fils était renfermé et en colère. Après des mois de thérapie avec Dr Fytrou, il communique ouvertement et a trouvé des moyens de gérer ses émotions.',
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+        },
+        {
+          name: 'Hélène M.',
+          role: 'Mère d\'une adolescente de 13 ans',
+          text: 'La thérapie en ligne a été un sauvetage pour nous. Notre adolescente était assez triste mais Dr Fytrou a réussi à créer une bonne relation avec elle et lui montrer le chemin pour trouver de nouvelles façons d\'être plus heureuse et plus calme.',
           image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
         }
       ]
@@ -117,7 +142,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-soft mx-auto mb-4"></div>
             <p className="text-gray-600 font-nunito">
-              {language === 'gr' ? 'Φόρτωση αξιολογήσεων...' : 'Loading reviews...'}
+              {language === 'gr' ? 'Φόρτωση αξιολογήσεων...' : 
+               language === 'en' ? 'Loading reviews...' : 
+               'Chargement des avis...'}
             </p>
           </div>
         ) : (
@@ -210,7 +237,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
               <Heart className="h-8 w-8 text-rose-soft" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-800 mb-4 font-poppins">
-              {language === 'gr' ? 'Η Οικογένεια σας Αξίζει Υποστήριξη' : 'Your Family Deserves Support'}
+              {language === 'gr' ? 'Η Οικογένεια σας Αξίζει Υποστήριξη' : 
+                language === 'en' ? 'Your Family Deserves Support' : 
+                'Votre Famille Mérite du Soutien'}
             </h3>
             <p className="text-gray-600 font-nunito leading-relaxed">
               {language === 'gr' 

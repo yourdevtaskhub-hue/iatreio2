@@ -22,7 +22,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       linksList: [
         'Σχετικά με τη Δρ. Φύτρου',
         'Υπηρεσίες',
-        'Η Προσέγγισή μας',
+        'Η Ομάδα μας',
         'Επικοινωνία'
       ],
       emergency: 'Ειδοποίηση Έκτακτης Ανάγκης',
@@ -56,7 +56,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       linksList: [
         'About Dr. Fytrou',
         'Services',
-        'Our Approach',
+        'Our Team',
         'Contact'
       ],
       emergency: 'Emergency Notice',
@@ -75,6 +75,40 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       ],
       copyright: '© 2024 Dr. Anna-Maria Fytrou. All rights reserved.',
       privacyProtected: 'Patient Privacy Protected'
+    },
+    fr: {
+      description: 'Fournissant des soins de santé mentale compatissants et basés sur des preuves pour les enfants et adolescents. Soutenant les familles à chaque étape du voyage vers la guérison et la croissance.',
+      services: 'Nos Services',
+      servicesList: [
+        'Évaluation Psychiatrique',
+        'Thérapie Individuelle',
+        'Thérapie Familiale',
+        'Intervention de Crise',
+        'Consultations en Ligne'
+      ],
+      quickLinks: 'Liens Rapides',
+      linksList: [
+        'À propos du Dr Fytrou',
+        'Services',
+        'Notre équipe',
+        'Contact'
+      ],
+      emergency: 'Avis d\'Urgence',
+      emergencyText: 'Si vous ou votre enfant faites face à une urgence de santé mentale, veuillez contacter immédiatement les services d\'urgence ou aller au service d\'urgence le plus proche. N\'attendez pas de réponse aux communications en ligne.',
+      swissEmergency: 'Urgence Suisse: 144',
+      euEmergency: 'Urgence UE: 112',
+      helplines: [
+        'Ligne d\'aide pour le Suicide Klimaka: 1018',
+        'Ligne d\'aide SOS pour Enfants, Adolescents et Parents: 1056',
+        'Ligne d\'aide Psychosociale: 10306',
+        'Ligne Nationale de Protection de l\'Enfant: 1107',
+        'Ligne d\'aide ΥΠΟΣΤΗΡΙΖΩ: 80011 80015',
+        'Ligne d\'aide pour adolescents: 116111',
+        'Ligne d\'aide Psychologique ITHAKI: 1145',
+        'Ligne d\'aide SOS d\'OKANA: 1031'
+      ],
+      copyright: '© 2024 Dr. Anna-Maria Fytrou. Tous droits réservés.',
+      privacyProtected: 'Confidentialité des Patients Protégée'
     }
   };
 
@@ -108,7 +142,9 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               <div>
                 <h3 className="font-bold text-xl font-poppins">Dr. Anna-Maria Fytrou</h3>
                 <p className="text-gray-300 text-sm font-quicksand">
-                  {language === 'gr' ? 'Παιδοψυχίατρος' : 'Child & Adolescent Psychiatrist'}
+                  {language === 'gr' ? 'Παιδοψυχίατρος' : 
+                   language === 'en' ? 'Child & Adolescent Psychiatrist' : 
+                   'Psychiatre pour enfants et adolescents'}
                 </p>
               </div>
             </motion.div>
@@ -168,7 +204,9 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               >
                 <MapPin className="h-4 w-4 mr-3" />
                 <span className="font-nunito">
-                  {language === 'gr' ? 'Λωζάνη, Ελβετία' : 'Lausanne, Switzerland'}
+                  {language === 'gr' ? 'Λωζάνη, Ελβετία' : 
+                   language === 'en' ? 'Lausanne, Switzerland' : 
+                   'Lausanne, Suisse'}
                 </span>
               </motion.div>
             </div>
@@ -196,7 +234,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
             <h4 className="font-semibold text-lg mb-4 font-poppins">{content[language].quickLinks}</h4>
             <ul className="space-y-2">
               {content[language].linksList.map((link, index) => {
-                const sectionIds = ['about', 'services', 'approach', 'contact'];
+                const sectionIds = ['about', 'services', 'team', 'contact'];
                 return (
                   <motion.li 
                     key={index}
@@ -268,7 +306,9 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               
               <div className="text-left">
                 <h5 className="text-red-300 font-semibold text-sm mb-3 font-poppins">
-                  {language === 'gr' ? 'Τηλεφωνικές Γραμμές Βοήθειας:' : 'Helplines:'}
+                  {language === 'gr' ? 'Τηλεφωνικές Γραμμές Βοήθειας:' : 
+                   language === 'en' ? 'Helplines:' : 
+                   'Lignes d\'aide:'}
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {content[language].helplines.map((helpline, index) => (
