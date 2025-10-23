@@ -21,8 +21,18 @@ export interface CreateCheckoutSessionData {
 export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) => {
   try {
     console.log('🔍 [DEBUG] Creating REAL Stripe Checkout Session...');
+    console.log('🔍 [DEBUG] Input data:', {
+      doctorId: data.doctorId,
+      doctorName: data.doctorName,
+      parentName: data.parentName,
+      parentEmail: data.parentEmail,
+      appointmentDate: data.appointmentDate,
+      appointmentTime: data.appointmentTime,
+      amountCents: data.amountCents
+    });
 
     // Get Stripe Price ID from database
+    console.log('🔍 [DEBUG] Fetching Stripe product for doctor:', data.doctorId);
     const { data: stripeProduct, error: productError } = await supabase
       .from('stripe_products')
       .select('stripe_price_id')
@@ -30,8 +40,11 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
       .single();
 
     if (productError || !stripeProduct) {
+      console.error('❌ [ERROR] Stripe product not found:', productError);
       throw new Error('Stripe product not found for the selected doctor.');
     }
+
+    console.log('✅ [SUCCESS] Stripe product found:', stripeProduct.stripe_price_id);
 
     // Create payment record in database
     const { data: paymentData, error: paymentError } = await supabase
@@ -56,11 +69,15 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
 
     console.log('✅ [SUCCESS] Payment record created:', paymentData.id);
 
-    // Create Stripe Checkout Session via server
-    console.log('🔍 [DEBUG] Creating Stripe Checkout Session via server...');
+    // Create Stripe Checkout Session via Netlify Function
+    console.log('🔍 [DEBUG] Creating Stripe Checkout Session via Netlify Function...');
     
     try {
-      const response = await fetch('http://localhost:3001/api/create-checkout-session', {
+      // Use Netlify Function endpoint instead of localhost
+      const netlifyFunctionUrl = '/.netlify/functions/create-checkout-session';
+      console.log('🔍 [DEBUG] Calling Netlify Function:', netlifyFunctionUrl);
+      
+      const response = await fetch(netlifyFunctionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,10 +96,19 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
       });
 
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ [ERROR] Server response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
       }
 
-      const { sessionId } = await response.json();
+      const responseData = await response.json();
+      console.log('🔍 [DEBUG] Response data:', responseData);
+      
+      const { sessionId } = responseData;
       console.log('✅ [SUCCESS] Checkout session created:', sessionId);
 
       // Show confirmation and redirect
