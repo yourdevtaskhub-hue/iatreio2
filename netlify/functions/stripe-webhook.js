@@ -86,6 +86,9 @@ exports.handler = async (event, context) => {
 async function handleCheckoutSessionCompleted(session) {
   console.log('🔍 [DEBUG] Processing checkout session completed:', session.id);
   console.log('🔍 [DEBUG] Full session object:', JSON.stringify(session, null, 2));
+  console.log('🔍 [DEBUG] Session metadata exists:', !!session.metadata);
+  console.log('🔍 [DEBUG] Session customer_details exists:', !!session.customer_details);
+  console.log('🔍 [DEBUG] Session customer_email exists:', !!session.customer_email);
 
   const {
     doctor_id,
@@ -135,6 +138,8 @@ async function handleCheckoutSessionCompleted(session) {
     });
     throw new Error('Missing required metadata in session');
   }
+
+  console.log('✅ [SUCCESS] All required metadata validated successfully');
 
   try {
     // Update payment status
