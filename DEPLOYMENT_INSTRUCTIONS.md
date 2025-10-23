@@ -1,92 +1,118 @@
-# 🚀 GitHub Deployment Instructions
+# 🚀 Manual Deployment Instructions
 
-## Prerequisites
-- Git installed
-- GitHub account
-- Repository: https://github.com/yourdevtaskhub-hue/iatreioweb.git
+## 📋 **Production Deployment Checklist**
 
-## Step 1: Initialize Git (if not already done)
+### **1. Environment Setup**
+
+#### **Frontend (.env.local)**
 ```bash
-git init
-git remote add origin https://github.com/yourdevtaskhub-hue/iatreioweb.git
+VITE_SUPABASE_URL=https://vdrmgzoupwyisiyrnjdi.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
+VITE_FRONTEND_URL=https://onlineparentteenclinic.com
 ```
 
-## Step 2: Add all files
+#### **Server (server.env)**
 ```bash
-git add .
-git commit -m "Fix image orientation, cache issues, and optimize all images
-
-- Added aggressive cache control headers
-- Fixed image orientation for Mac browsers  
-- Optimized all images (96-97% size reduction)
-- Enhanced CSS for cross-browser compatibility
-- Added image optimization scripts"
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret_here
+SUPABASE_URL=https://vdrmgzoupwyisiyrnjdi.supabase.co
+SUPABASE_SERVICE_KEY=your_supabase_service_key_here
+FRONTEND_URL=https://onlineparentteenclinic.com
 ```
 
-## Step 3: Push to GitHub
+### **2. Build & Deploy Frontend**
+
 ```bash
-git push -u origin main
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Upload dist/ folder to your web server
+# Point domain to the dist/ folder
 ```
 
-## Step 4: Deploy to Netlify
-1. Go to https://netlify.com
-2. Click "New site from Git"
-3. Connect your GitHub account
-4. Select repository: yourdevtaskhub-hue/iatreioweb
-5. Build settings:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-6. Click "Deploy site"
+### **3. Deploy Express Server**
 
-## Step 5: Verify Deployment
-1. Wait for Netlify build to complete
-2. Test the live URL
-3. Check on different devices:
-   - Windows Chrome/Edge
-   - Mac Safari/Chrome
-   - Mobile browsers
+```bash
+# Install server dependencies
+npm install express cors stripe @supabase/supabase-js
 
-## Cache Clearing for Users
-Tell users to do hard refresh:
-- **Mac:** Cmd + Shift + R
-- **Windows:** Ctrl + Shift + R
-- **Mobile:** Clear browser cache
+# Start server
+node server.js
+```
 
-## Build Verification
-- ✅ All images optimized (96-97% reduction)
-- ✅ CSS fixes for image orientation
-- ✅ Aggressive cache control headers
-- ✅ Cross-browser compatibility
-- ✅ Mobile responsive
+### **4. Stripe Webhook Setup**
 
-## File Changes Summary
-- `netlify.toml`: Added aggressive cache control
-- `src/index.css`: Enhanced image orientation fixes
-- `scripts/`: Added image optimization scripts
-- All images: Optimized and EXIF metadata removed
+1. **Stripe Dashboard** → **Developers** → **Webhooks**
+2. **Add endpoint**: `https://onlineparentteenclinic.com/api/stripe-webhook`
+3. **Events**: `checkout.session.completed`, `payment_intent.succeeded`
+4. **Copy webhook secret** to server.env
 
-## Expected Results
-- 🖼️ Images display correctly on all devices
-- ⚡ 10x faster page load (optimized images)
-- 🔄 No cache issues (fresh content always)
-- 📱 Perfect mobile experience
-- 🌐 Cross-browser compatibility
+### **5. Database Setup**
 
-## Troubleshooting
-If issues persist:
-1. Clear Netlify cache: Site settings → Build & deploy → Post processing
-2. Force rebuild: Trigger new deploy
-3. Check browser console for errors
-4. Verify all images load correctly
+Run these SQL scripts in Supabase:
+- `database_setup_stripe.sql`
+- `fix_stripe_products.sql`
+- `fix_payments_table.sql`
+- `fix_rls_policies.sql`
 
-## Success Criteria
-- ✅ Dr. Fytrou image displays correctly on Mac
-- ✅ All sections load properly
-- ✅ Fast loading on mobile
-- ✅ No cache issues
-- ✅ Cross-browser compatibility
+### **6. Test Everything**
+
+1. **Frontend**: Visit `https://onlineparentteenclinic.com`
+2. **Contact Form**: Fill out appointment form
+3. **Stripe Payment**: Complete test payment
+4. **Check Database**: Verify payment and appointment records
+5. **Webhook**: Check server logs for webhook events
+
+### **7. Go Live!**
+
+1. **Switch Stripe to Live Mode**
+2. **Update environment variables with live keys**
+3. **Test with real payment (small amount)**
+4. **Monitor for 24 hours**
 
 ---
-Generated: 2025-10-22T13:28:59.979Z
-Build: Production ready
-Status: ✅ Ready for deployment
+
+## 🔧 **Files to Deploy**
+
+### **Frontend Files:**
+- `dist/` folder (after `npm run build`)
+- `.env.local` with production keys
+
+### **Server Files:**
+- `server.js`
+- `server.env` with production keys
+- `package.json` (server dependencies)
+
+### **Database:**
+- Run all SQL scripts in Supabase
+- Verify RLS policies are enabled
+
+---
+
+## 🆘 **Troubleshooting**
+
+### **Common Issues:**
+1. **CORS errors**: Check server CORS settings
+2. **Webhook not working**: Verify endpoint URL and secret
+3. **Database errors**: Check RLS policies
+4. **Payment not completing**: Check Stripe logs
+
+### **Debug Steps:**
+1. Check browser console for errors
+2. Check server logs for webhook events
+3. Check Stripe Dashboard for payment status
+4. Check Supabase for database records
+
+---
+
+## 📞 **Support**
+
+If you need help:
+- Check server logs
+- Check Stripe Dashboard
+- Check Supabase Dashboard
+- Verify all environment variables are set
