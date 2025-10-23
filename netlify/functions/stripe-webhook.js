@@ -25,6 +25,8 @@ exports.handler = async (event, context) => {
   console.log('  - STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'SET' : 'NOT SET');
   console.log('  - SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
   console.log('  - SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'SET' : 'NOT SET');
+  console.log('🔍 [DEBUG] Request timestamp:', new Date().toISOString());
+  console.log('🔍 [DEBUG] Request ID:', event.headers['x-nf-request-id'] || 'N/A');
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -78,9 +80,17 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('❌ [ERROR] Webhook processing failed:', error);
+    console.error('❌ [ERROR] Error stack:', error.stack);
+    console.error('❌ [ERROR] Error message:', error.message);
+    console.error('❌ [ERROR] Error name:', error.name);
+    console.error('❌ [ERROR] Full error object:', JSON.stringify(error, null, 2));
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Webhook processing failed' }),
+      body: JSON.stringify({ 
+        error: 'Webhook processing failed',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      }),
     };
   }
 };
