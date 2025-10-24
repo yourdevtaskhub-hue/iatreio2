@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:block flex-shrink-0 overflow-x-auto">
-            <div className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 h-full min-w-fit">
+            <div className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 h-full min-w-fit pr-2 lg:pr-4 xl:pr-6">
               {Object.entries(content[language as keyof typeof content]).map(([key, value], index) => {
                 return key !== 'appointment' ? (
                   <motion.button
