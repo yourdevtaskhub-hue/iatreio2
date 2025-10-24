@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Menu, X, Globe } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import logoIatrio from '../assets/logoiatrio.png';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
 
   const content = {
     gr: {
@@ -52,6 +53,22 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.language-dropdown')) {
+        setIsLanguageDropdownOpen(false);
+      }
+    };
+    if (isLanguageDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isLanguageDropdownOpen]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -135,28 +152,128 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                   </motion.button>
                 ) : (
                   <React.Fragment key={`fragment-${key}-${index}`}>
-                    <motion.button
-                      key={`lang-${key}-${index}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        if (language === 'gr') setLanguage('en');
-                        else if (language === 'en') setLanguage('fr');
-                        else setLanguage('gr');
-                      }}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 sm:py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:shadow-lg transition-all duration-300 min-h-[40px]"
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {language === 'gr' ? 'EN' : language === 'en' ? 'FR' : 'GR'}
-                      </span>
-                    </motion.button>
+                    <div className="language-dropdown relative">
+                      <motion.button
+                        key={`lang-${key}-${index}`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                        className="flex items-center space-x-2 px-3 py-2.5 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:shadow-xl transition-all duration-300 min-h-[40px] border border-white/30"
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span className="text-sm font-semibold">
+                          {language === 'gr' ? '🇬🇷 GR' : language === 'en' ? '🇬🇧 EN' : '🇫🇷 FR'}
+                        </span>
+                        <motion.div
+                          animate={{ rotate: isLanguageDropdownOpen ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </motion.div>
+                      </motion.button>
+                      
+                      <AnimatePresence>
+                        {isLanguageDropdownOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 backdrop-blur-xl"
+                          >
+                            <div className="bg-gradient-to-r from-pink-300/20 via-purple-300/20 to-blue-300/20 px-4 py-2 border-b border-gray-100">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Language</p>
+                            </div>
+                            <div className="py-1">
+                              <motion.button
+                                whileHover={{ x: 4 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setLanguage('gr');
+                                  setIsLanguageDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                                  language === 'gr' 
+                                    ? 'bg-gradient-to-r from-pink-300/20 to-purple-300/20 border-l-4 border-rose-soft font-semibold' 
+                                    : 'hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50'
+                                }`}
+                              >
+                                <span className="text-3xl filter drop-shadow-sm">🇬🇷</span>
+                                <div className="flex-1">
+                                  <span className={`block ${language === 'gr' ? 'text-gray-800' : 'text-gray-700'}`}>Ελληνικά</span>
+                                  <span className="text-xs text-gray-500">Greek</span>
+                                </div>
+                                {language === 'gr' && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-2 h-2 bg-rose-soft rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ x: 4 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setLanguage('en');
+                                  setIsLanguageDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                                  language === 'en' 
+                                    ? 'bg-gradient-to-r from-blue-300/20 to-purple-300/20 border-l-4 border-blue-500 font-semibold' 
+                                    : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50'
+                                }`}
+                              >
+                                <span className="text-3xl filter drop-shadow-sm">🇬🇧</span>
+                                <div className="flex-1">
+                                  <span className={`block ${language === 'en' ? 'text-gray-800' : 'text-gray-700'}`}>English</span>
+                                  <span className="text-xs text-gray-500">Αγγλικά</span>
+                                </div>
+                                {language === 'en' && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-2 h-2 bg-blue-500 rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ x: 4 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setLanguage('fr');
+                                  setIsLanguageDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                                  language === 'fr' 
+                                    ? 'bg-gradient-to-r from-blue-300/20 to-pink-300/20 border-l-4 border-blue-600 font-semibold' 
+                                    : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-pink-50'
+                                }`}
+                              >
+                                <span className="text-3xl filter drop-shadow-sm">🇫🇷</span>
+                                <div className="flex-1">
+                                  <span className={`block ${language === 'fr' ? 'text-gray-800' : 'text-gray-700'}`}>Français</span>
+                                  <span className="text-xs text-gray-500">French</span>
+                                </div>
+                                {language === 'fr' && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-2 h-2 bg-blue-600 rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                     <motion.button
                       key={`appointment-${key}-${index}`}
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => scrollToSection('contact')}
-                      className="bg-white text-rose-soft px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins min-h-[40px] flex items-center justify-center"
+                      className="bg-white text-rose-soft px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins min-h-[40px] flex items-center justify-center whitespace-nowrap flex-shrink-0"
                     >
                       {value}
                     </motion.button>
@@ -187,20 +304,128 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             className="lg:hidden bg-white/95 backdrop-blur-md rounded-3xl mt-4 shadow-xl border border-gray-100"
           >
             <div className="px-4 sm:px-6 py-4 space-y-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                onClick={() => {
-                  if (language === 'gr') setLanguage('en');
-                  else if (language === 'en') setLanguage('fr');
-                  else setLanguage('gr');
-                }}
-                className="flex items-center space-x-2 w-full px-3 py-2 rounded-xl bg-gradient-to-r from-baby-blue to-mint-green text-gray-700"
-              >
-                <Globe className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {language === 'gr' ? 'English' : language === 'en' ? 'Français' : 'Ελληνικά'}
-                </span>
-              </motion.button>
+              <div className="language-dropdown">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gradient-to-r from-pink-300/30 via-purple-300/30 to-blue-300/30 text-gray-700 shadow-md border border-gray-200"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Globe className="h-5 w-5 text-gray-600" />
+                    <div className="text-left">
+                      <span className="text-base font-semibold block">
+                        {language === 'gr' ? '🇬🇷 Ελληνικά' : language === 'en' ? '🇬🇧 English' : '🇫🇷 Français'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {language === 'gr' ? 'Change Language' : language === 'en' ? 'Αλλαγή Γλώσσας' : 'Changer de Langue'}
+                      </span>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isLanguageDropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChevronDown className="h-5 w-5 text-gray-600" />
+                  </motion.div>
+                </motion.button>
+                
+                <AnimatePresence>
+                  {isLanguageDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+                    >
+                      <div className="bg-gradient-to-r from-pink-300/10 via-purple-300/10 to-blue-300/10 px-4 py-2 border-b border-gray-100">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Language</p>
+                      </div>
+                      <div className="py-1">
+                        <motion.button
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setLanguage('gr');
+                            setIsLanguageDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                            language === 'gr' 
+                              ? 'bg-gradient-to-r from-pink-300/20 to-purple-300/20 border-l-4 border-rose-soft font-semibold' 
+                              : 'hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50'
+                          }`}
+                        >
+                          <span className="text-3xl filter drop-shadow-sm">🇬🇷</span>
+                          <div className="flex-1">
+                            <span className={`block ${language === 'gr' ? 'text-gray-800' : 'text-gray-700'}`}>Ελληνικά</span>
+                            <span className="text-xs text-gray-500">Greek</span>
+                          </div>
+                          {language === 'gr' && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-2 h-2 bg-rose-soft rounded-full"
+                            />
+                          )}
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setLanguage('en');
+                            setIsLanguageDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                            language === 'en' 
+                              ? 'bg-gradient-to-r from-blue-300/20 to-purple-300/20 border-l-4 border-blue-500 font-semibold' 
+                              : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50'
+                          }`}
+                        >
+                          <span className="text-3xl filter drop-shadow-sm">🇬🇧</span>
+                          <div className="flex-1">
+                            <span className={`block ${language === 'en' ? 'text-gray-800' : 'text-gray-700'}`}>English</span>
+                            <span className="text-xs text-gray-500">Αγγλικά</span>
+                          </div>
+                          {language === 'en' && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-2 h-2 bg-blue-500 rounded-full"
+                            />
+                          )}
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setLanguage('fr');
+                            setIsLanguageDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3.5 text-left transition-all duration-200 ${
+                            language === 'fr' 
+                              ? 'bg-gradient-to-r from-blue-300/20 to-pink-300/20 border-l-4 border-blue-600 font-semibold' 
+                              : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-pink-50'
+                          }`}
+                        >
+                          <span className="text-3xl filter drop-shadow-sm">🇫🇷</span>
+                          <div className="flex-1">
+                            <span className={`block ${language === 'fr' ? 'text-gray-800' : 'text-gray-700'}`}>Français</span>
+                            <span className="text-xs text-gray-500">French</span>
+                          </div>
+                          {language === 'fr' && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="w-2 h-2 bg-blue-600 rounded-full"
+                            />
+                          )}
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               
               {Object.entries(content[language as keyof typeof content]).map(([key, value]) => (
                 key !== 'appointment' ? (

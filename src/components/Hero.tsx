@@ -62,7 +62,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
         initial={{ opacity: 0, x: -30, y: -30 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-[32%] left-4 sm:left-8 md:left-16 lg:left-32 xl:left-40 z-10"
+        className="absolute top-[8%] sm:top-[12%] md:top-[18%] lg:top-[25%] xl:top-[30%] left-2 sm:left-4 md:left-8 lg:left-16 xl:left-32 z-10"
         style={{
           WebkitTransform: 'none',
           transform: 'none',
@@ -70,22 +70,22 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           backfaceVisibility: 'hidden'
         }}
       >
-        {/* Post-it Note with realistic styling - Μικρότερο */}
+        {/* Post-it Note with realistic styling - Μικρότερο για κινητά */}
         <div className="relative">
           {/* Pin icon at the top */}
-          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
-            <Pin className="h-4 w-4 text-gray-600" fill="currentColor" />
+          <div className="absolute -top-1 sm:-top-2 left-1/2 transform -translate-x-1/2 z-20">
+            <Pin className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-600" fill="currentColor" />
           </div>
           
-          {/* Main post-it note */}
-          <div className="bg-pink-100 rounded-md px-4 py-3 shadow-xl border-2 border-pink-200 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+          {/* Main post-it note - Μικρότερο για κινητά */}
+          <div className="bg-pink-100 rounded-md px-1.5 py-1.5 sm:px-3 sm:py-2.5 md:px-4 md:py-3 shadow-xl border-2 border-pink-200 transform rotate-1 hover:rotate-0 transition-transform duration-300 w-[90px] sm:w-[110px] md:w-[130px] lg:w-auto">
             {/* Trophy icon */}
-            <div className="flex justify-center mb-2">
-              <Trophy className="h-5 w-5 text-yellow-600" fill="currentColor" />
+            <div className="flex justify-center mb-1 sm:mb-1.5 md:mb-2">
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-yellow-600" fill="currentColor" />
             </div>
             
-            {/* Text content */}
-            <div className="text-gray-800 text-xs font-bold font-nunito leading-tight text-center">
+            {/* Text content - Μικρότερο για κινητά */}
+            <div className="text-gray-800 text-[9px] sm:text-[10px] md:text-xs font-bold font-nunito leading-[1.2] sm:leading-tight text-center">
               {language === 'gr' 
                 ? <>Το 1ο Διαδικτυακό Ιατρείο<br />Γονέων και Εφήβων στην<br />Ευρώπη</>
                 : language === 'en' 
