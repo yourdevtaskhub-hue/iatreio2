@@ -104,7 +104,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
             <img 
               src={logoIatrio} 
               alt="Logo" 
-              className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0"
+              className="h-16 w-16 sm:h-20 sm:w-20 lg:h-16 lg:w-16 xl:h-20 xl:w-20 flex-shrink-0"
               style={{
                 imageOrientation: 'from-image',
                 WebkitTransform: 'none',
@@ -116,10 +116,10 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
               }}
             />
             <div className="flex flex-col justify-center min-h-[64px] sm:min-h-[80px]">
-              <h1 className="font-bold text-lg sm:text-xl text-white font-dancing-script leading-tight">
+              <h1 className="font-bold text-base sm:text-lg lg:text-xl text-white font-dancing-script leading-tight">
                 Dr. Anna-Maria Fytrou
               </h1>
-              <div className="text-xs sm:text-sm text-white/90 font-quicksand leading-tight">
+              <div className="text-xs sm:text-sm lg:text-sm text-white/90 font-quicksand leading-tight">
                 <div>
                   {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου' : 
                    language === 'en' ? 'Child and Adolescent Psychiatrist' : 
@@ -136,15 +136,15 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
 
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:block flex-shrink-0">
-            <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 h-full">
+          <div className="hidden lg:block flex-shrink-0 overflow-x-auto">
+            <div className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 h-full min-w-fit">
               {Object.entries(content[language as keyof typeof content]).map(([key, value], index) => {
                 return key !== 'appointment' ? (
                   <motion.button
                     key={`nav-${key}-${index}`}
                     whileHover={{ y: -2 }}
                     onClick={() => scrollToSection(key)}
-                    className="text-white hover:text-white/80 px-1 sm:px-2 py-2 text-xs sm:text-sm font-medium transition-colors font-quicksand text-center flex items-center justify-center min-h-[40px]"
+                    className="text-white hover:text-white/80 px-0.5 lg:px-1 xl:px-2 py-2 text-[10px] lg:text-xs xl:text-sm font-medium transition-colors font-quicksand text-center flex items-center justify-center min-h-[40px]"
                   >
                     <div className="flex flex-col justify-center">
                       <span>{value}</span>
@@ -158,17 +158,17 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                        className="flex items-center space-x-2 px-3 py-2.5 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:shadow-xl transition-all duration-300 min-h-[40px] border border-white/30"
+                        className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 px-1.5 lg:px-2 xl:px-3 py-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:shadow-xl transition-all duration-300 min-h-[40px] border border-white/30"
                       >
-                        <Globe className="h-4 w-4" />
-                        <span className="text-sm font-semibold">
+                        <Globe className="h-3 w-3 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
+                        <span className="text-[10px] lg:text-xs xl:text-sm font-semibold">
                           {language === 'gr' ? '🇬🇷 GR' : language === 'en' ? '🇬🇧 EN' : '🇫🇷 FR'}
                         </span>
                         <motion.div
                           animate={{ rotate: isLanguageDropdownOpen ? 180 : 0 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <ChevronDown className="h-3.5 w-3.5" />
+                          <ChevronDown className="h-2.5 w-2.5 lg:h-3 lg:w-3 xl:h-3.5 xl:w-3.5" />
                         </motion.div>
                       </motion.button>
                       
@@ -273,7 +273,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => scrollToSection('contact')}
-                      className="bg-white text-rose-soft px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins min-h-[40px] flex items-center justify-center whitespace-nowrap flex-shrink-0"
+                      className="bg-white text-rose-soft px-2 lg:px-3 xl:px-5 py-2 rounded-full text-[10px] lg:text-xs xl:text-sm font-medium shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 font-poppins min-h-[40px] flex items-center justify-center whitespace-nowrap flex-shrink-0 min-w-fit max-w-full"
                     >
                       {value}
                     </motion.button>

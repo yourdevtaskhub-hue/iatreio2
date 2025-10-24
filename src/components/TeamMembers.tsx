@@ -304,12 +304,13 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
-              className="w-full lg:w-1/3 h-64 lg:h-auto overflow-hidden bg-gray-50 flex items-center justify-center"
+              className="w-full lg:w-1/3 h-80 sm:h-96 md:h-[28rem] lg:h-auto overflow-hidden bg-gray-50 flex items-center justify-center"
             >
               <img
                 src={teamMembers[lang][2].image}
                 alt={teamMembers[lang][2].name}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-top sm:object-[center_top] md:object-[center_top] lg:object-[center_top] sm:scale-100 md:scale-110 lg:scale-100"
+                style={{ objectPosition: 'center top' }}
               />
             </motion.div>
 
