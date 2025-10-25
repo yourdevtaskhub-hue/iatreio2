@@ -15,7 +15,7 @@ interface StripeCheckoutProps {
   concerns: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
-  language: 'gr' | 'en';
+  language: 'gr' | 'en' | 'fr';
 }
 
 const StripeCheckout: React.FC<StripeCheckoutProps> = ({

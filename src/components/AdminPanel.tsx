@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
-import { Doctor, Availability, Appointment, AdminSettings } from '../types/appointments';
+import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 
 interface AdminPanelProps {
@@ -19,7 +19,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   // Appointments state
-  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'wallet'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'wallet' | 'waitinglist'>('reviews');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
@@ -37,6 +37,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     averageSession: 0
   });
   const [walletLoading, setWalletLoading] = useState(false);
+  
+  // Waiting list state
+  const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
+  const [waitingListLoading, setWaitingListLoading] = useState(false);
 
   const content = {
     gr: {
@@ -80,7 +84,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       pendingSessions: 'Εκκρεμείς',
       averageSession: 'Μέσο Εισόδημα/Συνεδρία',
       recentTransactions: 'Πρόσφατες Συναλλαγές',
-      noTransactions: 'Δεν υπάρχουν συναλλαγές'
+      noTransactions: 'Δεν υπάρχουν συναλλαγές',
+      // Waiting list content
+      waitingList: 'Λίστα Αναμονής',
+      waitingListTitle: 'Διαχείριση Λίστας Αναμονής',
+      waitingListSubtitle: 'Αιτήματα εγγραφής στη λίστα αναμονής',
+      noWaitingListEntries: 'Δεν υπάρχουν αιτήματα στη λίστα αναμονής',
+      parentName: 'Όνομα Γονέα',
+      email: 'Email',
+      phone: 'Τηλέφωνο',
+      preferredDate: 'Προτιμώμενη Ημερομηνία',
+      preferredTime: 'Προτιμώμενη Ώρα',
+      message: 'Μήνυμα',
+      submittedAt: 'Υποβλήθηκε',
+      refresh: 'Ανανέωση'
     },
     en: {
       title: 'Ιατρείο Panel - Reviews Management',
@@ -123,7 +140,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       pendingSessions: 'Pending',
       averageSession: 'Average per Session',
       recentTransactions: 'Recent Transactions',
-      noTransactions: 'No transactions found'
+      noTransactions: 'No transactions found',
+      // Waiting list content
+      waitingList: 'Waiting List',
+      waitingListTitle: 'Waiting List Management',
+      waitingListSubtitle: 'Waitlist registration requests',
+      noWaitingListEntries: 'No waiting list entries found',
+      parentName: 'Parent Name',
+      email: 'Email',
+      phone: 'Phone',
+      preferredDate: 'Preferred Date',
+      preferredTime: 'Preferred Time',
+      message: 'Message',
+      submittedAt: 'Submitted',
+      refresh: 'Refresh'
     }
   };
 
@@ -222,22 +252,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
       const totalRevenue = paymentsData
-        ?.filter(p => p.status === 'completed')
-        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+        ?.filter((p: any) => p.status === 'completed')
+        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
 
       const thisMonthRevenue = paymentsData
-        ?.filter(p => p.status === 'completed' && new Date(p.created_at) >= thisMonth)
-        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+        ?.filter((p: any) => p.status === 'completed' && new Date(p.created_at) >= thisMonth)
+        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
 
       const lastMonthRevenue = paymentsData
-        ?.filter(p => p.status === 'completed' && 
+        ?.filter((p: any) => p.status === 'completed' && 
           new Date(p.created_at) >= lastMonth && 
           new Date(p.created_at) <= lastMonthEnd)
-        .reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
 
       const totalSessions = paymentsData?.length || 0;
-      const completedSessions = paymentsData?.filter(p => p.status === 'completed').length || 0;
-      const pendingSessions = paymentsData?.filter(p => p.status === 'pending').length || 0;
+      const completedSessions = paymentsData?.filter((p: any) => p.status === 'completed').length || 0;
+      const pendingSessions = paymentsData?.filter((p: any) => p.status === 'pending').length || 0;
       const averageSession = completedSessions > 0 ? totalRevenue / completedSessions : 0;
 
       setWalletStats({
@@ -268,7 +298,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           schema: 'public',
           table: 'appointments'
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Admin: Appointments change detected:', payload);
           fetchAppointmentsMeta();
         }
@@ -280,7 +310,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           schema: 'public',
           table: 'availability'
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Admin: Availability change detected:', payload);
           fetchAppointmentsMeta();
         }
@@ -309,10 +339,58 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
+  const fetchWaitingList = async () => {
+    try {
+      setWaitingListLoading(true);
+      const { data, error } = await supabaseAdmin
+        .from('waiting_list')
+        .select(`
+          *,
+          doctors (
+            id,
+            name,
+            specialty
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setWaitingList(data || []);
+    } catch (error) {
+      console.error('Error fetching waiting list:', error);
+    } finally {
+      setWaitingListLoading(false);
+    }
+  };
+
+  const deleteWaitingListEntry = async (entryId: string) => {
+    if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αίτημα από τη λίστα αναμονής;')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabaseAdmin
+        .from('waiting_list')
+        .delete()
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setWaitingList(prev => prev.filter(entry => entry.id !== entryId));
+      
+      alert('Το αίτημα διαγράφηκε επιτυχώς από τη λίστα αναμονής.');
+    } catch (error) {
+      console.error('Error deleting waiting list entry:', error);
+      alert('Υπήρξε σφάλμα κατά τη διαγραφή του αιτήματος.');
+    }
+  };
+
   useEffect(() => {
     fetchReviews();
     fetchAppointmentsMeta();
     fetchWalletData();
+    fetchWaitingList();
   }, []);
 
   const handleStatusUpdate = async (reviewId: string, newStatus: 'approved' | 'rejected') => {
@@ -401,6 +479,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           <div className="inline-flex rounded-xl overflow-hidden bg-white shadow">
             <button onClick={() => setActiveTab('reviews')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='reviews'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>Κριτικές</button>
             <button onClick={() => setActiveTab('appointments')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
+            <button onClick={() => setActiveTab('waitinglist')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='waitinglist'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>📋 {content[language].waitingList}</button>
             <button onClick={() => setActiveTab('wallet')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='wallet'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>💰 {content[language].wallet}</button>
           </div>
         </div>
@@ -769,6 +848,269 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           </motion.div>
         )}
 
+        {activeTab === 'waitinglist' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-8"
+          >
+            {/* Beautiful Header with Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl shadow-2xl p-8 text-white"
+            >
+              <div className="flex flex-col lg:flex-row items-center justify-between">
+                <div className="mb-6 lg:mb-0">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <motion.div
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
+                      className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center shadow-lg"
+                    >
+                      <span className="text-3xl">📋</span>
+                    </motion.div>
+                    <div>
+                      <h2 className="text-3xl font-bold font-poppins">
+                        {content[language].waitingListTitle}
+                      </h2>
+                      <p className="text-indigo-100 font-nunito text-lg">
+                        {content[language].waitingListSubtitle}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      className="bg-white bg-opacity-20 rounded-2xl p-4 backdrop-blur-sm"
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{waitingList.length}</div>
+                        <div className="text-sm text-indigo-100">Συνολικά Αιτήματα</div>
+                      </div>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="bg-white bg-opacity-20 rounded-2xl p-4 backdrop-blur-sm"
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {waitingList.filter(entry => {
+                            const today = new Date();
+                            const entryDate = new Date(entry.created_at);
+                            return entryDate.toDateString() === today.toDateString();
+                          }).length}
+                        </div>
+                        <div className="text-sm text-indigo-100">Σήμερα</div>
+                      </div>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.5 }}
+                      className="bg-white bg-opacity-20 rounded-2xl p-4 backdrop-blur-sm"
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {waitingList.filter(entry => entry.preferred_date).length}
+                        </div>
+                        <div className="text-sm text-indigo-100">Με Προτίμηση</div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={fetchWaitingList}
+                  disabled={waitingListLoading}
+                  className="flex items-center space-x-3 px-6 py-4 bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-2xl hover:bg-opacity-30 transition-all duration-300 disabled:opacity-50 shadow-lg"
+                >
+                  <RefreshCw className={`h-5 w-5 ${waitingListLoading ? 'animate-spin' : ''}`} />
+                  <span className="font-semibold">{content[language].refresh}</span>
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Beautiful Cards Layout */}
+            {waitingListLoading ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="bg-white rounded-3xl shadow-xl p-12 text-center"
+              >
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mx-auto mb-6"></div>
+                <p className="text-gray-600 font-nunito text-xl">{content[language].loading}</p>
+              </motion.div>
+            ) : waitingList.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="bg-white rounded-3xl shadow-xl p-12 text-center"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                >
+                  <span className="text-4xl">📋</span>
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-800 font-poppins mb-4">
+                  {content[language].noWaitingListEntries}
+                </h3>
+                <p className="text-gray-600 font-nunito text-lg">
+                  Δεν υπάρχουν αιτήματα εγγραφής στη λίστα αναμονής αυτή τη στιγμή.
+                </p>
+              </motion.div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {waitingList.map((entry, index) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100"
+                  >
+                    {/* Card Header */}
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <span className="text-xl">👤</span>
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg font-poppins">{entry.name}</h3>
+                            <p className="text-indigo-100 text-sm">{entry.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-indigo-100">Υποβλήθηκε</div>
+                          <div className="text-sm font-semibold">
+                            {new Date(entry.created_at).toLocaleDateString('el-GR', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-6 space-y-4">
+                      {/* Contact Info */}
+                      {entry.phone && (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span className="text-green-600 text-sm">📞</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 font-medium">Τηλέφωνο</div>
+                            <div className="text-gray-800 font-semibold">{entry.phone}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Doctor Info */}
+                      {(entry as any).doctors && (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-600 text-sm">👨‍⚕️</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 font-medium">Επιλεγμένος Γιατρός</div>
+                            <div className="text-gray-800 font-semibold">{(entry as any).doctors.name}</div>
+                            {(entry as any).doctors.specialty && (
+                              <div className="text-xs text-gray-600">{(entry as any).doctors.specialty}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Preferred Date & Time */}
+                      {(entry.preferred_date || entry.preferred_time) && (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-600 text-sm">📅</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 font-medium">Ημερομηνία/Ώρα Που Ηθελε ο Πελατης και δεν βρήκε διαθέσιμη</div>
+                            <div className="text-gray-800 font-semibold">
+                              {entry.preferred_date && entry.preferred_time 
+                                ? `${entry.preferred_date} στις ${entry.preferred_time}`
+                                : entry.preferred_date || entry.preferred_time || '-'
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Message */}
+                      {entry.message && (
+                        <div className="bg-gray-50 rounded-2xl p-4">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-purple-600 text-sm">💬</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-500 font-medium mb-2">Μήνυμα</div>
+                              <div className="text-gray-700 text-sm leading-relaxed">
+                                {entry.message}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="pt-4 border-t border-gray-100 space-y-3">
+                        {/* Call Button */}
+                        <motion.a
+                          href={`tel:${entry.phone || '+41'}`}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center justify-center space-x-2 w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-300"
+                        >
+                          <span className="text-lg">📞</span>
+                          <span>Κλήση {entry.phone || 'Γιατρού'}</span>
+                        </motion.a>
+                        
+                        {/* Delete Button */}
+                        <motion.button
+                          onClick={() => deleteWaitingListEntry(entry.id)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center justify-center space-x-2 w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-300"
+                        >
+                          <span className="text-lg">🗑️</span>
+                          <span>Διαγραφή Αιτήματος Αναμονής</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Review Detail Modal */}
         {selectedReview && (
           <motion.div
@@ -970,7 +1312,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
           schema: 'public',
           table: 'availability'
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Admin: Availability change detected:', payload);
           // Refetch availability data
           fetchAvailabilityData();
@@ -1723,7 +2065,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
           schema: 'public',
           table: 'appointments'
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Admin: Appointment change detected:', payload);
           fetchAppointments();
         }
@@ -1935,7 +2277,7 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
           schema: 'public',
           table: 'appointments'
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Admin: Anna appointment change detected:', payload);
           fetchAppointments();
         }

@@ -44,4 +44,22 @@ export interface SlotInfo {
   reason?: 'booked' | 'outside' | 'locked';
 }
 
+export interface WaitingListEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  preferred_date?: string; // YYYY-MM-DD
+  preferred_time?: string; // HH:MM
+  message?: string;
+  doctor_id: string;
+  created_at: string;
+  updated_at: string;
+  doctors?: {
+    id: string;
+    name: string;
+    specialty?: string;
+  };
+}
+
 

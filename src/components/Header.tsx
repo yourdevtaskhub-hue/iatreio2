@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import logoIatrio from '../assets/logoiatrio.png';
 
@@ -136,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
 
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:block flex-shrink-0 overflow-x-auto">
+          <div className="hidden lg:block flex-shrink-0 overflow-visible">
             <div className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 h-full min-w-fit pr-2 lg:pr-4 xl:pr-6">
               {Object.entries(content[language as keyof typeof content]).map(([key, value], index) => {
                 return key !== 'appointment' ? (
@@ -158,11 +158,11 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                        className="flex items-center space-x-0.5 lg:space-x-1 xl:space-x-2 px-1.5 lg:px-2 xl:px-3 py-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:shadow-xl transition-all duration-300 min-h-[40px] border border-white/30"
+                        className="flex items-center space-x-1 lg:space-x-1.5 xl:space-x-2 px-2 lg:px-3 xl:px-4 py-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:shadow-xl transition-all duration-300 min-h-[40px] border border-white/30"
                       >
                         <Globe className="h-3 w-3 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
                         <span className="text-[10px] lg:text-xs xl:text-sm font-semibold">
-                          {language === 'gr' ? '🇬🇷 GR' : language === 'en' ? '🇬🇧 EN' : '🇫🇷 FR'}
+                          {language === 'gr' ? '🇬🇷 Ελληνικά' : language === 'en' ? '🇬🇧 English' : '🇫🇷 Français'}
                         </span>
                         <motion.div
                           animate={{ rotate: isLanguageDropdownOpen ? 180 : 0 }}
@@ -172,15 +172,10 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                         </motion.div>
                       </motion.button>
                       
-                      <AnimatePresence>
-                        {isLanguageDropdownOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 backdrop-blur-xl"
-                          >
+                      {isLanguageDropdownOpen && (
+                        <div
+                          className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-visible z-[999999]"
+                        >
                             <div className="bg-gradient-to-r from-pink-300/20 via-purple-300/20 to-blue-300/20 px-4 py-2 border-b border-gray-100">
                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Language</p>
                             </div>
@@ -264,9 +259,8 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                                 )}
                               </motion.button>
                             </div>
-                          </motion.div>
+                          </div>
                         )}
-                      </AnimatePresence>
                     </div>
                     <motion.button
                       key={`appointment-${key}-${index}`}
@@ -330,15 +324,10 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                   </motion.div>
                 </motion.button>
                 
-                <AnimatePresence>
-                  {isLanguageDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
-                    >
+                {isLanguageDropdownOpen && (
+                  <div
+                    className="mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+                  >
                       <div className="bg-gradient-to-r from-pink-300/10 via-purple-300/10 to-blue-300/10 px-4 py-2 border-b border-gray-100">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Language</p>
                       </div>
@@ -422,9 +411,8 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
                           )}
                         </motion.button>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </div>
               
               {Object.entries(content[language as keyof typeof content]).map(([key, value]) => (

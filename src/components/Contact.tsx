@@ -5,7 +5,6 @@ import profile2 from '../assets/profile2.png';
 import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
-import TimezoneInfo from './TimezoneInfo';
 import StripeCheckout from './StripeCheckout';
 
 interface ContactProps {
@@ -84,7 +83,6 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   // const [availableDays] = useState<Record<string, boolean>>({}); // Not used for now
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWaitlistPopup, setShowWaitlistPopup] = useState(false);
   const [waitlistFormData, setWaitlistFormData] = useState({
     name: '',
@@ -92,7 +90,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     phone: '',
     message: '',
     preferredDate: '',
-    preferredTime: ''
+    preferredTime: '',
+    doctorId: ''
   });
   const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
@@ -224,44 +223,37 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!waitlistFormData.name || !waitlistFormData.email) {
-      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε τουλάχιστον το όνομά σας και το email σας.' : 
-        language === 'en' ? 'Please fill in at least your name and email.' :
-        'Veuillez remplir au moins votre nom et votre email.');
+    if (!waitlistFormData.name || !waitlistFormData.email || !waitlistFormData.doctorId) {
+      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε το όνομά σας, το email σας και επιλέξτε γιατρό.' : 
+        language === 'en' ? 'Please fill in your name, email and select a doctor.' :
+        'Veuillez remplir votre nom, email et sélectionner un médecin.');
       return;
     }
 
     setIsSubmittingWaitlist(true);
 
     try {
-      // Δημιουργία email περιεχομένου
-      const subject = encodeURIComponent('Αίτημα εγγραφής στη λίστα αναμονής - Ιατρείο Δρ. Φύτρου');
-      const body = encodeURIComponent(`
-Νέο αίτημα εγγραφής στη λίστα αναμονής:
+      // Αποθήκευση στη βάση δεδομένων
+      const { error } = await supabase
+        .from('waiting_list')
+        .insert({
+          name: waitlistFormData.name,
+          email: waitlistFormData.email,
+          phone: waitlistFormData.phone || null,
+          preferred_date: waitlistFormData.preferredDate || null,
+          preferred_time: waitlistFormData.preferredTime || null,
+          message: waitlistFormData.message || null,
+          doctor_id: waitlistFormData.doctorId
+        });
 
-Όνομα Γονέα/Κηδεμόνα: ${waitlistFormData.name}
-Email: ${waitlistFormData.email}
-Τηλέφωνο: ${waitlistFormData.phone || 'Δεν παρέχεται'}
+      if (error) throw error;
 
-Ημερομηνία που ήθελε να κλείσει ραντεβού: ${waitlistFormData.preferredDate || 'Δεν παρέχεται'}
-Ώρα που ήταν κατελλημένη: ${waitlistFormData.preferredTime || 'Δεν παρέχεται'}
-
-Επιπλέον Μήνυμα:
-${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήνυμα'}
-
----
-Αυτό το email στάλθηκε από τη φόρμα λίστας αναμονής της ιστοσελίδας.
-      `);
-
-      // Άνοιγμα email client με mailto link
-      const mailtoLink = `mailto:iatreiodrfytrou@gmail.com?subject=${subject}&body=${body}`;
-      window.open(mailtoLink, '_blank');
-      
+      // Επιτυχής εγγραφή
       alert(language === 'gr' 
-        ? 'Ανοίχθηκε το email client σας με προ-συμπληρωμένο μήνυμα. Παρακαλώ στείλτε το email για να εγγραφείτε στη λίστα αναμονής.'
+        ? 'Εγγραφήτε επιτυχώς στη λίστα αναμονής! Θα σας ειδοποιήσουμε όταν υπάρχει διαθέσιμη ώρα.'
         : language === 'en'
-        ? 'Your email client has opened with a pre-filled message. Please send the email to join the waitlist.'
-        : 'Votre client email s\'est ouvert avec un message pré-rempli. Veuillez envoyer l\'email pour rejoindre la liste d\'attente.'
+        ? 'Successfully added to the waitlist! We will notify you when a time slot becomes available.'
+        : 'Ajouté avec succès à la liste d\'attente! Nous vous informerons lorsqu\'un créneau se libère.'
       );
       
       // Επαναφορά φόρμας
@@ -271,17 +263,18 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
         phone: '',
         message: '',
         preferredDate: '',
-        preferredTime: ''
+        preferredTime: '',
+        doctorId: ''
       });
       setShowWaitlistPopup(false);
       
     } catch (error) {
-      console.error('Error opening email client:', error);
+      console.error('Error saving to waitlist:', error);
       alert(language === 'gr' 
-        ? 'Υπήρξε πρόβλημα με το άνοιγμα του email client. Παρακαλώ επικοινωνήστε μαζί μας απευθείας στο iatreiodrfytrou@gmail.com'
+        ? 'Υπήρξε πρόβλημα με την εγγραφή στη λίστα αναμονής. Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε μαζί μας στο iatreiodrfytrou@gmail.com'
         : language === 'en'
-        ? 'There was a problem opening your email client. Please contact us directly at iatreiodrfytrou@gmail.com'
-        : 'Il y a eu un problème avec l\'ouverture de votre client email. Veuillez nous contacter directement à iatreiodrfytrou@gmail.com'
+        ? 'There was a problem adding you to the waitlist. Please try again or contact us at iatreiodrfytrou@gmail.com'
+        : 'Il y a eu un problème pour vous ajouter à la liste d\'attente. Veuillez réessayer ou nous contacter à iatreiodrfytrou@gmail.com'
       );
     } finally {
       setIsSubmittingWaitlist(false);
@@ -289,6 +282,11 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
   };
 
   const handleWaitlistInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setWaitlistFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleWaitlistSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setWaitlistFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -886,8 +884,6 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
               </h3>
             </div>
             
-            {/* Timezone Information */}
-            <TimezoneInfo language={language} />
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-4">
@@ -1224,20 +1220,15 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={isSubmitting || !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200}
+                disabled={!selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200}
                 className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
-                  isSubmitting || !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200
+                  !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
                 }`}
               >
                 <Calendar className="inline-block h-5 w-5 mr-2" />
-                {isSubmitting 
-                  ? (language === 'gr' ? 'Αποστολή...' : 
-                    language === 'en' ? 'Sending...' : 
-                    'Envoi...')
-                  : content[language].sendMessage
-                }
+                {content[language].sendMessage}
               </motion.button>
             </form>
 
@@ -1344,55 +1335,76 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
           </motion.div>
         </div>
 
-        {/* Waitlist Popup */}
+        {/* Beautiful Waitlist Popup */}
         <AnimatePresence>
           {showWaitlistPopup && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
               onClick={() => setShowWaitlistPopup(false)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                transition={{ type: "spring", duration: 0.5 }}
+                className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[95vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-6">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6 }}
-                        className="bg-gradient-to-r from-orange-400 to-pink-400 p-3 rounded-2xl shadow-lg"
-                      >
-                        <Clock3 className="h-6 w-6 text-white" />
-                      </motion.div>
-                      <h3 className="text-xl font-bold font-poppins">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400">
-                          {content[language].waitlistTitle}
-                        </span>
-                      </h3>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setShowWaitlistPopup(false)}
-                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                      <X className="h-5 w-5 text-gray-500" />
-                    </motion.button>
+                {/* Beautiful Header */}
+                <div className="bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-8 text-white relative overflow-hidden">
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
                   </div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.2, type: "spring" }}
+                          whileHover={{ rotate: 360, scale: 1.1 }}
+                          className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg"
+                        >
+                          <Clock3 className="h-8 w-8 text-white" />
+                        </motion.div>
+                        <div>
+                          <h3 className="text-2xl font-bold font-poppins">
+                            {content[language].waitlistTitle}
+                          </h3>
+                          <p className="text-orange-100 text-sm font-nunito">
+                            Εγγραφή στη λίστα αναμονής
+                          </p>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.1, rotate: 90 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setShowWaitlistPopup(false)}
+                        className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-opacity-30 transition-all duration-300"
+                      >
+                        <X className="h-5 w-5 text-white" />
+                      </motion.button>
+                    </div>
+                    
+                  </div>
+                </div>
 
-
-                  {/* Form */}
-                  <form onSubmit={handleWaitlistSubmit} className="space-y-4">
-                    <div>
-                      <label htmlFor="waitlistName" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                {/* Form Content */}
+                <div className="p-8 pb-12">
+                  <form onSubmit={handleWaitlistSubmit} className="space-y-6">
+                    {/* Name Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <label htmlFor="waitlistName" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
                         {content[language].waitlistName} *
                       </label>
                       <motion.input
@@ -1402,16 +1414,21 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                         name="name"
                         value={waitlistFormData.name}
                         onChange={handleWaitlistInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800 placeholder-gray-400"
                         placeholder={language === 'gr' ? 'Το πλήρες όνομά σας' : 
                       language === 'en' ? 'Your full name' : 
                       'Votre nom complet'}
                         required
                       />
-                    </div>
+                    </motion.div>
 
-                    <div>
-                      <label htmlFor="waitlistEmail" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                    {/* Email Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <label htmlFor="waitlistEmail" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
                         {content[language].waitlistEmail} *
                       </label>
                       <motion.input
@@ -1421,14 +1438,19 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                         name="email"
                         value={waitlistFormData.email}
                         onChange={handleWaitlistInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800 placeholder-gray-400"
                         placeholder="your.email@example.com"
                         required
                       />
-                    </div>
+                    </motion.div>
 
-                    <div>
-                      <label htmlFor="waitlistPhone" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                    {/* Phone Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      <label htmlFor="waitlistPhone" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
                         {content[language].waitlistPhone}
                       </label>
                       <motion.input
@@ -1438,16 +1460,48 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                         name="phone"
                         value={waitlistFormData.phone}
                         onChange={handleWaitlistInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800 placeholder-gray-400"
                         placeholder="+41 XX XXX XX XX"
                       />
-                    </div>
+                    </motion.div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3 font-quicksand">
+                    {/* Doctor Selection Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.65 }}
+                    >
+                      <label htmlFor="waitlistDoctor" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
+                        Γιατρός *
+                      </label>
+                      <motion.select
+                        whileFocus={{ scale: 1.02 }}
+                        id="waitlistDoctor"
+                        name="doctorId"
+                        value={waitlistFormData.doctorId}
+                        onChange={handleWaitlistSelectChange}
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800"
+                        required
+                      >
+                        <option value="">Επιλέξτε γιατρό</option>
+                        {doctors.map(doctor => (
+                          <option key={doctor.id} value={doctor.id}>
+                            {getDoctorDisplayName(doctor)}
+                          </option>
+                        ))}
+                      </motion.select>
+                    </motion.div>
+
+                    {/* Date & Time Fields */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.75 }}
+                    >
+                      <label className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
                         {content[language].waitlistDateTimeLabel}
                       </label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-4">
                         <motion.input
                           whileFocus={{ scale: 1.02 }}
                           type="date"
@@ -1455,10 +1509,9 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                           name="preferredDate"
                           value={waitlistFormData.preferredDate}
                           onChange={handleWaitlistInputChange}
-                          className="px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                          className="px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800"
                           min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())}
                           style={{ direction: 'ltr' }}
-                          placeholder="Ημερομηνία"
                         />
                         <motion.input
                           whileFocus={{ scale: 1.02 }}
@@ -1467,62 +1520,77 @@ ${waitlistFormData.message || 'Δεν παρέχεται επιπλέον μήν
                           name="preferredTime"
                           value={waitlistFormData.preferredTime}
                           onChange={handleWaitlistInputChange}
-                          className="px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 font-nunito"
+                          className="px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800"
                           style={{ direction: 'ltr' }}
-                          placeholder="Ώρα"
                         />
                       </div>
-                    </div>
+                    </motion.div>
 
-                    <div>
-                      <label htmlFor="waitlistMessage" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                    {/* Message Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.85 }}
+                    >
+                      <label htmlFor="waitlistMessage" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
                         {content[language].waitlistMessage}
                       </label>
                       <motion.textarea
                         whileFocus={{ scale: 1.02 }}
                         id="waitlistMessage"
                         name="message"
-                        rows={3}
+                        rows={4}
                         value={waitlistFormData.message}
                         onChange={handleWaitlistInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-300 resize-none font-nunito"
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 resize-none font-nunito text-gray-800 placeholder-gray-400"
                         placeholder={language === 'gr' ? 'Επιπλέον πληροφορίες ή προτιμήσεις...' : 
                           language === 'en' ? 'Additional information or preferences...' : 
                           'Informations supplémentaires ou préférences...'}
                       />
-                    </div>
+                    </motion.div>
 
-                    {/* Buttons */}
-                    <div className="flex space-x-3 pt-4">
+                    {/* Action Buttons */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.9 }}
+                      className="flex space-x-4 pt-8 mt-6"
+                    >
                       <motion.button
                         type="button"
                         onClick={() => setShowWaitlistPopup(false)}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 transition-all duration-300 font-poppins"
+                        className="flex-1 py-4 px-6 border-2 border-gray-300 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-poppins"
                       >
                         {content[language].waitlistCancel}
                       </motion.button>
                       <motion.button
                         type="submit"
-                        disabled={isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email}
-                        whileHover={{ scale: 1.05 }}
+                        disabled={isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email || !waitlistFormData.doctorId}
+                        whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`flex-1 py-3 px-4 font-semibold rounded-2xl transition-all duration-300 font-poppins ${
-                          isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email
+                        className={`flex-1 py-4 px-6 font-semibold rounded-2xl transition-all duration-300 font-poppins flex items-center justify-center space-x-2 ${
+                          isSubmittingWaitlist || !waitlistFormData.name || !waitlistFormData.email || !waitlistFormData.doctorId
                             ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-orange-400 to-pink-400 text-white hover:shadow-lg'
+                            : 'bg-gradient-to-r from-orange-400 to-pink-400 text-white hover:shadow-xl hover:shadow-orange-200'
                         }`}
                       >
-                        <Send className="inline-block h-4 w-4 mr-2" />
-                        {isSubmittingWaitlist 
-                          ? (language === 'gr' ? 'Αποστολή...' : 
-                    language === 'en' ? 'Sending...' : 
-                    'Envoi...')
-                          : content[language].waitlistSubmit
-                        }
+                        {isSubmittingWaitlist ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          <Send className="h-5 w-5" />
+                        )}
+                        <span>
+                          {isSubmittingWaitlist 
+                            ? (language === 'gr' ? 'Αποστολή...' : 
+                              language === 'en' ? 'Sending...' : 
+                              'Envoi...')
+                            : content[language].waitlistSubmit
+                          }
+                        </span>
                       </motion.button>
-                    </div>
+                    </motion.div>
                   </form>
                 </div>
               </motion.div>
