@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3 } from 'lucide-react';
-import profile2 from '../assets/profile2.jpg';
+import profile2 from '../assets/profile2.JPG';
 import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
