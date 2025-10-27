@@ -91,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        isScrolled ? 'bg-gradient-to-r from-pink-300/95 via-purple-300/95 to-blue-300/95 backdrop-blur-md shadow-xl' : 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300'
+        isScrolled ? 'bg-gradient-to-r from-pink-200/95 via-purple-200/95 to-blue-200/95 backdrop-blur-md shadow-xl' : 'bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200'
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">

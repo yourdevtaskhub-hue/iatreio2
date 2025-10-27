@@ -12,7 +12,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       description: 'Παρέχοντας συμπονετική, βασισμένη σε αποδείξεις φροντίδα ψυχικής υγείας για παιδιά και εφήβους. Υποστηρίζοντας οικογένειες σε κάθε βήμα του ταξιδιού προς την ευδαιμονία.',
       services: 'Υπηρεσίες',
       servicesList: [
-        'Ψυχιατρική Αξιολόγηση',
+        'Ψυχιατρική & Ψυχολογική Αξιολόγηση',
         'Ατομική Θεραπεία',
         'Οικογενειακή Θεραπεία',
         'Παρέμβαση Κρίσης',
@@ -46,7 +46,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       description: 'Providing compassionate, evidence-based mental health care for children and adolescents. Supporting families through every step of the journey towards healing and growth.',
       services: 'Our Services',
       servicesList: [
-        'Psychiatric Assessment',
+        'Psychiatric & Psychological Assessment',
         'Individual Therapy',
         'Family Therapy',
         'Crisis Intervention',
@@ -80,7 +80,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       description: 'Fournissant des soins de santé mentale compatissants et basés sur des preuves pour les enfants et adolescents. Soutenant les familles à chaque étape du voyage vers la guérison et la croissance.',
       services: 'Nos Services',
       servicesList: [
-        'Évaluation Psychiatrique',
+        'Évaluation Psychiatrique & Psychologique',
         'Thérapie Individuelle',
         'Thérapie Familiale',
         'Intervention de Crise',

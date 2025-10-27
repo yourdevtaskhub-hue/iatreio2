@@ -1,6 +1,5 @@
 import React from 'react';
-import sofiaImg from '../assets/Σοφία_Σπυριάδου.jpg';
-import ioannaImg from '../assets/Ιωάννα_Πισσάρη.jpg';
+import doctorsImg from '../assets/doctors.jpg';
 import { motion } from 'framer-motion';
 
 interface TeamMembersProps {
@@ -188,30 +187,20 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
           viewport={{ once: true }}
           className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden mb-8"
         >
-          {/* Δύο εικόνες στο πάνω μέρος */}
+          {/* Ενιαία εικόνα στο πάνω μέρος */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
-            className="relative w-full h-[30rem] lg:h-[36rem] overflow-hidden bg-gray-50 flex items-center justify-center"
+            className="relative w-full h-[40rem] lg:h-[48rem] overflow-hidden bg-gray-50 flex items-center justify-center"
           >
-            {/* Αριστερή εικόνα - Σοφία */}
-            <div className="w-1/2 h-full relative overflow-hidden">
+            {/* Ενιαία εικόνα */}
+            <div className="w-full h-full relative overflow-hidden">
               <img
-                src={sofiaImg}
-                alt="Σοφία Σπυριάδου"
+                src={doctorsImg}
+                alt="Η ομάδα μας"
                 className="w-full h-full object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
-            </div>
-            
-            {/* Δεξιά εικόνα - Ιωάννα */}
-            <div className="w-1/2 h-full relative overflow-hidden">
-              <img
-                src={ioannaImg}
-                alt="Ιωάννα Πισσάρη"
-                className="w-full h-full object-cover object-center scale-125"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
             </div>

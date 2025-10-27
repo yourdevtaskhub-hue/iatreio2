@@ -17,7 +17,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
       description: 'Στο Διαδικτυακό Ιατρείο μας προσφέρεται ένα πλήρες φάσμα διαγνωστικών και θεραπευτικών υπηρεσιών σχεδιασμένων να υποστηρίξουν εφήβους και τις οικογένειες τους σε κάθε στάδιο της ψυχικοκοινωνικής τους ανάπτυξης.',
       services: [
         {
-          title: 'Ψυχιατρική Αξιολόγηση',
+          title: 'Ψυχιατρική & Ψυχολογική Αξιολόγηση',
           description: 'Ολοκληρωμένη εκτίμηση και διάγνωση καταστάσεων ψυχικής υγείας σε παιδιά και εφήβους.',
           features: ['Λεπτομερείς κλινικές συνεντεύξεις και εξετάσεις', 'Ψυχολογικές δοκιμασίες', 'Διαγνωστική διατύπωση', 'Σχεδιασμός θεραπείας']
         },
@@ -208,7 +208,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
       description: 'We offer a full range of psychiatric and psychotherapeutic services designed to support children, adolescents, and their families through every stage of mental health treatment.',
       services: [
         {
-          title: 'Psychiatric Assessment',
+          title: 'Psychiatric & Psychological Assessment',
           description: 'Comprehensive evaluation and diagnosis of mental health conditions in children and adolescents.',
           features: ['Detailed clinical interviews', 'Psychological testing', 'Diagnostic formulation', 'Treatment planning']
         },
@@ -399,7 +399,7 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
       description: 'Dans notre Clinique en ligne, nous offrons un spectre complet de services diagnostiques et thérapeutiques conçus pour soutenir les adolescents et leurs familles à chaque étape de leur développement psychosocial.',
       services: [
         {
-          title: 'Évaluation Psychiatrique',
+          title: 'Évaluation Psychiatrique & Psychologique',
           description: 'Évaluation complète et diagnostic des conditions de santé mentale chez les enfants et adolescents.',
           features: ['Entretiens cliniques détaillés et examens', 'Tests psychologiques', 'Formulation diagnostique', 'Planification thérapeutique']
         },

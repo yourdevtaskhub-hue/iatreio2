@@ -82,7 +82,7 @@ const TrustSection: React.FC<TrustSectionProps> = ({ language }) => {
                   </p>
                   <div className="bg-gradient-to-r from-warm-cream to-yellow-soft p-3 rounded-xl shadow-sm">
                     <p className="text-sm text-gray-500 mb-1 font-quicksand">
-                      {language === 'gr' ? 'ειδ. στην Ελλάδα και την Ελβετία' : 
+                      {language === 'gr' ? 'ειδικευμένη στην Ελλάδα και στην Ελβετία' : 
                        language === 'en' ? 'Specialized in Greece and Switzerland' : 
                        'Spécialisée en Grèce et en Suisse'}
                     </p>
