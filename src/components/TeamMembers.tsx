@@ -1,5 +1,5 @@
 import React from 'react';
-import doctorsImg from '../assets/doctors.jpg';
+import doctorsImg from '../assets/doctors.JPG';
 import { motion } from 'framer-motion';
 
 interface TeamMembersProps {
