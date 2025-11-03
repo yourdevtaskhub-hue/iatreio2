@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../lib/supabase';
-import { User, Mail, Phone, Calendar, LogOut, Heart, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, Calendar, LogOut, Heart, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star } from 'lucide-react';
 import Contact from '../components/Contact';
 import ReviewForm from '../components/ReviewForm';
 import { getDoctorPrice } from '../lib/stripe-api';
@@ -127,8 +127,15 @@ const UserPanel: React.FC = () => {
   const handlePurchaseDeposits = async () => {
     if (!user || !selectedDoctorIdPkg || !pricePerSessionCents || sessionsCount <= 0) return;
     setPayLoading(true);
+    
+    console.log('🔍 [DEBUG] === USERPANEL: Purchase Deposits ===');
+    console.log('🔍 [DEBUG] sessionsCount:', sessionsCount, 'type:', typeof sessionsCount);
+    console.log('🔍 [DEBUG] totalAmountCents:', totalAmountCents);
+    console.log('🔍 [DEBUG] pricePerSessionCents:', pricePerSessionCents);
+    console.log('🔍 [DEBUG] calculated sessions:', totalAmountCents / pricePerSessionCents);
+    
     try {
-      await createRealStripeCheckout({
+      const checkoutData = {
         doctorId: selectedDoctorIdPkg,
         doctorName: selectedDoctorNamePkg,
         parentName: fullName || (email ? email.split('@')[0] : ''),
@@ -136,8 +143,14 @@ const UserPanel: React.FC = () => {
         appointmentDate: '', // deposit purchase
         appointmentTime: '', // deposit purchase
         concerns: `DEPOSIT_PURCHASE sessions=${sessionsCount}`,
-        amountCents: totalAmountCents
-      });
+        amountCents: totalAmountCents,
+        sessionsCount: sessionsCount // Pass sessions count explicitly
+      };
+      
+      console.log('🔍 [DEBUG] checkoutData.sessionsCount:', checkoutData.sessionsCount, 'type:', typeof checkoutData.sessionsCount);
+      console.log('🔍 [DEBUG] Full checkout data:', JSON.stringify(checkoutData, null, 2));
+      
+      await createRealStripeCheckout(checkoutData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -751,50 +764,183 @@ const UserPanel: React.FC = () => {
 
       {/* Packages (Deposits) Modal */}
       {isPackagesModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setIsPackagesModalOpen(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto" onClick={(e)=> e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-bold font-poppins">Προπληρωμένες Συνεδρίες</h3>
-              <button onClick={() => setIsPackagesModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="h-5 w-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsPackagesModalOpen(false)}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto border-2 border-purple-200/50" 
+            onClick={(e)=> e.stopPropagation()}
+          >
+            {/* Header with gradient */}
+            <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 rounded-t-3xl p-6 overflow-hidden">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"
+              />
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"
+              />
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl"
+                  >
+                    <Wallet className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <div>
+                    <h3 className="text-2xl font-bold font-poppins text-white">Προπληρωμένες Συνεδρίες</h3>
+                    <p className="text-white/90 text-sm font-nunito mt-1">Δημιουργήστε Deposit για Μελλοντική Εξαργύρωση</p>
+                  </div>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsPackagesModalOpen(false)} 
+                  className="text-white/90 hover:text-white bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </motion.button>
+              </div>
             </div>
-            <div className="p-6 space-y-5">
+
+            <div className="p-6 space-y-6">
+              {/* Benefits Highlight */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-200/50">
+                <div className="flex items-start gap-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-xl text-white shrink-0"
+                  >
+                    <Star className="h-5 w-5" />
+                  </motion.div>
+                  <div className="flex-1">
+                    <h4 className="font-bold font-poppins text-gray-800 mb-2">Γιατί Προπληρωμένες Συνεδρίες;</h4>
+                    <div className="space-y-2 text-sm font-nunito text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                        <span>Αγοράστε <strong>όσες συνεδρίες</strong> θέλετε</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4 text-pink-600 flex-shrink-0" />
+                        <span>Πιστώνονται <strong>αυτόματα στο deposit</strong> του λογαριασμού σας</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-rose-600 flex-shrink-0" />
+                        <span>Εξαργυρώστε τις <strong>όποτε επιθυμείτε</strong> μελλοντικά</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Fields */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 font-nunito">Γιατρός</label>
-                  <select value={selectedDoctorIdPkg} onChange={(e)=> setSelectedDoctorIdPkg(e.target.value)} className="w-full border rounded-xl px-3 py-2">
+                  <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
+                    <User className="h-4 w-4 text-purple-600" />
+                    Γιατρός
+                  </label>
+                  <select 
+                    value={selectedDoctorIdPkg} 
+                    onChange={(e)=> setSelectedDoctorIdPkg(e.target.value)} 
+                    className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-nunito bg-white"
+                  >
                     {doctors.map((d:any)=> (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 font-nunito">Τιμή ανά συνεδρία</label>
-                  <div className="w-full border rounded-xl px-3 py-2 bg-gray-50">{pricePerSessionCents? `€${(pricePerSessionCents/100).toFixed(2)}`: '-'}</div>
+                  <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-pink-600" />
+                    Τιμή ανά συνεδρία
+                  </label>
+                  <div className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 font-semibold text-gray-800 font-nunito">
+                    {pricePerSessionCents? `€${(pricePerSessionCents/100).toFixed(2)}`: '-'}
+                  </div>
                 </div>
               </div>
+              
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 font-nunito">Πλήθος συνεδριών</label>
-                  <input type="number" min={1} value={sessionsCount} onChange={(e)=> setSessionsCount(Math.max(1, Number(e.target.value)))} className="w-full border rounded-xl px-3 py-2" />
+                  <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-rose-600" />
+                    Πλήθος συνεδριών
+                  </label>
+                  <input 
+                    type="number" 
+                    min={1} 
+                    value={sessionsCount} 
+                    onChange={(e)=> setSessionsCount(Math.max(1, Number(e.target.value)))} 
+                    className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-nunito bg-white" 
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 font-nunito">Σύνολο</label>
-                  <div className="w-full border rounded-xl px-3 py-2 bg-purple-50 font-semibold">€{(totalAmountCents/100).toFixed(2)}</div>
+                  <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-purple-600" />
+                    Συνολικό Deposit
+                  </label>
+                  <div className="w-full border-2 border-purple-400 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg font-poppins shadow-lg">
+                    €{(totalAmountCents/100).toFixed(2)}
+                  </div>
                 </div>
               </div>
 
-              <div className="text-xs text-gray-500 font-nunito">
-                Οι προπληρωμένες συνεδρίες αφορούν αποκλειστικά την/τον επιλεγμένη/ο γιατρό και μπορούν να εξαργυρωθούν οποτεδήποτε βάσει διαθεσιμότητας.
+              {/* Info Box */}
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <Gift className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm font-nunito text-gray-700 leading-relaxed">
+                    <strong className="text-blue-800">Σημαντικό:</strong> Οι προπληρωμένες συνεδρίες που αγοράζετε <strong>πιστώνονται αυτόματα στο deposit</strong> του λογαριασμού σας και μπορείτε να τις εξαργυρώσετε οποτεδήποτε στο μέλλον, βάσει διαθεσιμότητας, αποκλειστικά με τον επιλεγμένο γιατρό.
+                  </p>
+                </div>
               </div>
 
-              <button disabled={!selectedDoctorIdPkg || !pricePerSessionCents || payLoading} onClick={handlePurchaseDeposits} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-rose-soft to-purple-soft text-white py-3 rounded-2xl shadow-lg disabled:opacity-60">
-                <CreditCard className="h-5 w-5" />
-                {payLoading ? 'Μετάβαση στο Stripe…' : 'Πληρωμή & Αγορά Προπληρωμένων'}
-              </button>
+              {/* CTA Button */}
+              <motion.button 
+                disabled={!selectedDoctorIdPkg || !pricePerSessionCents || payLoading} 
+                onClick={handlePurchaseDeposits}
+                whileHover={{ scale: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 1 : 1.02, y: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 0 : -2 }}
+                whileTap={{ scale: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 1 : 0.98 }}
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white py-4 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all font-poppins font-bold text-lg relative overflow-hidden group"
+              >
+                {/* Shine effect */}
+                <motion.div
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"
+                />
+                {payLoading ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                    />
+                    <span className="relative z-10">Μετάβαση στο Stripe…</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-6 w-6 relative z-10" />
+                    <span className="relative z-10">Πληρωμή & Δημιουργία Deposit</span>
+                    <ArrowRight className="h-5 w-5 relative z-10" />
+                  </>
+                )}
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

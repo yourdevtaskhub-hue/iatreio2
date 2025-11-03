@@ -16,6 +16,7 @@ export interface CreateCheckoutSessionData {
   appointmentTime: string;
   concerns: string;
   amountCents: number;
+  sessionsCount?: number; // Optional: for deposit purchases
 }
 
 export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) => {
@@ -113,9 +114,15 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
             appointmentTime: data.appointmentTime || '',
             concerns: data.concerns || '',
             amountCents: data.amountCents,
-            priceId: stripePriceId || null // null for deposits
+            priceId: stripePriceId || null, // null for deposits
+            sessionsCount: data.sessionsCount || null // for deposit purchases
           };
-          console.log('🔍 [DEBUG] Request body to Netlify Function:', JSON.stringify(requestBody, null, 2));
+          
+          console.log('🔍 [DEBUG] === FRONTEND: Sending to Netlify Function ===');
+          console.log('🔍 [DEBUG] data.sessionsCount:', data.sessionsCount, 'type:', typeof data.sessionsCount);
+          console.log('🔍 [DEBUG] requestBody.sessionsCount:', requestBody.sessionsCount, 'type:', typeof requestBody.sessionsCount);
+          console.log('🔍 [DEBUG] Full request body:', JSON.stringify(requestBody, null, 2));
+          console.log('🔍 [DEBUG] === END FRONTEND REQUEST ===');
           const r = await fetch(url, {
             method: 'POST',
             mode: 'cors',

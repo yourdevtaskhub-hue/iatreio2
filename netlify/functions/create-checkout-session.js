@@ -66,7 +66,8 @@ exports.handler = async (event, context) => {
       appointmentTime, 
       concerns, 
       amountCents, 
-      priceId 
+      priceId,
+      sessionsCount: sessionsCountFromBody // Optional: passed explicitly for deposit purchases
     } = body;
 
     console.log('🔍 [DEBUG] Raw request body:', JSON.stringify(body, null, 2));
@@ -80,6 +81,7 @@ exports.handler = async (event, context) => {
       concerns,
       amountCents, 
       priceId,
+      sessionsCountFromBody,
       amountCentsType: typeof amountCents,
       amountCentsValue: amountCents
     });
@@ -90,6 +92,48 @@ exports.handler = async (event, context) => {
     const isDepositByEmptyFields = (!appointmentDate || appointmentDate === '') && (!appointmentTime || appointmentTime === '');
     const finalIsDeposit = isDeposit || isDepositByEmptyFields;
     
+    // Extract sessions count for deposit purchases
+    // Priority: 1) Explicit sessionsCount from body, 2) Extract from concerns, 3) null
+    let sessionsCount = null;
+    
+    console.log('🔍 [DEBUG] === SESSIONS COUNT EXTRACTION ===');
+    console.log('🔍 [DEBUG] sessionsCountFromBody:', sessionsCountFromBody, 'type:', typeof sessionsCountFromBody);
+    console.log('🔍 [DEBUG] concerns:', concerns, 'type:', typeof concerns);
+    console.log('🔍 [DEBUG] finalIsDeposit:', finalIsDeposit);
+    
+    if (finalIsDeposit) {
+      // First, try to use the explicitly passed sessionsCount from request body
+      if (sessionsCountFromBody !== null && sessionsCountFromBody !== undefined) {
+        const parsed = typeof sessionsCountFromBody === 'string' ? parseInt(sessionsCountFromBody, 10) : sessionsCountFromBody;
+        if (!isNaN(parsed) && parsed > 0) {
+          sessionsCount = parsed;
+          console.log('✅ [SUCCESS] Using sessions count from request body:', sessionsCount);
+        } else {
+          console.warn('⚠️ [WARNING] sessionsCountFromBody is invalid:', sessionsCountFromBody);
+        }
+      }
+      
+      // Fallback: try to extract from concerns field (format: DEPOSIT_PURCHASE sessions=X)
+      if (!sessionsCount && typeof concerns === 'string' && concerns.includes('sessions=')) {
+        const sessionsMatch = concerns.match(/sessions=(\d+)/);
+        if (sessionsMatch && sessionsMatch[1]) {
+          sessionsCount = parseInt(sessionsMatch[1], 10);
+          console.log('✅ [SUCCESS] Extracted sessions count from concerns:', sessionsCount);
+        } else {
+          console.warn('⚠️ [WARNING] Could not extract sessions from concerns:', concerns);
+        }
+      }
+      
+      if (!sessionsCount) {
+        console.error('❌ [ERROR] Could not determine sessions count! Will use generic description.');
+        console.error('❌ [ERROR] sessionsCountFromBody:', sessionsCountFromBody);
+        console.error('❌ [ERROR] concerns:', concerns);
+      } else {
+        console.log('✅ [SUCCESS] Final sessionsCount:', sessionsCount);
+      }
+    }
+    
+    console.log('🔍 [DEBUG] === END SESSIONS COUNT EXTRACTION ===');
     console.log('🔍 [DEBUG] Deposit detection:', {
       isDeposit,
       isDepositByEmptyFields,
@@ -97,7 +141,8 @@ exports.handler = async (event, context) => {
       concerns,
       appointmentDate,
       appointmentTime,
-      priceId
+      priceId,
+      sessionsCount: sessionsCount || 'NOT EXTRACTED - THIS IS THE PROBLEM!'
     });
 
     // Validate required fields
@@ -233,14 +278,37 @@ exports.handler = async (event, context) => {
       willUsePriceData: shouldUsePriceData
     });
     
+    // Build description with extensive logging
+    let description = '';
+    console.log('🔍 [DEBUG] === BUILDING DESCRIPTION ===');
+    console.log('🔍 [DEBUG] finalIsDeposit:', finalIsDeposit);
+    console.log('🔍 [DEBUG] sessionsCount:', sessionsCount, 'type:', typeof sessionsCount);
+    console.log('🔍 [DEBUG] sessionsCount > 0?:', sessionsCount && sessionsCount > 0);
+    
+    if (finalIsDeposit) {
+      if (sessionsCount && sessionsCount > 0 && !isNaN(sessionsCount)) {
+        description = `${sessionsCount} συνεδρίες`;
+        console.log('✅ [SUCCESS] Using sessions count in description:', description);
+      } else {
+        description = 'Προπληρωμένες συνεδρίες';
+        console.warn('⚠️ [WARNING] Using generic description because sessionsCount is invalid:', sessionsCount);
+      }
+    } else {
+      description = `Συνεδρία ${appointmentDate} ${appointmentTime}`;
+      console.log('🔍 [DEBUG] Using appointment description for regular booking');
+    }
+    
+    console.log('🔍 [DEBUG] Final description:', description);
+    console.log('🔍 [DEBUG] === END BUILDING DESCRIPTION ===');
+    
     const lineItem = shouldUsePriceData
       ? {
           price_data: {
             currency: 'eur',
             unit_amount: amountCents,
             product_data: { 
-              name: isDeposit ? `Deposit συνεδριών — ${doctorName}` : `Ραντεβού με ${doctorName}`,
-              description: isDeposit ? `${Math.round(amountCents / 100)} συνεδρίες` : `Συνεδρία ${appointmentDate} ${appointmentTime}`
+              name: finalIsDeposit ? `Deposit συνεδριών — ${doctorName}` : `Ραντεβού με ${doctorName}`,
+              description: description
             },
           },
           quantity: 1,
@@ -250,7 +318,10 @@ exports.handler = async (event, context) => {
           quantity: 1,
         };
 
+    console.log('🔍 [DEBUG] === FINAL LINE ITEM ===');
     console.log('🔍 [DEBUG] Line item:', JSON.stringify(lineItem, null, 2));
+    console.log('🔍 [DEBUG] Description in line item:', lineItem.price_data?.product_data?.description);
+    console.log('🔍 [DEBUG] === END FINAL LINE ITEM ===');
 
     let session;
     try {
@@ -271,6 +342,7 @@ exports.handler = async (event, context) => {
           doctor_name: doctorName,
           concerns: concerns || '',
           amount_cents: amountCents.toString(),
+          sessions_count: sessionsCount ? sessionsCount.toString() : '',
         },
       };
       console.log('🔍 [DEBUG] Session data:', JSON.stringify(sessionData, null, 2));
