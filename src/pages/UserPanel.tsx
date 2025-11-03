@@ -165,8 +165,7 @@ const UserPanel: React.FC = () => {
       const { data } = await supabase
         .from('session_deposits')
         .select('doctor_id, remaining_sessions, doctors(name)')
-        .eq('customer_email', email)
-        .gt('remaining_sessions', 0);
+        .eq('customer_email', email);
       setDeposits(data || []);
     };
     fetchDeposits();
@@ -457,6 +456,48 @@ const UserPanel: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Deposit Widget (κάθετα κάτω από τα στοιχεία χρήστη) */}
+            <div className="mt-4 bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-2xl shadow-xl p-5 border border-purple-100/50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 via-pink-500 to-rose-500 text-white shadow-lg">
+                  <Gift className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold font-poppins text-gray-800">Deposit Συνεδριών</h3>
+              </div>
+
+              {(() => {
+                const totalRemaining = (deposits || []).reduce((sum:number, d:any) => sum + (Number(d?.remaining_sessions) || 0), 0);
+                return (
+                  <>
+                    {/* Total pill */}
+                    <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-purple-200 rounded-xl px-4 py-2 mb-3">
+                      <div className="flex items-center gap-2 text-gray-700 font-nunito">
+                        <Coins className="h-4 w-4 text-purple-600" />
+                        <span>Συνολικά διαθέσιμες συνεδρίες</span>
+                      </div>
+                      <span className="text-purple-700 font-poppins font-extrabold">{totalRemaining}</span>
+                    </div>
+
+                    {/* List per doctor or empty state */}
+                    {deposits && deposits.length > 0 ? (
+                      <div className="space-y-2">
+                        {deposits.map((d:any, idx:number) => (
+                          <div key={idx} className="flex items-center justify-between bg-white/70 border border-purple-100 rounded-xl px-3 py-2">
+                            <span className="text-sm text-gray-700 font-nunito">{d.doctors?.name || 'Γιατρός'}</span>
+                            <span className="text-sm font-poppins text-purple-700 font-semibold">{d.remaining_sessions}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-600 font-nunito bg-white/70 border border-purple-100 rounded-xl px-3 py-3">
+                        Δεν έχετε ακόμη προπληρωμένες συνεδρίες. Μπορείτε να τις αγοράσετε από την επιλογή «Προπληρωμένες Συνεδρίες». 
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </motion.div>
 
           {/* Dashboard Content */}
@@ -713,21 +754,7 @@ const UserPanel: React.FC = () => {
               </div>
             </div>
 
-            {/* Deposits Section */}
-            {deposits && deposits.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl p-6">
-                <h3 className="text-xl font-bold mb-4 font-poppins">Deposit Συνεδριών</h3>
-                <div className="space-y-3 font-nunito">
-                  {deposits.map((d:any, idx:number) => (
-                    <div key={idx} className="flex justify-between items-center py-2 border-b">
-                      <span className="text-gray-600">{d.doctors?.name || 'Γιατρός'}</span>
-                      <span className="font-medium">{d.remaining_sessions} συνεδρία(ες)</span>
-                    </div>
-                  ))}
-                  <p className="text-xs text-gray-500 mt-2">Τα deposits εξαργυρώνονται σε κρατήσεις με την/τον αντίστοιχη/ο γιατρό.</p>
-                </div>
-              </div>
-            )}
+            {/* Deposits Section μετακινήθηκε στην αριστερή στήλη */}
 
             {/* Review Form (μόνο η φόρμα) */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
