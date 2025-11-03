@@ -37,6 +37,13 @@ const getSupabaseAdmin = () => {
   return supabaseAdminInstance;
 };
 
-// Export the getter functions instead of direct instances
+// Export lazy getters to ensure singleton pattern is maintained across all imports
+// This prevents multiple GoTrueClient instances
 export const supabase = getSupabase();
 export const supabaseAdmin = getSupabaseAdmin();
+
+// Ensure we don't create multiple instances if module is re-imported
+if (typeof window !== 'undefined') {
+  (window as any).__supabase_singleton = supabase;
+  (window as any).__supabaseAdmin_singleton = supabaseAdmin;
+}

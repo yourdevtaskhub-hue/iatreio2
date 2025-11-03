@@ -3,7 +3,11 @@ const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51SEsJ3AwY6mf2WfLrr3Tjc1Hbb6bR49JI9zC0HiHCGTkH8x8vsVlwwnhqIa2YcPKaIbu2yHq5TW8xHH7VY00wffc00XP4PZdP8', {
+// IMPORTANT: STRIPE_SECRET_KEY must be set in Netlify Dashboard > Environment variables
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20',
 });
 
@@ -14,11 +18,21 @@ const supabase = createClient(
 );
 
 exports.handler = async (event, context) => {
-  // Enable CORS
+  // Enable CORS (support both localhost and production)
+  const origin = event.headers.origin || event.headers.Origin || '*';
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://perentteenonlineclinic.com',
+    'https://www.perentteenonlineclinic.com'
+  ];
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : '*';
+  
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'false',
   };
 
   // Handle preflight requests
@@ -55,26 +69,92 @@ exports.handler = async (event, context) => {
       priceId 
     } = body;
 
-    console.log('🔍 [DEBUG] Request data:', {
+    console.log('🔍 [DEBUG] Raw request body:', JSON.stringify(body, null, 2));
+    console.log('🔍 [DEBUG] Parsed request data:', {
       doctorId, 
       doctorName, 
       parentName, 
       parentEmail, 
       appointmentDate, 
       appointmentTime, 
+      concerns,
       amountCents, 
+      priceId,
+      amountCentsType: typeof amountCents,
+      amountCentsValue: amountCents
+    });
+
+    // Check if this is a deposit purchase
+    const isDeposit = (typeof concerns === 'string') && concerns.startsWith('DEPOSIT_PURCHASE');
+    // Also check if appointment date/time are empty (deposit indicator)
+    const isDepositByEmptyFields = (!appointmentDate || appointmentDate === '') && (!appointmentTime || appointmentTime === '');
+    const finalIsDeposit = isDeposit || isDepositByEmptyFields;
+    
+    console.log('🔍 [DEBUG] Deposit detection:', {
+      isDeposit,
+      isDepositByEmptyFields,
+      finalIsDeposit,
+      concerns,
+      appointmentDate,
+      appointmentTime,
       priceId
     });
 
     // Validate required fields
-    if (!doctorId || !doctorName || !parentName || !parentEmail || !appointmentDate || !appointmentTime || !amountCents || !priceId) {
-      console.error('❌ [ERROR] Missing required fields');
+    // CRITICAL: For deposits, we allow empty appointmentDate/Time and null priceId
+    const missing = [];
+    if (!doctorId) missing.push('doctorId');
+    if (!doctorName) missing.push('doctorName');
+    if (!parentName) missing.push('parentName');
+    if (!parentEmail) missing.push('parentEmail');
+    if (!amountCents || amountCents === 0) missing.push('amountCents');
+    
+    // Only require appointmentDate/Time and priceId if NOT a deposit
+    if (!finalIsDeposit) {
+      if (!appointmentDate || appointmentDate === '') missing.push('appointmentDate');
+      if (!appointmentTime || appointmentTime === '') missing.push('appointmentTime');
+      if (!priceId) missing.push('priceId');
+    }
+    // For deposits, priceId can be null - that's OK!
+    
+    if (missing.length > 0) {
+      console.error('❌ [ERROR] Missing required fields:', missing);
+      console.error('❌ [ERROR] Full validation context:', {
+        isDeposit: finalIsDeposit,
+        hasDoctorId: !!doctorId,
+        hasDoctorName: !!doctorName,
+        hasParentName: !!parentName,
+        hasParentEmail: !!parentEmail,
+        hasAmountCents: !!amountCents && amountCents !== 0,
+        hasAppointmentDate: !!appointmentDate && appointmentDate !== '',
+        hasAppointmentTime: !!appointmentTime && appointmentTime !== '',
+        hasPriceId: !!priceId,
+        priceIdValue: priceId
+      });
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing required fields for checkout session.' }),
+        body: JSON.stringify({ 
+          error: 'Missing required fields for checkout session.', 
+          missing, 
+          received: body,
+          isDeposit: finalIsDeposit,
+          validationContext: {
+            hasDoctorId: !!doctorId,
+            hasDoctorName: !!doctorName,
+            hasParentName: !!parentName,
+            hasParentEmail: !!parentEmail,
+            hasAmountCents: !!amountCents && amountCents !== 0,
+            hasAppointmentDate: !!appointmentDate && appointmentDate !== '',
+            hasAppointmentTime: !!appointmentTime && appointmentTime !== '',
+            hasPriceId: !!priceId,
+            priceIdValue: priceId
+          }
+        }),
       };
     }
+    
+    console.log('✅ [SUCCESS] All validation passed. isDeposit:', finalIsDeposit);
 
     // Create payment record in database
     console.log('🔍 [DEBUG] Creating payment record in database...');
@@ -87,9 +167,10 @@ exports.handler = async (event, context) => {
         status: 'pending',
         customer_email: parentEmail,
         parent_name: parentName,
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-        doctor_name: doctorName,
+        appointment_date: finalIsDeposit ? null : (appointmentDate || null),
+        appointment_time: finalIsDeposit ? null : (appointmentTime || null),
+        doctor_name: doctorName
+        // Note: 'concerns' field is stored in Stripe metadata, not in payments table
       })
       .select()
       .single();
@@ -109,29 +190,96 @@ exports.handler = async (event, context) => {
 
     // Create Stripe Checkout Session
     console.log('🔍 [DEBUG] Creating Stripe Checkout Session...');
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
+    console.log('🔍 [DEBUG] isDeposit:', isDeposit);
+    console.log('🔍 [DEBUG] amountCents:', amountCents);
+    console.log('🔍 [DEBUG] priceId:', priceId);
+    console.log('🔍 [DEBUG] Stripe key mode:', process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST') : 'FALLBACK');
+    
+    // CRITICAL: Always use price_data for live mode to avoid test price issues
+    // Test prices don't exist in live Stripe account, so we must use dynamic pricing
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+    // Check if using live mode (based on environment variable only)
+    const isLiveMode = stripeSecretKey.startsWith('sk_live_');
+    const isTestPrice = priceId && (priceId.includes('test') || !priceId.match(/^price_[a-zA-Z0-9]{24,}$/));
+    
+    console.log('🔍 [DEBUG] Stripe secret key check:', {
+      keyExists: !!process.env.STRIPE_SECRET_KEY,
+      envKeyPrefix: stripeSecretKey.substring(0, 10) + '...',
+      fallbackKeyPrefix: fallbackKey.substring(0, 10) + '...',
+      isLiveMode,
+      isTestPrice,
+      priceId
+    });
+    
+    // In live mode, ALWAYS use price_data (dynamic pricing) to avoid "No such price" errors
+    // This is the only safe way when test prices are stored in database but we use live keys
+    // FORCE price_data if we're in live mode OR if it's a deposit purchase
+    let shouldUsePriceData = isDeposit || isLiveMode;
+    
+    if (isLiveMode && !isDeposit) {
+      console.warn('⚠️ [WARNING] Live mode detected - FORCING price_data (dynamic pricing) instead of priceId to avoid test price conflicts');
+      shouldUsePriceData = true; // Force price_data in live mode
+    }
+    
+    // Safety check: if no priceId or if test price detected, use price_data
+    if (!shouldUsePriceData && (!priceId || isTestPrice)) {
+      console.warn('⚠️ [WARNING] No priceId or test price detected - using price_data');
+      shouldUsePriceData = true;
+    }
+    
+    console.log('🔍 [DEBUG] Final decision:', {
+      shouldUsePriceData,
+      isDeposit,
+      isLiveMode,
+      willUsePriceData: shouldUsePriceData
+    });
+    
+    const lineItem = shouldUsePriceData
+      ? {
+          price_data: {
+            currency: 'eur',
+            unit_amount: amountCents,
+            product_data: { 
+              name: isDeposit ? `Deposit συνεδριών — ${doctorName}` : `Ραντεβού με ${doctorName}`,
+              description: isDeposit ? `${Math.round(amountCents / 100)} συνεδρίες` : `Συνεδρία ${appointmentDate} ${appointmentTime}`
+            },
+          },
+          quantity: 1,
+        }
+      : {
           price: priceId,
           quantity: 1,
+        };
+
+    console.log('🔍 [DEBUG] Line item:', JSON.stringify(lineItem, null, 2));
+
+    let session;
+    try {
+      const sessionData = {
+        payment_method_types: ['card'],
+        line_items: [ lineItem ],
+        mode: 'payment',
+        success_url: `${event.headers.origin || 'https://perentteenonlineclinic.com'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
+        cancel_url: `${event.headers.origin || 'https://perentteenonlineclinic.com'}/contact?status=cancelled`,
+        customer_email: parentEmail,
+        metadata: {
+          doctor_id: doctorId,
+          payment_id: paymentData.id,
+          parent_name: parentName,
+          parent_email: parentEmail,
+          appointment_date: isDeposit ? '' : appointmentDate,
+          appointment_time: isDeposit ? '' : appointmentTime,
+          doctor_name: doctorName,
+          concerns: concerns || '',
+          amount_cents: amountCents.toString(),
         },
-      ],
-      mode: 'payment',
-      success_url: `${event.headers.origin || 'https://onlineparentteenclinic.netlify.app'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
-      cancel_url: `${event.headers.origin || 'https://onlineparentteenclinic.netlify.app'}/contact?status=cancelled`,
-      customer_email: parentEmail,
-      metadata: {
-        doctor_id: doctorId,
-        payment_id: paymentData.id,
-        parent_name: parentName,
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-        doctor_name: doctorName,
-        concerns: concerns || '',
-        amount_cents: amountCents.toString(),
-      },
-    });
+      };
+      console.log('🔍 [DEBUG] Session data:', JSON.stringify(sessionData, null, 2));
+      session = await stripe.checkout.sessions.create(sessionData);
+    } catch (e) {
+      console.error('❌ [ERROR] Stripe session create failed:', e);
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'stripe_session_failed', message: e.message }) };
+    }
 
     console.log('✅ [SUCCESS] Stripe Checkout Session created:', session.id);
     console.log('🔍 [DEBUG] Session URL:', session.url);
@@ -147,10 +295,17 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('❌ [ERROR] Stripe Checkout Session creation failed:', error);
+    console.error('❌ [ERROR] Error stack:', error.stack);
+    console.error('❌ [ERROR] Error details:', JSON.stringify(error, null, 2));
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ 
+        error: 'checkout_session_creation_failed',
+        message: error.message || 'Unknown error',
+        details: error.toString(),
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
     };
   }
 };

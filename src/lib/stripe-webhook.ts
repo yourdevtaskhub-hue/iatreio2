@@ -69,7 +69,30 @@ async function handleCheckoutCompleted(session: any) {
 
     console.log('✅ [WEBHOOK] Payment status updated to completed');
 
-    // Create appointment record
+    // Detect deposit purchase via concerns marker or empty appointment fields
+    const isDeposit = !payment.appointment_date && !payment.appointment_time
+      || (typeof session?.metadata?.concerns === 'string' && session.metadata.concerns.startsWith('DEPOSIT_PURCHASE'))
+      || (typeof payment?.notes === 'string' && payment.notes.startsWith('DEPOSIT_PURCHASE'))
+      || (typeof payment?.concerns === 'string' && payment.concerns.startsWith('DEPOSIT_PURCHASE'));
+
+    if (isDeposit) {
+      const marker = (session?.metadata?.concerns || payment?.concerns || '').toString();
+      const match = marker.match(/sessions=(\d+)/);
+      const sessions = match ? parseInt(match[1], 10) : 0;
+      if (sessions > 0) {
+        await creditDepositSessions({
+          doctorId: payment.doctor_id,
+          customerEmail: payment.customer_email,
+          sessions
+        });
+        console.log('✅ [WEBHOOK] Deposit credited:', { doctorId: payment.doctor_id, sessions });
+      } else {
+        console.warn('⚠️ [WEBHOOK] Deposit marker found but sessions not parsed');
+      }
+      return;
+    }
+
+    // Otherwise create appointment record
     await createAppointment(payment, session);
 
   } catch (error) {
@@ -174,5 +197,53 @@ async function createAppointment(payment: any, stripeData: any) {
 
   } catch (error) {
     console.error('❌ [WEBHOOK] Error creating appointment:', error);
+  }
+}
+
+async function creditDepositSessions(args: { doctorId: string; customerEmail: string; sessions: number }) {
+  try {
+    // Ensure row exists per (email, doctor)
+    const { data: existing, error: selErr } = await supabase
+      .from('session_deposits')
+      .select('id, remaining_sessions')
+      .eq('customer_email', args.customerEmail)
+      .eq('doctor_id', args.doctorId)
+      .maybeSingle();
+
+    if (selErr) {
+      console.error('❌ [WEBHOOK] Failed to read session_deposits:', selErr);
+    }
+
+    if (existing) {
+      const { error: updErr } = await supabase
+        .from('session_deposits')
+        .update({ remaining_sessions: (existing.remaining_sessions || 0) + args.sessions, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (updErr) throw updErr;
+    } else {
+      const { error: insErr } = await supabase
+        .from('session_deposits')
+        .insert({
+          doctor_id: args.doctorId,
+          customer_email: args.customerEmail,
+          remaining_sessions: args.sessions,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      if (insErr) throw insErr;
+    }
+
+    // Optional: add transaction log
+    await supabase
+      .from('session_deposit_transactions')
+      .insert({
+        doctor_id: args.doctorId,
+        customer_email: args.customerEmail,
+        delta_sessions: args.sessions,
+        reason: 'purchase',
+        created_at: new Date().toISOString()
+      });
+  } catch (error) {
+    console.error('❌ [WEBHOOK] Error crediting deposit sessions:', error);
   }
 }

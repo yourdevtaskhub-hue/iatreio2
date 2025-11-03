@@ -88,7 +88,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
 // Stripe Webhook
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_7j2pwxIom2pTU84KLRUi0UqQln5IctLf';
+  // IMPORTANT: STRIPE_WEBHOOK_SECRET must be set in environment variables
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error('STRIPE_WEBHOOK_SECRET environment variable is required');
+  }
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
 

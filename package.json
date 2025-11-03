@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "netlify dev",
     "build": "vite build",
     "optimize:profile": "node scripts/optimizeProfile.mjs",
     "check:deployment": "node scripts/check-deployment.mjs",

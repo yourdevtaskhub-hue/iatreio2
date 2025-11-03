@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Heart, Quote } from 'lucide-react';
+import { Star, Heart, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import ReviewForm from './ReviewForm';
@@ -12,6 +12,8 @@ interface TestimonialsProps {
 const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 3;
 
   const content = {
     gr: {
@@ -23,19 +25,25 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Μαρία Κ.',
           role: 'Μητέρα 12χρονου',
           text: 'Η Δρ. Φύτρου άλλαξε τη ζωή της οικογένειας μας. Η κόρη μου που αντιμετώπιζε άγχος, τώρα είναι πιο ήρεμη και χαρούμενη. Η προσέγγισή της είναι τόσο ζεστή και κατανοητή.',
-          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Μητέρα 12χρονου'
         },
         {
           name: 'Γιάννης Π.',
           role: 'Πατέρας 15χρονου',
           text: 'Ο γιος μου ήταν κλειστός και θυμωμένος. Μετά από μήνες θεραπείας με τη Δρ. Φύτρου, επικοινωνεί ανοιχτά και έχει βρει τρόπους να διαχειρίζεται τα συναισθήματά του.',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Πατέρας 15χρονου'
         },
         {
           name: 'Ελένη Μ.',
           role: 'Μητέρα 13χρονης',
           text: 'Η διαδικτυακή θεραπεία ήταν σωτήρια για εμάς. Η έφηβη μας ηταν αρκετά στεναχωρεμένη αλλα η κυρία Δρ. Φύτρου κατάφερε να δημιουργήσει μια καλή σχέση μαζί της και να της δείξει τον δρομο για να βρει νεους τροπους να ειναι πιο χαρουμενη και πιο ηρεμη',
-          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Μητέρα 13χρονης'
         }
       ]
     },
@@ -48,19 +56,25 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Maria K.',
           role: 'Mother of 12-year-old',
           text: 'Dr. Fytrou changed our family\'s life. My daughter who was struggling with anxiety is now more confident and happy. Her approach is so warm and understanding.',
-          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Mother of 12-year-old'
         },
         {
           name: 'John P.',
           role: 'Father of teenager',
           text: 'My son was withdrawn and angry. After months of therapy with Dr. Fytrou, he communicates openly and has found ways to manage his emotions.',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Father of teenager'
         },
         {
           name: 'Helen M.',
           role: 'Mother of 13-year-old',
           text: 'Online therapy was a lifesaver for us. Our teenager was quite sad but Dr. Fytrou managed to create a good relationship with her and show her the way to find new ways to be happier and more calm.',
-          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Mother of 13-year-old'
         }
       ]
     },
@@ -73,19 +87,25 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
           name: 'Marie K.',
           role: 'Mère d\'un enfant de 12 ans',
           text: 'Dr Fytrou a changé la vie de notre famille. Ma fille qui luttait contre l\'anxiété est maintenant plus confiante et heureuse. Son approche est si chaleureuse et compréhensive.',
-          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Mère d\'un enfant de 12 ans'
         },
         {
           name: 'Jean P.',
           role: 'Père d\'un adolescent',
           text: 'Mon fils était renfermé et en colère. Après des mois de thérapie avec Dr Fytrou, il communique ouvertement et a trouvé des moyens de gérer ses émotions.',
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Père d\'un adolescent'
         },
         {
           name: 'Hélène M.',
           role: 'Mère d\'une adolescente de 13 ans',
           text: 'La thérapie en ligne a été un sauvetage pour nous. Notre adolescente était assez triste mais Dr Fytrou a réussi à créer une bonne relation avec elle et lui montrer le chemin pour trouver de nouvelles façons d\'être plus heureuse et plus calme.',
-          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+          image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          session_topic: 'Mère d\'une adolescente de 13 ans'
         }
       ]
     }
@@ -103,10 +123,12 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
 
         if (error) throw error;
         setReviews(data || []);
+        setCurrentPage(1); // Reset to first page when reviews change
       } catch (error) {
         console.error('Error fetching reviews:', error);
         // Fallback to mock data if database fails
         setReviews([]);
+        setCurrentPage(1);
       } finally {
         setLoading(false);
       }
@@ -116,7 +138,13 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
   }, []);
 
   // Use database reviews if available, otherwise fallback to mock data
-  const displayReviews = reviews.length > 0 ? reviews : content[language].testimonials;
+  const allReviews = reviews.length > 0 ? reviews : content[language].testimonials;
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(allReviews.length / reviewsPerPage);
+  const startIndex = (currentPage - 1) * reviewsPerPage;
+  const endIndex = startIndex + reviewsPerPage;
+  const displayReviews = allReviews.slice(startIndex, endIndex);
 
   return (
     <section id="testimonials" className="py-20 bg-white">
@@ -219,6 +247,106 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language }) => {
             </motion.div>
           ))}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && allReviews.length > reviewsPerPage && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="flex justify-center items-center mt-12 space-x-2"
+          >
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-lg transition-all duration-300 font-poppins ${
+                currentPage === 1
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-lg'
+              }`}
+            >
+              <ChevronLeft className="h-5 w-5 inline-block" />
+              <span className="ml-1">
+                {language === 'gr' ? 'Προηγούμενη' : 
+                 language === 'en' ? 'Previous' : 
+                 'Précédent'}
+              </span>
+            </motion.button>
+
+            {/* Page Numbers */}
+            <div className="flex space-x-2">
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNum = index + 1;
+                // Show ellipsis for large page counts
+                if (totalPages > 7) {
+                  if (pageNum === 1 || pageNum === totalPages || 
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+                    return (
+                      <motion.button
+                        key={pageNum}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-10 h-10 rounded-lg transition-all duration-300 font-poppins font-semibold ${
+                          currentPage === pageNum
+                            ? 'bg-gradient-to-r from-rose-soft to-purple-soft text-white shadow-lg'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNum}
+                      </motion.button>
+                    );
+                  } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                    return (
+                      <span key={pageNum} className="w-10 h-10 flex items-center justify-center text-gray-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                } else {
+                  return (
+                    <motion.button
+                      key={pageNum}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg transition-all duration-300 font-poppins font-semibold ${
+                        currentPage === pageNum
+                          ? 'bg-gradient-to-r from-rose-soft to-purple-soft text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pageNum}
+                    </motion.button>
+                  );
+                }
+              })}
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-lg transition-all duration-300 font-poppins ${
+                currentPage === totalPages
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-lg'
+              }`}
+            >
+              <span className="mr-1">
+                {language === 'gr' ? 'Επόμενη' : 
+                 language === 'en' ? 'Next' : 
+                 'Suivant'}
+              </span>
+              <ChevronRight className="h-5 w-5 inline-block" />
+            </motion.button>
+          </motion.div>
         )}
 
         <motion.div 

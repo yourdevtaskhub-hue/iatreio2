@@ -3,7 +3,11 @@ const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51SEsJ3AwY6mf2WfLrr3Tjc1Hbb6bR49JI9zC0HiHCGTkH8x8vsVlwwnhqIa2YcPKaIbu2yHq5TW8xHH7VY00wffc00XP4PZdP8', {
+// IMPORTANT: STRIPE_SECRET_KEY must be set in Netlify Dashboard > Environment variables
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20',
 });
 
@@ -137,8 +141,10 @@ async function handleCheckoutSessionCompleted(session) {
     'final_parent_email': parent_email
   });
 
-  // Validate required metadata
-  if (!doctor_id || !payment_id || !parent_name || !parent_email || !appointment_date || !appointment_time) {
+  const isDeposit = typeof concerns === 'string' && concerns.startsWith('DEPOSIT_PURCHASE');
+
+  // Validate required metadata (για deposit δεν απαιτείται appointment)
+  if (!doctor_id || !payment_id || !parent_name || !parent_email || (!isDeposit && (!appointment_date || !appointment_time))) {
     console.error('❌ [ERROR] Missing required metadata in session');
     console.error('❌ [ERROR] Missing fields:', {
       doctor_id: !doctor_id,
@@ -170,6 +176,37 @@ async function handleCheckoutSessionCompleted(session) {
     }
 
     console.log('✅ [SUCCESS] Payment status updated');
+
+    // Αν είναι αγορά deposit: πίστωση υπολοίπου και όχι δημιουργία ραντεβού
+    if (isDeposit) {
+      const sessionsMatch = (concerns || '').toString().match(/sessions=(\d+)/);
+      const sessions = sessionsMatch ? parseInt(sessionsMatch[1], 10) : 0;
+
+      // Update payment status
+      const { error: updErr } = await supabase
+        .from('payments')
+        .update({ status: 'completed', stripe_checkout_session_id: session.id })
+        .eq('id', payment_id);
+      if (updErr) throw updErr;
+
+      if (sessions > 0) {
+        // Καταγραφή κίνησης (trigger ενημερώνει υπόλοιπο)
+        const { error: txErr } = await supabase
+          .from('session_deposit_transactions')
+          .insert({
+            customer_email: parent_email,
+            doctor_id: doctor_id,
+            delta_sessions: sessions,
+            reason: 'purchase',
+            payment_id: payment_id,
+            metadata: { stripe_session_id: session.id }
+          });
+        if (txErr) throw txErr;
+      }
+
+      console.log('✅ [SUCCESS] Deposit purchase credited');
+      return;
+    }
 
     // Create appointment
     console.log('🔍 [DEBUG] Creating appointment...');

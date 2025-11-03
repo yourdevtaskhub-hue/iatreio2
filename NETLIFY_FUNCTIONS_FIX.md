@@ -21,11 +21,13 @@
 Βεβαιώσου ότι τα παρακάτω environment variables είναι ρυθμισμένα στο Netlify dashboard:
 
 ```
-STRIPE_SECRET_KEY=sk_test_51SEsJ3AwY6mf2WfLrr3Tjc1Hbb6bR49JI9zC0HiHCGTkH8x8vsVlwwnhqIa2YcPKaIbu2yHq5TW8xHH7VY00wffc00XP4PZdP8
-STRIPE_WEBHOOK_SECRET=whsec_7j2pwxIom2pTU84KLRUi0UqQln5IctLf
-SUPABASE_URL=https://vdrmgzoupwyisiyrnjdi.supabase.co
-SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcm1nem91cHd5aXNpeXJuamRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTUzMDAxNiwiZXhwIjoyMDc1MTA2MDE2fQ.uH3E-xqFmKkMF6Uul3jaSHTqloqklWDg7KaIAMxq_CQ
+STRIPE_SECRET_KEY=sk_live_... (βρες στο Stripe Dashboard)
+STRIPE_WEBHOOK_SECRET=whsec_... (βρες στο Stripe Dashboard)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGc... (βρες στο Supabase Dashboard)
 ```
+
+⚠️ **ΜΗΝ** commit-άρεις τα actual values! Βρες τα από τα dashboards.
 
 ## Επόμενα Βήματα
 1. Commit και push τις αλλαγές στο GitHub

@@ -6,11 +6,12 @@ import { ReviewSubmission } from '../types/reviews';
 
 interface ReviewFormProps {
   language: 'gr' | 'en' | 'fr';
+  defaultName?: string;
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({ language }) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
   const [formData, setFormData] = useState<ReviewSubmission>({
-    name: '',
+    name: defaultName || '',
     rating: 0,
     text: '',
     session_topic: ''

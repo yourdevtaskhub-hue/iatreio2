@@ -1,12 +1,14 @@
 export interface Review {
-  id: string;
+  id?: string;
   name: string;
   rating: number;
   text: string;
   session_topic: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  updated_at: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  created_at?: string;
+  updated_at?: string;
+  image?: string;
+  role?: string;
 }
 
 export interface ReviewSubmission {

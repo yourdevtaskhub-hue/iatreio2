@@ -62,10 +62,8 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
         initial={{ opacity: 0, x: -30, y: -30 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-[12%] sm:top-[15%] md:top-[20%] lg:top-[26%] xl:top-[30%] left-2 sm:left-4 md:left-8 lg:left-16 xl:left-32 z-10"
+        className="absolute top-[120px] sm:top-[140px] md:top-[160px] lg:top-[180px] xl:top-[200px] left-2 sm:left-4 md:left-8 lg:left-16 xl:left-32 z-10"
         style={{
-          WebkitTransform: 'none',
-          transform: 'none',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden'
         }}

@@ -12,6 +12,8 @@ import Contact from './components/Contact';
 import TeamMembers from './components/TeamMembers';
 import Footer from './components/Footer';
 import Admin from './pages/Admin';
+import Auth from './pages/Auth';
+import UserPanel from './pages/UserPanel';
 import EiriniPanel from './components/EiriniPanel';
 import IoannaPanel from './components/IoannaPanel';
 import SofiaPanel from './components/SofiaPanel';
@@ -31,6 +33,10 @@ function App() {
     const path = window.location.pathname;
     if (path === '/admin' || path === '/admin/') {
       setCurrentPage('admin');
+    } else if (path === '/auth' || path === '/auth/') {
+      setCurrentPage('auth');
+    } else if (path === '/panel' || path === '/panel/') {
+      setCurrentPage('panel');
     } else if (path === '/eirini' || path === '/eirini/') {
       setCurrentPage('eirini');
     } else if (path === '/ioanna' || path === '/ioanna/') {
@@ -52,6 +58,10 @@ function App() {
     switch (currentPage) {
       case 'admin':
         return <Admin />;
+      case 'auth':
+        return <Auth language={language as any} />;
+      case 'panel':
+        return <UserPanel />;
       case 'eirini':
         return <EiriniPanel language={language} onLogout={() => setCurrentPage('home')} />;
       case 'ioanna':

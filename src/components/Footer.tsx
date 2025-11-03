@@ -247,6 +247,18 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
                 );
               })}
             </ul>
+
+            {/* Auth Button */}
+            <div className="mt-6">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { window.location.href = '/auth'; }}
+                className="w-full bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 py-2 rounded-xl shadow-lg font-poppins"
+              >
+                {language === 'gr' ? 'Σύνδεση / Εγγραφή Λογαριασμού' : language === 'fr' ? 'Connexion / Créer un compte' : 'Login / Create Account'}
+              </motion.button>
+            </div>
           </div>
         </div>
 

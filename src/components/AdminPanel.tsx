@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users, Search, ChevronLeft, ChevronRight, X, Mail, Phone, User, Calendar } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
@@ -19,7 +19,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   // Appointments state
-  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'wallet' | 'waitinglist'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'waitinglist' | 'wallet' | 'closures' | 'customers'>('reviews');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
@@ -41,6 +41,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   // Waiting list state
   const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
   const [waitingListLoading, setWaitingListLoading] = useState(false);
+  
+  // Customers state
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersSearch, setCustomersSearch] = useState('');
+  const [customersPage, setCustomersPage] = useState(1);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [selectedCustomerUser, setSelectedCustomerUser] = useState<any | null>(null);
+  const customersPerPage = 10;
 
   const content = {
     gr: {
@@ -363,6 +372,55 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
+  const fetchCustomers = async () => {
+    try {
+      setCustomersLoading(true);
+      const { data, error } = await supabaseAdmin
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      const customersData = data || [];
+      setCustomers(customersData);
+      
+      // Fetch emails for all customers in parallel
+      const emailPromises = customersData.map(async (c: any) => {
+        if (c.user_id) {
+          try {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(c.user_id);
+            return { customerId: c.id, email: userData?.user?.email || null };
+          } catch {
+            return { customerId: c.id, email: null };
+          }
+        }
+        return { customerId: c.id, email: null };
+      });
+      
+      const emailResults = await Promise.all(emailPromises);
+      setCustomers((prev) => 
+        prev.map((c: any) => {
+          const emailData = emailResults.find((e: any) => e.customerId === c.id);
+          return { ...c, _email: emailData?.email || null };
+        })
+      );
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const fetchCustomerUser = async (userId: string) => {
+    try {
+      const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+      if (error) throw error;
+      setSelectedCustomerUser(data.user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
+
   const deleteWaitingListEntry = async (entryId: string) => {
     if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αίτημα από τη λίστα αναμονής;')) {
       return;
@@ -391,7 +449,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     fetchAppointmentsMeta();
     fetchWalletData();
     fetchWaitingList();
+    fetchCustomers();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'customers') {
+      fetchCustomers();
+    }
+  }, [activeTab]);
 
   const handleStatusUpdate = async (reviewId: string, newStatus: 'approved' | 'rejected') => {
     try {
@@ -480,7 +545,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
             <button onClick={() => setActiveTab('reviews')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='reviews'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>Κριτικές</button>
             <button onClick={() => setActiveTab('appointments')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
             <button onClick={() => setActiveTab('waitinglist')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='waitinglist'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>📋 {content[language].waitingList}</button>
+            <button onClick={() => setActiveTab('closures')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='closures'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>🏖️ Διακοπές / Κλείσιμο</button>
             <button onClick={() => setActiveTab('wallet')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='wallet'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>💰 {content[language].wallet}</button>
+            <button onClick={() => setActiveTab('customers')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='customers'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>👥 Χρήστες-Πληροφοριές</button>
           </div>
         </div>
 
@@ -848,6 +915,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           </motion.div>
         )}
 
+        {activeTab === 'closures' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div className="bg-white rounded-2xl shadow p-6">
+              <div className="flex items-start space-x-3 mb-3">
+                <div className="text-2xl">🏖️</div>
+                <div>
+                  <h3 className="text-xl font-bold">Διακοπές / Κλείσιμο Ιατρείου</h3>
+                  <p className="text-gray-600">Μερικά κλικ για να ξεκουραστείτε! Συμπληρώστε τα πεδία και πατήστε αποθήκευση. Οι μέρες θα κρυφτούν αυτόματα από το ημερολόγιο κρατήσεων.</p>
+                </div>
+              </div>
+              <ClinicClosuresManager doctors={doctors} />
+            </div>
+          </motion.div>
+        )}
+
         {activeTab === 'waitinglist' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1111,6 +1198,265 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           </motion.div>
         )}
 
+        {activeTab === 'customers' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold font-poppins mb-2">👥 Χρήστες-Πληροφοριές</h2>
+                  <p className="text-blue-100 font-nunito">Διαχείριση όλων των πελατών</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={fetchCustomers}
+                  disabled={customersLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-5 w-5 ${customersLoading ? 'animate-spin' : ''}`} />
+                  <span className="font-semibold">Ανανέωση</span>
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="bg-white rounded-xl shadow-lg p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Αναζήτηση με όνομα, email ή τηλέφωνο..."
+                  value={customersSearch}
+                  onChange={(e) => setCustomersSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
+                />
+              </div>
+            </div>
+
+            {/* Customers List */}
+            {customersLoading ? (
+              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+                <p className="text-gray-600">Φόρτωση...</p>
+              </div>
+            ) : (() => {
+              const filtered = customers.filter(c => {
+                const search = customersSearch.toLowerCase();
+                return !search || 
+                  (c.full_name?.toLowerCase().includes(search)) ||
+                  (c.phone?.includes(search));
+              });
+              const totalPages = Math.ceil(filtered.length / customersPerPage);
+              const startIdx = (customersPage - 1) * customersPerPage;
+              const paginated = filtered.slice(startIdx, startIdx + customersPerPage);
+              
+              return (
+                <>
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gradient-to-r from-purple-100 to-pink-100">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-bold text-gray-700">Όνομα</th>
+                            <th className="px-4 py-3 text-left text-sm font-bold text-gray-700">Email</th>
+                            <th className="px-4 py-3 text-left text-sm font-bold text-gray-700">Τηλέφωνο</th>
+                            <th className="px-4 py-3 text-left text-sm font-bold text-gray-700">Ημερομηνία Εγγραφής</th>
+                            <th className="px-4 py-3 text-left text-sm font-bold text-gray-700">Ενέργειες</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {paginated.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
+                                Δεν βρέθηκαν χρήστες
+                              </td>
+                            </tr>
+                          ) : (
+                            paginated.map((customer) => (
+                              <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 font-medium">{customer.full_name || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {(customer as any)._email || '...'}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{customer.phone || '-'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                  {new Date(customer.created_at).toLocaleDateString('el-GR')}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <button
+                                    onClick={async () => {
+                                      setSelectedCustomer(customer);
+                                      if (customer.user_id) {
+                                        await fetchCustomerUser(customer.user_id);
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
+                                  >
+                                    Προβολή
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between bg-white rounded-xl shadow-lg p-4">
+                      <div className="text-sm text-gray-600">
+                        Σελίδα {customersPage} από {totalPages} ({filtered.length} συνολικά)
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setCustomersPage(p => Math.max(1, p - 1))}
+                          disabled={customersPage === 1}
+                          className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setCustomersPage(p => Math.min(totalPages, p + 1))}
+                          disabled={customersPage === totalPages}
+                          className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
+
+        {/* Customer Detail Modal */}
+        {selectedCustomer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => {
+              setSelectedCustomer(null);
+              setSelectedCustomerUser(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold font-poppins">Πληροφορίες Χρήστη</h3>
+                  <button
+                    onClick={() => {
+                      setSelectedCustomer(null);
+                      setSelectedCustomerUser(null);
+                    }}
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                    <User className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-nunito">Ονοματεπώνυμο</p>
+                      <p className="font-semibold font-nunito">{selectedCustomer.full_name || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                    <Mail className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-nunito">Email</p>
+                      <p className="font-semibold font-nunito">{selectedCustomerUser?.email || '...'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                    <Phone className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-nunito">Τηλέφωνο</p>
+                      <p className="font-semibold font-nunito">{selectedCustomer.phone || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                    <Calendar className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-nunito">Ημερομηνία Εγγραφής</p>
+                      <p className="font-semibold font-nunito">
+                        {new Date(selectedCustomer.created_at).toLocaleDateString('el-GR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedCustomer.avatar_url && (
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 font-nunito mb-2">Avatar</p>
+                    <img src={selectedCustomer.avatar_url} alt="Avatar" className="h-24 w-24 rounded-full object-cover" />
+                  </div>
+                )}
+
+                <div className="p-4 bg-gray-50 rounded-xl">
+                  <p className="text-xs text-gray-500 font-nunito mb-2">User ID</p>
+                  <p className="font-mono text-sm">{selectedCustomer.user_id}</p>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-xl">
+                  <p className="text-xs text-gray-500 font-nunito mb-2">Ενημερώθηκε</p>
+                  <p className="font-semibold font-nunito">
+                    {new Date(selectedCustomer.updated_at).toLocaleDateString('el-GR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+
+                {selectedCustomerUser && (
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="text-xs text-blue-600 font-nunito mb-2 font-semibold">Auth Πληροφορίες</p>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-semibold">Email Επαληθευμένο:</span> {selectedCustomerUser.email_confirmed_at ? 'Ναι' : 'Όχι'}</p>
+                      <p><span className="font-semibold">Τελευταία Σύνδεση:</span> {
+                        selectedCustomerUser.last_sign_in_at 
+                          ? new Date(selectedCustomerUser.last_sign_in_at).toLocaleDateString('el-GR')
+                          : 'Ποτέ'
+                      }</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* Review Detail Modal */}
         {selectedReview && (
           <motion.div
@@ -1206,6 +1552,244 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface ClinicClosuresManagerProps {
+  doctors: Doctor[];
+}
+
+const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }) => {
+  const [doctorId, setDoctorId] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const fetchClosures = async () => {
+    setLoading(true);
+    const { data } = await supabaseAdmin
+      .from('clinic_closures')
+      .select('id, doctor_id, date_from, date_to, reason')
+      .order('date_from', { ascending: false });
+    setItems(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchClosures(); }, []);
+
+  const resetForm = () => {
+    setDateFrom('');
+    setDateTo('');
+    setReason('');
+    setDoctorId('all');
+    setEditingId(null);
+  };
+
+  const handleSave = async () => {
+    if (!dateFrom || !dateTo) { alert('Παρακαλώ ορίστε Ημερομηνία Από/Έως.'); return; }
+    setSaving(true);
+    try {
+      const payload: any = {
+        date_from: dateFrom,
+        date_to: dateTo,
+        reason: reason || null,
+      };
+      if (doctorId !== 'all') payload.doctor_id = doctorId;
+
+      if (editingId) {
+        const { error } = await supabaseAdmin
+          .from('clinic_closures')
+          .update(payload)
+          .eq('id', editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabaseAdmin.from('clinic_closures').insert(payload);
+        if (error) throw error;
+      }
+
+      resetForm();
+      await fetchClosures();
+      alert('Η αποθήκευση ολοκληρώθηκε.');
+    } catch (e) {
+      console.error(e);
+      alert('Σφάλμα κατά την αποθήκευση.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (it: any) => {
+    setEditingId(it.id);
+    setDoctorId(it.doctor_id || 'all');
+    setDateFrom(it.date_from);
+    setDateTo(it.date_to);
+    setReason(it.reason || '');
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Να διαγραφεί οριστικά το κλείσιμο;')) return;
+    try {
+      const { error } = await supabaseAdmin
+        .from('clinic_closures')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      if (editingId === id) resetForm();
+      await fetchClosures();
+    } catch (e) {
+      console.error(e);
+      alert('Σφάλμα κατά τη διαγραφή.');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Instructions header */}
+      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-5">
+        <div className="flex items-start space-x-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-rose-400 to-purple-400 text-white flex items-center justify-center shadow">📘</div>
+          <div>
+            <div className="text-lg font-bold text-gray-900 font-poppins">Οδηγίες Χρήσης</div>
+            <div className="text-sm text-gray-600 font-nunito">Ακολουθήστε τα παρακάτω βήματα <strong>1 έως 5</strong> με τη σειρά για να ανακοινώσετε το κλείσιμο του ιατρείου.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Doctor card */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center mb-2">
+            <div className="h-8 w-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mr-2">👨‍⚕️</div>
+            <label className="text-sm font-semibold text-gray-800 font-poppins">1) Επιλέξτε Γιατρό</label>
+          </div>
+          <select value={doctorId} onChange={e=>setDoctorId(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito">
+            <option value="all">Όλοι οι γιατροί</option>
+            {(doctors||[]).map(d => (
+              <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-2 font-nunito">Για κλείσιμο όλου του ιατρείου αφήστε «Όλοι οι γιατροί».</p>
+        </div>
+
+        {/* From date card */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center mb-2">
+            <div className="h-8 w-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mr-2">📅</div>
+            <label className="text-sm font-semibold text-gray-800 font-poppins">2) Από Ημερομηνία</label>
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-3">🗓️</span>
+            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="w-full pl-10 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2 font-nunito">Η πρώτη μέρα που είστε κλειστά.</p>
+        </div>
+
+        {/* To date card */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center mb-2">
+            <div className="h-8 w-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mr-2">🏁</div>
+            <label className="text-sm font-semibold text-gray-800 font-poppins">3) Έως Ημερομηνία</label>
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-3">🗓️</span>
+            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="w-full pl-10 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito" />
+          </div>
+          <p className="text-xs text-gray-500 mt-2 font-nunito">Η τελευταία μέρα που είστε κλειστά.</p>
+        </div>
+
+        {/* Right column: Step 4 (message) and Step 5 (save) stacked */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4 flex flex-col">
+          {/* Step 4 */}
+          <div>
+            <div className="flex items-center mb-2">
+              <div className="h-8 w-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mr-2">📝</div>
+              <div className="text-sm font-semibold text-gray-800 font-poppins">4) Μήνυμα / Αιτιολογία</div>
+            </div>
+            <p className="text-xs text-gray-500 font-nunito mb-3">Γράψτε ένα σύντομο, ζεστό μήνυμα που θα δουν οι επισκέπτες.</p>
+            <textarea value={reason} onChange={e=>setReason(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito" rows={5} placeholder="Π.χ. Κλειστά λόγω Πάσχα – Καλές Γιορτές!" />
+          </div>
+
+          {/* Step 5 */}
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center mb-2">
+              <div className="h-8 w-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mr-2">💾</div>
+              <div className="text-sm font-semibold text-gray-800 font-poppins">5) Αποθήκευση</div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button disabled={saving} onClick={handleSave} className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl shadow-lg hover:from-indigo-600 hover:to-purple-600 active:scale-[0.98] transition font-poppins">
+                {editingId ? '✨ Ενημέρωση' : '💾 Αποθήκευση'}
+              </button>
+              {editingId && (
+                <button type="button" onClick={resetForm} className="px-4 py-3 bg-white border text-gray-800 rounded-2xl hover:bg-gray-50 active:scale-[0.98] transition">Ακύρωση</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Removed standalone message card: merged into step 4 above */}
+
+      {/* Live preview */}
+      {(dateFrom && dateTo) && (
+        <div className="bg-gradient-to-r from-yellow-50 to-pink-50 border border-yellow-200 rounded-3xl p-4">
+          <div className="flex items-start space-x-3">
+            <div className="text-2xl">🎈</div>
+            <div>
+              <div className="font-semibold mb-1 text-gray-800">Προεπισκόπηση μηνύματος στον επισκέπτη</div>
+              <div className="text-sm text-gray-800">Από <strong>{dateFrom}</strong> έως <strong>{dateTo}</strong>.</div>
+              {reason && <div className="text-sm text-gray-700 mt-1">{reason}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-gray-50 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-gray-800 font-poppins">📚 Υπάρχοντα Κλεισίματα</h4>
+          <button onClick={fetchClosures} disabled={loading} className="px-3 py-2 bg-white border rounded-xl hover:bg-gray-100 disabled:opacity-50 font-nunito">🔄 Ανανέωση</button>
+        </div>
+        {loading ? (
+          <div className="text-gray-600">Φόρτωση...</div>
+        ) : items.length === 0 ? (
+          <div className="text-gray-600 font-nunito">Δεν υπάρχουν καταχωρήσεις. Ήρθε η ώρα για λίγη ξεκούραση; Προσθέστε την πρώτη! 🌞</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px] font-nunito">
+              <thead className="bg-white">
+                <tr>
+                  <th className="text-left p-2">Γιατρός</th>
+                  <th className="text-left p-2">Από</th>
+                  <th className="text-left p-2">Έως</th>
+                  <th className="text-left p-2">Μήνυμα</th>
+                  <th className="text-left p-2">Ενέργειες</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((it:any)=>{
+                  const doc = (doctors||[]).find(d=> d.id === it.doctor_id);
+                  return (
+                    <tr key={it.id} className="border-t">
+                      <td className="p-2">{it.doctor_id ? `${doc?.name || it.doctor_id}` : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-800">Όλοι οι γιατροί</span>}</td>
+                      <td className="p-2">{it.date_from}</td>
+                      <td className="p-2">{it.date_to}</td>
+                      <td className="p-2">{it.reason || '-'}</td>
+                      <td className="p-2 space-x-2">
+                        <button onClick={()=>handleEdit(it)} className="px-3 py-1 bg-white border rounded-xl hover:bg-gray-50">✏️ Επεξεργασία</button>
+                        <button onClick={()=>handleDelete(it.id)} className="px-3 py-1 bg-red-500 text-white rounded-xl hover:bg-red-600">🗑️ Διαγραφή</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

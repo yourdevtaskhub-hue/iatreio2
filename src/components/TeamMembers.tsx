@@ -28,22 +28,8 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
     gr: [
       {
         id: 1,
-        name: 'Σοφία Σπυριάδου',
-        image: '/sofia_spyriadou.png',
-        bio: `Η κυρία Σπυριάδου ολοκλήρωσε τις σπουδές της στη Ψυχολογία στο Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης και ακολούθησε **Μεταπτυχιακό Πρόγραμμα Σπουδών στην Κλινική Ψυχική Υγεία** στο ίδιο Πανεπιστήμιο.
-
-Έχει εκπαιδευτεί στην **Κλινική Ψυχομετρία και Νευροψυχολογία** στη Γ' Πανεπιστημιακή Ψυχιατρική Κλινική του ΑΧΕΠΑ. Εμπλουτίζει τις γνώσεις της με την **4ετή εκπαίδευση της στη Γνωσιακή Συμπεριφορική Ψυχοθεραπεία** στην Ελληνική Εταιρεία Γνωσιακής και Συμπεριφορικής Ψυχοθεραπείας.
-
-Είναι **πιστοποιημένη στη χορήγηση ψυχομετρικών εργαλείων** όπως : Τεστ νοημοσύνης ενηλίκων **WAIS- V**, Τεστ νοημοσύνης ανηλίκων **WISC- III**, Κλίμακα κατάθλιψης **Hamilton-D**, **SCI- PANSS**, για την σχιζοφρένεια, Κλίμακα μανίας, διπολικής διαταραχής, Young Mania Rating Scale. Έχει εκπαιδευτεί από το Αμερικανικό Πανεπιστήμιο του Κολοράντο «University of Colorado,陕西» στη **σχολική ψυχολογία**. Έχοντας τεράστια εμπειρία στο ελληνικό και το γερμανικό σύστημα εκπαίδευσης, διαθέτει όλα τα εφόδια να συνοδεύσει τα παιδιά και τους εφήβους στις δυσκολίες τους κατά τα σχολικά χρόνια.
-
-Είναι η ιδανική ειδικός για τη **Πρώτη Συνεδρία των γονέων** με το Ιατρείο μας, την **Εξέταση και Ψυχοθεραπεία παιδιών και εφήβων** και τους γονείς τους σε **Συμβουλευτική γονέων**.
-
-Η κλινική παιδοψυχολόγος μιλάει **άψογα ελληνικά και γερμανικά**.`
-      },
-      {
-        id: 2,
         name: 'Ιωάννα Πισσάρη',
-        image: '/ioanna_pissari.png',
+        image: '/sofia_spyriadou.png',
         bio: `Η κυρία Πισσάρη ολοκλήρωσε τις σπουδές της στην Ψυχολογία στο Εθνικό Καποδιστριακό Πανεπιστήμιο Αθηνών και ακολούθησε **Μεταπτυχιακό Πρόγραμμα Σπουδών στην Κλινική Ψυχική Υγεία** στο Πανεπιστήμιο «University of Wolverhampton» της Αγγλίας.
 
 Το ενδιαφέρον της στρέφεται γύρω από την **4ετή εκπαίδευση της στην Γνωσιακή Συμπεριφορική Ψυχοθεραπεία** από την Εταιρεία Γνωσιακής Συμπεριφορικής Ψυχοθεραπείας, ενώ παράλληλα είναι εξειδικευμένη στο **Φάσμα του Αυτισμού** και την **Διαταραχή Ελλειματικής Προσοχής και Υπερκινητικότητας (ΔΕΠΥ)** από το Πανεπιστήμιου «University of Derby» της Αγγλίας.
@@ -53,6 +39,20 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
 Είναι η ιδανική ειδικός για τη **Πρώτη Συνεδρία των γονέων** με το Ιατρείο μας, την **Εξέταση και Ψυχοθεραπεία παιδιών και εφήβων** και για **Συμβουλευτική γονέων**.
 
 Η κλινική παιδοψυχολόγος μιλάει **άψογα ελληνικά και αγγλικά**.`
+      },
+      {
+        id: 2,
+        name: 'Σοφία Σπυριάδου',
+        image: '/ioanna_pissari.png',
+        bio: `Η κυρία Σπυριάδου ολοκλήρωσε τις σπουδές της στη Ψυχολογία στο Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης και ακολούθησε **Μεταπτυχιακό Πρόγραμμα Σπουδών στην Κλινική Ψυχική Υγεία** στο ίδιο Πανεπιστήμιο.
+
+Έχει εκπαιδευτεί στην **Κλινική Ψυχομετρία και Νευροψυχολογία** στη Γ' Πανεπιστημιακή Ψυχιατρική Κλινική του ΑΧΕΠΑ. Εμπλουτίζει τις γνώσεις της με την **4ετή εκπαίδευση της στη Γνωσιακή Συμπεριφορική Ψυχοθεραπεία** στην Ελληνική Εταιρεία Γνωσιακής και Συμπεριφορικής Ψυχοθεραπείας.
+
+Είναι **πιστοποιημένη στη χορήγηση ψυχομετρικών εργαλείων** όπως : Τεστ νοημοσύνης ενηλίκων **WAIS- V**, Τεστ νοημοσύνης ανηλίκων **WISC- III**, Κλίμακα κατάθλιψης **Hamilton-D**, **SCI- PANSS**, για την σχιζοφρένεια, Κλίμακα μανίας, διπολικής διαταραχής, Young Mania Rating Scale. Έχει εκπαιδευτεί από το Αμερικανικό Πανεπιστήμιο του Κολοράντο «University of Colorado,陕西» στη **σχολική ψυχολογία**. Έχοντας τεράστια εμπειρία στο ελληνικό και το γερμανικό σύστημα εκπαίδευσης, διαθέτει όλα τα εφόδια να συνοδεύσει τα παιδιά και τους εφήβους στις δυσκολίες τους κατά τα σχολικά χρόνια.
+
+Είναι η ιδανική ειδικός για τη **Πρώτη Συνεδρία των γονέων** με το Ιατρείο μας, την **Εξέταση και Ψυχοθεραπεία παιδιών και εφήβων** και τους γονείς τους σε **Συμβουλευτική γονέων**.
+
+Η κλινική παιδοψυχολόγος μιλάει **άψογα ελληνικά και γερμανικά**.`
       },
       {
         id: 3,
@@ -72,22 +72,8 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
     en: [
       {
         id: 1,
-        name: 'Sofia Spyriadou',
-        image: '/sofia_spyriadou.png',
-        bio: `Ms. Spyriadou completed her studies in Psychology at Aristotle University of Thessaloniki and followed a **Master's Program in Clinical Mental Health** at the same University.
-
-She has been trained in **Clinical Psychometry and Neuropsychology** at the 3rd University Psychiatric Clinic of AHEPA. She enriches her knowledge with her **4-year training in Cognitive Behavioral Therapy** at the Greek Society of Cognitive and Behavioral Therapy.
-
-She is **certified in administering psychometric tools** such as: Adult Intelligence Test **WAIS-V**, Juvenile Intelligence Test **WISC-III**, Depression Scale **Hamilton-D**, **SCI-PANSS** for schizophrenia, Mania Scale, bipolar disorder, Young Mania Rating Scale. She has been trained by the American University of Colorado "University of Colorado, USA" in **school psychology**. Having extensive experience in the Greek and German education system, she has all the tools to support children and adolescents in their difficulties during school years.
-
-She is the ideal specialist for the **First Parent Session** with our Clinic, **Examination and Psychotherapy of children and adolescents** and their parents in **Parent Counseling**.
-
-The clinical child psychologist speaks **fluent Greek and German**.`
-      },
-      {
-        id: 2,
         name: 'Ioanna Pissari',
-        image: '/ioanna_pissari.png',
+        image: '/sofia_spyriadou.png',
         bio: `Ms. Pissari completed her studies in Psychology at the National and Kapodistrian University of Athens and followed a **Master's Program in Clinical Mental Health** at the University "University of Wolverhampton" in England.
 
 Her interest revolves around her **4-year training in Cognitive Behavioral Therapy** from the Cognitive Behavioral Therapy Society, while she is also specialized in **Autism Spectrum** and **Attention Deficit Hyperactivity Disorder (ADHD)** from the University "University of Derby" in England.
@@ -97,6 +83,20 @@ Ms. Pissari is a **Champion of women's and patients' protection**. She has suppo
 She is the ideal specialist for the **First Parent Session** with our Clinic, **Examination and Psychotherapy of children and adolescents** and for **Parent Counseling**.
 
 The clinical child psychologist speaks **fluent Greek and English**.`
+      },
+      {
+        id: 2,
+        name: 'Sofia Spyriadou',
+        image: '/ioanna_pissari.png',
+        bio: `Ms. Spyriadou completed her studies in Psychology at Aristotle University of Thessaloniki and followed a **Master's Program in Clinical Mental Health** at the same University.
+
+She has been trained in **Clinical Psychometry and Neuropsychology** at the 3rd University Psychiatric Clinic of AHEPA. She enriches her knowledge with her **4-year training in Cognitive Behavioral Therapy** at the Greek Society of Cognitive and Behavioral Therapy.
+
+She is **certified in administering psychometric tools** such as: Adult Intelligence Test **WAIS-V**, Juvenile Intelligence Test **WISC-III**, Depression Scale **Hamilton-D**, **SCI-PANSS** for schizophrenia, Mania Scale, bipolar disorder, Young Mania Rating Scale. She has been trained by the American University of Colorado "University of Colorado, USA" in **school psychology**. Having extensive experience in the Greek and German education system, she has all the tools to support children and adolescents in their difficulties during school years.
+
+She is the ideal specialist for the **First Parent Session** with our Clinic, **Examination and Psychotherapy of children and adolescents** and their parents in **Parent Counseling**.
+
+The clinical child psychologist speaks **fluent Greek and German**.`
       },
       {
         id: 3,
@@ -116,22 +116,8 @@ The **clinical child psychologist speaks fluent Greek and French**.`
     fr: [
       {
         id: 1,
-        name: 'Sofia Spyriadou',
-        image: '/sofia_spyriadou.png',
-        bio: `Mme Spyriadou a terminé ses études en Psychologie à l'Université Aristote de Thessalonique et a suivi un **Programme de Master en Santé Mentale Clinique** à la même Université.
-
-Elle a été formée en **Psychométrie Clinique et Neuropsychologie** à la 3ème Clinique Psychiatrique Universitaire d'AHEPA. Elle enrichit ses connaissances avec sa **formation de 4 ans en Thérapie Cognitivo-Comportementale** à la Société Grecque de Thérapie Cognitivo-Comportementale.
-
-Elle est **certifiée dans l'administration d'outils psychométriques** tels que : Test d'intelligence adulte **WAIS-V**, Test d'intelligence juvénile **WISC-III**, Échelle de dépression **Hamilton-D**, **SCI-PANSS** pour la schizophrénie, Échelle de manie, trouble bipolaire, Young Mania Rating Scale. Elle a été formée par l'Université Américaine du Colorado "University of Colorado, USA" en **psychologie scolaire**. Ayant une vaste expérience dans le système éducatif grec et allemand, elle dispose de tous les outils pour accompagner les enfants et adolescents dans leurs difficultés pendant les années scolaires.
-
-Elle est la spécialiste idéale pour la **Première Session Parentale** avec notre Clinique, l'**Examen et Psychothérapie des enfants et adolescents** et leurs parents en **Conseil Parental**.
-
-La psychologue clinique pour enfants parle **couramment le grec et l'allemand**.`
-      },
-      {
-        id: 2,
         name: 'Ioanna Pissari',
-        image: '/ioanna_pissari.png',
+        image: '/sofia_spyriadou.png',
         bio: `Mme Pissari a terminé ses études en Psychologie à l'Université Nationale et Kapodistrienne d'Athènes et a suivi un **Programme de Master en Santé Mentale Clinique** à l'Université "University of Wolverhampton" en Angleterre.
 
 Son intérêt tourne autour de sa **formation de 4 ans en Thérapie Cognitivo-Comportementale** de la Société de Thérapie Cognitivo-Comportementale, tandis qu'elle est également spécialisée dans le **Spectre de l'Autisme** et le **Trouble Déficitaire de l'Attention avec Hyperactivité (TDAH)** de l'Université "University of Derby" en Angleterre.
@@ -141,6 +127,20 @@ Mme Pissari est une **Championne de la protection des femmes et des patients**. 
 Elle est la spécialiste idéale pour la **Première Session Parentale** avec notre Clinique, l'**Examen et Psychothérapie des enfants et adolescents** et pour le **Conseil Parental**.
 
 La psychologue clinique pour enfants parle **couramment le grec et l'anglais**.`
+      },
+      {
+        id: 2,
+        name: 'Sofia Spyriadou',
+        image: '/ioanna_pissari.png',
+        bio: `Mme Spyriadou a terminé ses études en Psychologie à l'Université Aristote de Thessalonique et a suivi un **Programme de Master en Santé Mentale Clinique** à la même Université.
+
+Elle a été formée en **Psychométrie Clinique et Neuropsychologie** à la 3ème Clinique Psychiatrique Universitaire d'AHEPA. Elle enrichit ses connaissances avec sa **formation de 4 ans en Thérapie Cognitivo-Comportementale** à la Société Grecque de Thérapie Cognitivo-Comportementale.
+
+Elle est **certifiée dans l'administration d'outils psychométriques** tels que : Test d'intelligence adulte **WAIS-V**, Test d'intelligence juvénile **WISC-III**, Échelle de dépression **Hamilton-D**, **SCI-PANSS** pour la schizophrénie, Échelle de manie, trouble bipolaire, Young Mania Rating Scale. Elle a été formée par l'Université Américaine du Colorado "University of Colorado, USA" en **psychologie scolaire**. Ayant une vaste expérience dans le système éducatif grec et allemand, elle dispose de tous les outils pour accompagner les enfants et adolescents dans leurs difficultés pendant les années scolaires.
+
+Elle est la spécialiste idéale pour la **Première Session Parentale** avec notre Clinique, l'**Examen et Psychothérapie des enfants et adolescents** et leurs parents en **Conseil Parental**.
+
+La psychologue clinique pour enfants parle **couramment le grec et l'allemand**.`
       },
       {
         id: 3,

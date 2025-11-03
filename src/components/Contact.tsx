@@ -9,9 +9,17 @@ import StripeCheckout from './StripeCheckout';
 
 interface ContactProps {
   language: 'gr' | 'en' | 'fr';
+  // Προαιρετικά αρχικές τιμές για προ-συμπλήρωση από προφίλ χρήστη
+  prefill?: {
+    parentName?: string;
+    email?: string;
+    phone?: string;
+  };
+  // Όταν είναι true, προβάλλεται μόνο η φόρμα (χωρίς headers/πληροφορίες)
+  onlyForm?: boolean;
 }
 
-const Contact: React.FC<ContactProps> = ({ language }) => {
+const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const [formData, setFormData] = useState({
     parentName: '',
     childAge: '',
@@ -30,6 +38,17 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   const [messageLength, setMessageLength] = useState(0);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
+  
+  // Εφαρμογή προ-συμπλήρωσης όταν δοθούν τιμές από γονικό component
+  useEffect(() => {
+    if (!prefill) return;
+    setFormData(prev => ({
+      ...prev,
+      parentName: prefill.parentName ?? prev.parentName,
+      email: prefill.email ?? prev.email,
+      phone: prefill.phone ?? prev.phone,
+    }));
+  }, [prefill]);
   
   // Φιλτραρισμένες θεματολογίες βάσει επιλεγμένης ειδικότητας
   const getAvailableThematologies = () => {
@@ -76,6 +95,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     return doctor.specialty === specialtyMap[selectedSpecialty];
   });
   const [slots, setSlots] = useState<SlotInfo[]>([]);
+  const [closureNotice, setClosureNotice] = useState<{from: string, to: string, reason?: string} | null>(null);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [calendarMonth] = useState(() => {
@@ -294,7 +314,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     gr: {
       title: 'Επικοινωνία',
       subtitle: 'Έτοιμοι να Ξεκινήσετε το Ταξίδι σας;',
-      description: 'Το πρώτο βήμα προς την υποστήριξη ψυχικής υγείας μπορεί να είναι καθοριστικό. Είμαστε εδώ για να το κάνουμε όσο πιο άνετο και απλό γίνεται.',
+      description: 'Το πρώτο βήμα προς την υποστήριξη ψυχικής υγείας μπορεί να είναι καθοριστικό. Είμαστε εδώ για να το κάνουμε όσο πιο εύκολο γίνεται.',
+      description2: 'Αφήστε τους ειδικούς να σας στηρίξουν στην διαγνωστική και θεραπευτική διαδικασία. Με αυτόν τον τρόπο η οικογένεια σας θα λάβει την αναγκαία βοήθεια και καθοδήγηση από Παιδοψυχίατρο και Παιδοψυχολόγους έμπειρους και ενημερωμένους με τα νεότερα και πιο σύγχρονα πρωτόκολλα στον κόσμο. Το Ιατρείο μας συνδυάζει την οργάνωση και την εκπαίδευση της Ελβετικής κουλτούρας με την ενσυναίσθηση και την τρυφερότητα της Ελληνικής.',
       contactInfo: 'Στοιχεία Επικοινωνίας',
       email: 'Email',
       emailDesc: '',
@@ -372,7 +393,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     en: {
       title: 'Contact',
       subtitle: 'Ready to Start Your Journey?',
-      description: 'Taking the first step towards mental health support can feel overwhelming. We\'re here to make it as comfortable and straightforward as possible.',
+      description: 'Taking the first step towards mental health support can feel overwhelming. We\'re here to make it as easy as possible.',
+      description2: "Let the specialists support you in the diagnostic and therapeutic process. In this way, your family will receive the necessary help and guidance from a Child and Adolescent Psychiatrist and Child Psychologists who are experienced and up to date with the newest and most modern protocols in the world. Our Clinic combines the organization and training of Swiss culture with the empathy and tenderness of Greek culture.",
       contactInfo: 'Contact Information',
       email: 'Email',
       emailDesc: 'We typically respond within 24 hours',
@@ -451,7 +473,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
     fr: {
       title: 'Contact',
       subtitle: 'Prêt à Commencer Votre Voyage?',
-      description: 'Faire le premier pas vers le soutien en santé mentale peut sembler accablant. Nous sommes là pour le rendre aussi confortable et simple que possible.',
+      description: 'Faire le premier pas vers le soutien en santé mentale peut sembler accablant. Nous sommes là pour le rendre aussi facile que possible.',
+      description2: "Laissez les spécialistes vous soutenir dans le processus diagnostique et thérapeutique. De cette manière, votre famille recevra l'aide et l'orientation nécessaires d'un pédopsychiatre et de psychologues pour enfants, expérimentés et à jour des protocoles les plus récents et les plus modernes au monde. Notre clinique allie l'organisation et la formation de la culture suisse à l'empathie et à la tendresse de la culture grecque.",
       contactInfo: 'Informations de Contact',
       email: 'Email',
       emailDesc: 'Nous répondons généralement dans les 24 heures',
@@ -589,8 +612,23 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   // Υπολογισμός slots για επιλεγμένη ημερομηνία/γιατρό
   useEffect(() => {
     const compute = async () => {
-      if (!formData.appointmentDate || !selectedDoctorId) { setSlots([]); return; }
+      if (!formData.appointmentDate || !selectedDoctorId) { setSlots([]); setClosureNotice(null); return; }
       console.log('[Contact] compute slots for', formData.appointmentDate, 'doctor:', selectedDoctorId);
+      // Έλεγχος για κλείσιμο ιατρείου/διακοπές
+      const { data: closures } = await supabase
+        .from('clinic_closures')
+        .select('doctor_id,date_from,date_to,reason')
+        .or(`doctor_id.eq.${selectedDoctorId},doctor_id.is.null`)
+        .lte('date_from', formData.appointmentDate)
+        .gte('date_to', formData.appointmentDate);
+      if (closures && closures.length > 0) {
+        const c = closures[0];
+        setClosureNotice({ from: c.date_from, to: c.date_to, reason: c.reason || undefined });
+        setSlots([]);
+        setSelectedTime('');
+        return;
+      }
+      setClosureNotice(null);
       // Φέρνουμε μόνο availability ακριβώς για τη μέρα και τον γιατρό
       const { data: av } = await supabase
         .from('availability')
@@ -649,217 +687,224 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
   }, [formData.appointmentDate, selectedDoctorId, settings]);
 
   return (
-    <section id="contact" className="py-20 bg-white">
+    <section id="contact" className={onlyForm ? "py-0 bg-white" : "py-20 bg-white"}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-8 mt-2"
-        >
-          {/* Title Section */}
-          <div className="mb-6">
-            <h2 className="text-4xl font-bold mb-4 font-poppins">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
-                {content[language].title}
-              </span>
-            </h2>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 text-center block text-xl font-poppins">
-              {content[language].subtitle}
-            </span>
-            <p className="text-sm text-gray-500 mt-2 font-nunito">
-              Το πρώτο βήμα προς την υποστήριξη…
-            </p>
-          </div>
-
-          {/* Image and Description Section */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
-              className="flex-shrink-0 overflow-hidden shadow-xl"
-            >
-              <img 
-                src={profile2} 
-                alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 
-                  language === 'en' ? 'Doctor profile' : 
-                  'Photo du médecin'} 
-                className="w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 object-cover"
-              />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="flex-1"
-            >
-              <p className="text-xl text-gray-600 leading-relaxed font-nunito text-left lg:text-left">
-                {content[language].description}
-              </p>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <div className="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
-          {/* Contact Information */}
+        {!onlyForm && (
           <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="space-y-8"
+            className="text-center mb-8 mt-2"
           >
-            <div className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100">
-              <div className="flex items-center mb-6">
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl mr-4 shadow-lg"
-                >
-                  <Heart className="h-6 w-6 text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold font-poppins">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
-                    {content[language].contactInfo}
-                  </span>
-                </h3>
-              </div>
-              
-              <div className="space-y-6">
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className="flex items-start space-x-4"
-                >
-                  <div className="bg-gradient-to-r from-blue-soft to-green-soft p-3 rounded-2xl shadow-md">
-                    <Mail className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].email}</h4>
-                    <a href="mailto:iatreiodrfytrou@gmail.com" className="text-blue-soft hover:text-purple-soft transition-colors font-nunito">
-                      iatreiodrfytrou@gmail.com
-                    </a>
-                    <p className="text-sm text-gray-600 mt-1 font-quicksand">{content[language].emailDesc}</p>
-                  </div>
-                </motion.div>
-
-                {/* Social Media Links */}
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className="flex items-start space-x-4"
-                >
-                  <div className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-md">
-                    <Heart className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-3 font-poppins">Social Media</h4>
-                    <div className="flex space-x-3">
-                      <motion.a
-                        href="https://www.instagram.com/drfytrouannamaria/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="p-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300"
-                      >
-                        <Instagram className="h-4 w-4" />
-                      </motion.a>
-                      <motion.a
-                        href="https://www.tiktok.com/@drfytrouannamaria"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="p-2 rounded-full bg-black text-white hover:shadow-lg transition-all duration-300"
-                      >
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                        </svg>
-                      </motion.a>
-                      <motion.a
-                        href="https://www.facebook.com/p/Dr-Fytrou-Anna-Maria-61568951687995/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="p-2 rounded-full bg-blue-600 text-white hover:shadow-lg transition-all duration-300"
-                      >
-                        <Facebook className="h-4 w-4" />
-                      </motion.a>
-                      
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className="flex items-start space-x-4"
-                >
-                  <div className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl shadow-md">
-                    <MapPin className="h-6 w-6 text-gray-700" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].location}</h4>
-                    <p className="text-gray-700 font-nunito">
-                      {language === 'gr' ? 'Λωζάνη, Ελβετία' : 
-                        language === 'en' ? 'Lausanne, Switzerland' : 
-                        'Lausanne, Suisse'}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1 font-quicksand">{content[language].locationDesc}</p>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className="flex items-start space-x-4"
-                >
-                  <div className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-md">
-                    <Clock className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].hours}</h4>
-                    <div className="space-y-1 text-gray-700 font-nunito">
-                      <p>{language === 'gr' ? 'Ραντεβού κατόπιν διαθεσιμότητας' : 
-                        language === 'en' ? 'Appointments upon availability' : 
-                        'Rendez-vous selon disponibilité'}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+            {/* Title Section */}
+            <div className="mb-6">
+              <h2 className="text-4xl font-bold mb-4 font-poppins">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+                  {content[language].title}
+                </span>
+              </h2>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 text-center block text-xl font-poppins">
+                {content[language].subtitle}
+              </span>
+              <p className="text-sm text-gray-500 mt-2 font-nunito">
+                Το πρώτο βήμα προς την υποστήριξη…
+              </p>
             </div>
 
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
-            >
-              <h3 className="text-xl font-bold mb-4 font-poppins">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
-                  {content[language].expectTitle}
-                </span>
-              </h3>
-              <ul className="space-y-3">
-                {content[language].expectations.map((expectation, index) => (
-                  <motion.li 
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="flex items-start text-gray-600 font-nunito"
-                  >
-                    <motion.div 
-                      whileHover={{ scale: 1.5 }}
-                      className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mt-2 mr-3 flex-shrink-0"
-                    />
-                    {expectation}
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
+            {/* Image and Description Section */}
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-6 max-w-6xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.02 }}
+                className="flex-shrink-0 overflow-hidden shadow-xl"
+              >
+                <img 
+                  src={profile2} 
+                  alt={language === 'gr' ? 'Φωτογραφία ιατρού' : 
+                    language === 'en' ? 'Doctor profile' : 
+                    'Photo du médecin'} 
+                  className="w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 object-cover"
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="flex-1"
+              >
+                <p className="text-xl text-gray-600 leading-relaxed font-nunito text-left lg:text-left">
+                  {content[language].description}
+                </p>
+                <p className="mt-4 text-base text-gray-600 leading-relaxed font-nunito text-left lg:text-left">
+                  {content[language].description2}
+                </p>
+              </motion.div>
+            </div>
           </motion.div>
+        )}
+
+        <div className={onlyForm ? "max-w-3xl mx-auto" : "grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto"}>
+          {/* Contact Information */}
+          {!onlyForm && (
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <div className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100">
+                <div className="flex items-center mb-6">
+                  <motion.div
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                    className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl mr-4 shadow-lg"
+                  >
+                    <Heart className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold font-poppins">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+                      {content[language].contactInfo}
+                    </span>
+                  </h3>
+                </div>
+                
+                <div className="space-y-6">
+                  <motion.div 
+                    whileHover={{ x: 5 }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="bg-gradient-to-r from-blue-soft to-green-soft p-3 rounded-2xl shadow-md">
+                      <Mail className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].email}</h4>
+                      <a href="mailto:iatreiodrfytrou@gmail.com" className="text-blue-soft hover:text-purple-soft transition-colors font-nunito">
+                        iatreiodrfytrou@gmail.com
+                      </a>
+                      <p className="text-sm text-gray-600 mt-1 font-quicksand">{content[language].emailDesc}</p>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Social Media Links */}
+                  <motion.div 
+                    whileHover={{ x: 5 }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-md">
+                      <Heart className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-3 font-poppins">Social Media</h4>
+                      <div className="flex space-x-3">
+                        <motion.a
+                          href="https://www.instagram.com/drfytrouannamaria/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300"
+                        >
+                          <Instagram className="h-4 w-4" />
+                        </motion.a>
+                        <motion.a
+                          href="https://www.tiktok.com/@drfytrouannamaria"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 rounded-full bg-black text-white hover:shadow-lg transition-all duration-300"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                          </svg>
+                        </motion.a>
+                        <motion.a
+                          href="https://www.facebook.com/p/Dr-Fytrou-Anna-Maria-61568951687995/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 rounded-full bg-blue-600 text-white hover:shadow-lg transition-all duration-300"
+                        >
+                          <Facebook className="h-4 w-4" />
+                        </motion.a>
+                        
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    whileHover={{ x: 5 }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="bg-gradient-to-r from-yellow-soft to-warm-cream p-3 rounded-2xl shadow-md">
+                      <MapPin className="h-6 w-6 text-gray-700" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].location}</h4>
+                      <p className="text-gray-700 font-nunito">
+                        {language === 'gr' ? 'Λωζάνη, Ελβετία' : 
+                          language === 'en' ? 'Lausanne, Switzerland' : 
+                          'Lausanne, Suisse'}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1 font-quicksand">{content[language].locationDesc}</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    whileHover={{ x: 5 }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="bg-gradient-to-r from-rose-soft to-purple-soft p-3 rounded-2xl shadow-md">
+                      <Clock className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-1 font-poppins">{content[language].hours}</h4>
+                      <div className="space-y-1 text-gray-700 font-nunito">
+                        <p>{language === 'gr' ? 'Ραντεβού κατόπιν διαθεσιμότητας' : 
+                          language === 'en' ? 'Appointments upon availability' : 
+                          'Rendez-vous selon disponibilité'}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
+              >
+                <h3 className="text-xl font-bold mb-4 font-poppins">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
+                    {content[language].expectTitle}
+                  </span>
+                </h3>
+                <ul className="space-y-3">
+                  {content[language].expectations.map((expectation, index) => (
+                    <motion.li 
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="flex items-start text-gray-600 font-nunito"
+                    >
+                      <motion.div 
+                        whileHover={{ scale: 1.5 }}
+                        className="w-2 h-2 bg-gradient-to-r from-rose-soft to-purple-soft rounded-full mt-2 mr-3 flex-shrink-0"
+                      />
+                      {expectation}
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            </motion.div>
+          )}
 
           {/* Contact Form */}
           <motion.div 
@@ -1083,7 +1128,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   style={{ direction: 'ltr' }}
                 />
                 {/* Display appointment guidelines */}
-                {formData.appointmentDate && (
+                {formData.appointmentDate && !closureNotice && (
                   <div className="mt-2 text-xs text-gray-600 font-nunito bg-blue-50 rounded-lg p-2 border-l-4 border-blue-300">
                     <div className="flex items-start space-x-2">
                       <span className="text-blue-500 text-sm">ℹ️</span>
@@ -1098,9 +1143,30 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
               {/* Slots visualization */}
               {formData.appointmentDate && (
                 <div className="col-span-2">
-                  <div className="text-xs text-gray-500 mb-2 font-quicksand">{content[language].slotLegend}</div>
+                  {!closureNotice && (
+                    <div className="text-xs text-gray-500 mb-2 font-quicksand">{content[language].slotLegend}</div>
+                  )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {slots.length===0 ? (
+                    {closureNotice ? (
+                      <div className="col-span-full bg-gradient-to-r from-yellow-50 to-pink-50 border border-yellow-200 text-gray-800 rounded-2xl p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="text-2xl">🎈</div>
+                          <div>
+                            <div className="font-semibold mb-1">
+                              {language==='en' ? 'Closed on these days' : language==='fr' ? 'Fermé ces jours-là' : 'Κλειστά αυτές τις μέρες'}
+                            </div>
+                            <div className="text-sm">
+                              {language==='en' && (<span>From <strong>{closureNotice.from}</strong> to <strong>{closureNotice.to}</strong>.</span>)}
+                              {language==='fr' && (<span>Du <strong>{closureNotice.from}</strong> au <strong>{closureNotice.to}</strong>.</span>)}
+                              {language!=='en' && language!=='fr' && (<span>Από <strong>{closureNotice.from}</strong> έως <strong>{closureNotice.to}</strong>.</span>)}
+                            </div>
+                            {closureNotice.reason && (
+                              <div className="text-sm mt-1">{closureNotice.reason}</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : slots.length===0 ? (
                       <div className="text-gray-500 col-span-full">{language==='gr'? 'Δεν υπάρχουν διαθέσιμα για την ημέρα.': 'No availability for the day.'}</div>
                     ) : (
                       slots.map(s=> (
