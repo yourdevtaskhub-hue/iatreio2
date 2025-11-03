@@ -205,7 +205,6 @@ exports.handler = async (event, context) => {
     console.log('🔍 [DEBUG] Stripe secret key check:', {
       keyExists: !!process.env.STRIPE_SECRET_KEY,
       envKeyPrefix: stripeSecretKey.substring(0, 10) + '...',
-      fallbackKeyPrefix: fallbackKey.substring(0, 10) + '...',
       isLiveMode,
       isTestPrice,
       priceId
