@@ -51,6 +51,19 @@
     Pragma = "no-cache"
     Expires = "0"
 
+# Redirect from misspelled domain to correct domain (permanent)
+[[redirects]]
+  from = "https://perentteenonlineclinic.com/*"
+  to = "https://parentteenonlineclinic.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.perentteenonlineclinic.com/*"
+  to = "https://www.parentteenonlineclinic.com/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/admin"
   to = "/index.html"

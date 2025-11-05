@@ -23,8 +23,8 @@ exports.handler = async (event, context) => {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://perentteenonlineclinic.com',
-    'https://www.perentteenonlineclinic.com'
+    'https://parentteenonlineclinic.com',
+    'https://www.parentteenonlineclinic.com'
   ];
   const allowOrigin = allowedOrigins.includes(origin) ? origin : '*';
   
@@ -329,8 +329,8 @@ exports.handler = async (event, context) => {
         payment_method_types: ['card'],
         line_items: [ lineItem ],
         mode: 'payment',
-        success_url: `${event.headers.origin || 'https://perentteenonlineclinic.com'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
-        cancel_url: `${event.headers.origin || 'https://perentteenonlineclinic.com'}/contact?status=cancelled`,
+        success_url: `${event.headers.origin || 'https://parentteenonlineclinic.com'}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentData.id}`,
+        cancel_url: `${event.headers.origin || 'https://parentteenonlineclinic.com'}/contact?status=cancelled`,
         customer_email: parentEmail,
         metadata: {
           doctor_id: doctorId,

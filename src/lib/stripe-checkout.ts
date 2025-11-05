@@ -88,7 +88,7 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
     try {
       // Determine Functions base URL
       const envBase = (import.meta as any).env?.VITE_NETLIFY_FUNCTIONS_BASE as string | undefined;
-      const prodBaseDefault = 'https://perentteenonlineclinic.com/.netlify/functions';
+      const prodBaseDefault = 'https://parentteenonlineclinic.com/.netlify/functions';
       // Add local Netlify Dev default (8888) so localhost works 100%
       const localNetlifyDefault = 'http://localhost:8888/.netlify/functions';
       const bases = [
