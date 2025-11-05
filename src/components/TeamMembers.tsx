@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import doctorsImg from '../assets/doctors.JPG';
 import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import ioannaCertificate from '../assets/ioanna_certificate.png';
+import sofiaCertificate from '../assets/sofia_certificate.png';
+import sofiaMaster from '../assets/sofia_master.png';
 
 interface TeamMembersProps {
   language: string;
@@ -9,19 +13,44 @@ interface TeamMembersProps {
 const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
   const lang = language as 'gr' | 'en' | 'fr';
   
+  const [selectedMember, setSelectedMember] = useState<number | null>(null);
+  const [selectedPDFs, setSelectedPDFs] = useState<string[]>([]);
+
   const content = {
     gr: {
       title: 'Η ομάδα της Δρ. Φύτρου',
-      subtitle: 'Οι συνεργάτες μας είναι ψυχολόγοι και ψυχοθεραπευτές, εξειδικευμένοι στην παιδική ψυχοπαθολογία και εποπτεύονται εβδομαδιαίως από την Δρ. Φύτρου για τα περιστατικά του ιατρείου.'
+      subtitle: 'Οι συνεργάτες μας είναι ψυχολόγοι και ψυχοθεραπευτές, εξειδικευμένοι στην παιδική ψυχοπαθολογία και εποπτεύονται εβδομαδιαίως από την Δρ. Φύτρου για τα περιστατικά του ιατρείου.',
+      viewButton: 'Προβολή Πτυχίου/Εκπαιδεύσεων',
+      closeButton: 'Κλείσιμο'
     },
     en: {
       title: 'Dr. Fytrou\'s Team',
-      subtitle: 'Our collaborators are psychologists and psychotherapists, specialized in child psychopathology and supervised weekly by Dr. Fytrou for the clinic\'s cases.'
+      subtitle: 'Our collaborators are psychologists and psychotherapists, specialized in child psychopathology and supervised weekly by Dr. Fytrou for the clinic\'s cases.',
+      viewButton: 'View Degree/Training',
+      closeButton: 'Close'
     },
     fr: {
       title: 'L\'équipe du Dr Fytrou',
-      subtitle: 'Nos collaborateurs sont des psychologues et psychothérapeutes, spécialisés en psychopathologie de l\'enfant et supervisés hebdomadairement par le Dr Fytrou pour les cas de la clinique.'
+      subtitle: 'Nos collaborateurs sont des psychologues et psychothérapeutes, spécialisés en psychopathologie de l\'enfant et supervisés hebdomadairement par le Dr Fytrou pour les cas de la clinique.',
+      viewButton: 'Voir Diplôme/Formation',
+      closeButton: 'Fermer'
     }
+  };
+
+  const handleViewCertificates = (memberId: number) => {
+    setSelectedMember(memberId);
+    if (memberId === 1) {
+      // Ioanna Pissari
+      setSelectedPDFs([ioannaCertificate]);
+    } else if (memberId === 2) {
+      // Sofia Spyriadou
+      setSelectedPDFs([sofiaCertificate, sofiaMaster]);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedMember(null);
+    setSelectedPDFs([]);
   };
 
   const teamMembers = {
@@ -253,6 +282,26 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
                   <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full"></div>
                 </motion.div>
 
+                {/* Κουμπί Προβολή Πτυχίου/Εκπαιδεύσεων - μόνο για Ιωάννα (id:1) και Σοφία (id:2) */}
+                {(member.id === 1 || member.id === 2) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 1.0 + index * 0.3 }}
+                    viewport={{ once: true }}
+                    className="mt-6 flex justify-center"
+                  >
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleViewCertificates(member.id)}
+                      className="bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 font-quicksand border border-white/50"
+                    >
+                      {content[lang].viewButton}
+                    </motion.button>
+                  </motion.div>
+                )}
+
                 {/* Διαχωριστική γραμμή ανάμεσα στα κείμενα (μόνο για το δεύτερο βιογραφικό) */}
                 {index === 1 && (
                   <motion.div
@@ -350,6 +399,52 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
         </motion.div>
 
       </div>
+
+      {/* Modal για προβολή PDFs */}
+      {selectedMember !== null && selectedPDFs.length > 0 && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={handleCloseModal}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-rose-soft to-purple-soft text-white p-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold font-poppins">
+                {content[lang].viewButton}
+              </h3>
+              <motion.button
+                whileHover={{ rotate: 90, scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleCloseModal}
+                className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </motion.button>
+            </div>
+
+            {/* Image Content */}
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="space-y-4">
+                {selectedPDFs.map((image, imageIndex) => (
+                  <div key={imageIndex} className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                    <img
+                      src={image}
+                      alt={`Certificate ${imageIndex + 1}`}
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 };
