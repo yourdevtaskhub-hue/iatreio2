@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../lib/supabase';
-import { User, Mail, Phone, Calendar, LogOut, Heart, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star } from 'lucide-react';
+import { User, Mail, Phone, Calendar, LogOut, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star } from 'lucide-react';
 import Contact from '../components/Contact';
 import ReviewForm from '../components/ReviewForm';
 import { getDoctorPrice } from '../lib/stripe-api';
 import { createRealStripeCheckout } from '../lib/stripe-checkout';
+import logoIatrio5 from '../assets/logoiatrio5.png';
 
 const UserPanel: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -258,8 +259,8 @@ const UserPanel: React.FC = () => {
   // Υπολογίζουμε δυναμικά τον χαιρετισμό με βάση το τρέχον όνομα
   const displayName = getUserDisplayName();
   const greeting = displayName
-    ? `Καλώς ορίσατε στο ιατρείο μας, ${displayName}!`
-    : 'Καλώς ορίσατε στο ιατρείο μας!';
+    ? `Καλώς ήρθατε στο ιατρείο μας, ${displayName}!`
+    : 'Καλώς ήρθατε στο ιατρείο μας!';
 
   if (loading) {
     return (
@@ -279,21 +280,28 @@ const UserPanel: React.FC = () => {
       <div className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-200 py-8 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="bg-white p-3 rounded-full shadow-lg"
-              >
-                <Heart className="h-8 w-8 text-rose-soft" />
-              </motion.div>
-              <div>
+            <div className="flex items-center space-x-3">
+              <img 
+                src={logoIatrio5} 
+                alt="Logo" 
+                className="h-16 w-16 sm:h-20 sm:w-20 lg:h-16 lg:w-16 xl:h-20 xl:w-20 flex-shrink-0"
+                style={{
+                  imageOrientation: 'from-image',
+                  WebkitTransform: 'none',
+                  transform: 'none',
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                  WebkitTransformOrigin: 'center center',
+                  transformOrigin: 'center center'
+                }}
+              />
+              <div className="flex flex-col justify-center">
                 <h1 className="text-3xl font-bold text-white font-poppins">
                   {greeting}
                 </h1>
-                <p className="text-white/90 text-sm font-nunito">
-                  Διαδικτυακό Ιατρείο Dr. Anna-Maria Fytrou
-                </p>
+                <h2 className="text-white font-bold text-lg font-dancing-script leading-tight">
+                  Dr. Anna-Maria Fytrou
+                </h2>
               </div>
             </div>
   
@@ -509,17 +517,10 @@ const UserPanel: React.FC = () => {
           >
             {/* Welcome Card */}
             <div className="bg-gradient-to-r from-rose-soft to-purple-soft rounded-2xl shadow-xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4 font-poppins">
-                Καλώς ήρθες στο Ιατρείο μας! 🏥
-              </h3>
-              <p className="text-white/90 leading-relaxed font-nunito mb-4">
-                Είμαστε εδώ για να σε υποστηρίξουμε σε κάθε βήμα του ταξιδιού σου προς την καλύτερη ψυχική υγεία. 
-                Χρησιμοποίησε το dashboard αυτό για να διαχειριστείς τα ραντεβού σου και να έχεις πρόσβαση στις υπηρεσίες μας.
+              <p className="text-white/90 leading-relaxed font-nunito">
+                Είμαστε εδώ για να σας υποστηρίξουμε σε κάθε βήμα του ταξιδιού προς την ψυχική ευημερία. 
+                Χρησιμοποιήστε το προφίλ σας για να διαχειριστείτε τα ραντεβού σας και να έχετε πρόσβαση στις υπηρεσίες μας.
               </p>
-              <div className="flex items-center space-x-2 mt-6">
-                <Heart className="h-5 w-5" />
-                <span className="text-sm font-nunito">Η ομάδα μας είναι εδώ για εσένα</span>
-              </div>
             </div>
 
             {/* Quick Actions */}
