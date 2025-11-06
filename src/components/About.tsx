@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Award, Users, Clock, Star } from 'lucide-react';
+import { GraduationCap, Award, Users, Clock, Star, X } from 'lucide-react';
 // import drProfile from '../assets/profile.png';
 import happyTeen from '../assets/happyteen.jpg';
+import specialtyTitleImg from '../assets/ΤΙΤΛΟΣ ΕΙΔΙΚΟΤΗΤΑΣ.png';
+import recognitionImg from '../assets/Αναγνωριση.png';
+import psychotherapyImg from '../assets/Ψυχοθεραπεία.png';
 
 interface AboutProps {
   language: 'gr' | 'en' | 'fr';
 }
 
 const About: React.FC<AboutProps> = ({ language }) => {
+  const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
   const content = {
     gr: {
       title: 'Σχετικά με την Δρ. Φύτρου',
@@ -57,6 +61,8 @@ const About: React.FC<AboutProps> = ({ language }) => {
                       ]
                     }
                   ],
+      viewSpecialtyButton: 'Τίτλος Ειδικότητας/Τίτλος Ψυχοθεραπευτή (Ελλάδα & Ελβετία)',
+      closeButton: 'Κλείσιμο',
       memberships: 'Επαγγελματικές Συμμετοχές',
       membershipsList: [
         'Συμμετοχή στο 11ο Πανελλήνιο Παιδοψυχιατρικό Συνέδριο με τίτλο «Θεωρία και κλινική στην Ψυχιατρική Παιδιού και Εφήβου: Ανιχνεύοντας τις νέες ψυχοπαθολογίες» (Αθήνα, Ιούνιος 2019)',
@@ -111,6 +117,8 @@ const About: React.FC<AboutProps> = ({ language }) => {
           ]
         }
       ],
+      viewSpecialtyButton: 'Titre de Spécialité/Titre de Psychothérapeute (Grèce & Suisse)',
+      closeButton: 'Fermer',
       memberships: 'Participations Professionnelles',
       membershipsList: [
         'Participation au 11ème Congrès Panhellénique de Psychiatrie de l\'Enfant avec le titre "Théorie et clinique en Psychiatrie de l\'Enfant et de l\'Adolescent: Explorer les nouvelles psychopathologies" (Athènes, Juin 2019)',
@@ -165,6 +173,8 @@ const About: React.FC<AboutProps> = ({ language }) => {
           ]
         }
       ],
+      viewSpecialtyButton: 'Specialty Title/Psychotherapist Title (Greece & Switzerland)',
+      closeButton: 'Close',
       memberships: 'Professional Memberships',
       membershipsList: [
         'Participation in the 11th Panhellenic Child Psychiatry Conference titled "Theory and Clinical Practice in Child and Adolescent Psychiatry: Exploring New Psychopathologies" (Athens, June 2019)',
@@ -346,7 +356,57 @@ const About: React.FC<AboutProps> = ({ language }) => {
                   </motion.div>
                 );
               })}
+              {/* Extra card: Specialty Titles button to occupy the empty spot */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setShowSpecialtyModal(true)}
+                  className="bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-gray-700 px-6 py-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 font-quicksand border border-white/50 text-center"
+                >
+                  {content[language].viewSpecialtyButton}
+                </motion.button>
+              </motion.div>
             </div>
+
+            {/* Modal για προβολή PDFs Ειδικότητας/Τίτλων */}
+            {showSpecialtyModal && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowSpecialtyModal(false)}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden"
+                  onClick={(e)=> e.stopPropagation()}
+                >
+                  <div className="bg-gradient-to-r from-rose-soft to-purple-soft text-white p-4 flex items-center justify-between">
+                    <h3 className="text-xl font-bold font-poppins">{content[language].viewSpecialtyButton}</h3>
+                    <motion.button whileHover={{ rotate: 90, scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={()=> setShowSpecialtyModal(false)} className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/20 transition-colors">
+                      <X className="h-6 w-6" />
+                    </motion.button>
+                  </div>
+                  <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+                    <div className="space-y-4">
+                      {[specialtyTitleImg, recognitionImg, psychotherapyImg].map((image, idx)=> (
+                        <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={image}
+                            alt={`Certificate ${idx + 1}`}
+                            className="w-full h-auto object-contain"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
 
             {/* Επαγγελματικές Συμμετοχές */}
             <motion.div 
