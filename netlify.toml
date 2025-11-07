@@ -4,7 +4,7 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   # NOTE: Secrets must be set in Netlify Dashboard > Site settings > Environment variables
   # Do NOT commit secrets to git!
 

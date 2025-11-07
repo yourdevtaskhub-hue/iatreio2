@@ -1,13 +1,21 @@
 const { createClient } = require('@supabase/supabase-js');
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables are required');
-}
+let supabase;
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const getSupabaseClient = () => {
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error('missing_supabase_env');
+  }
+
+  if (!supabase) {
+    supabase = createClient(url, serviceKey);
+  }
+
+  return supabase;
+};
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -42,6 +50,8 @@ exports.handler = async (event) => {
   }
 
   try {
+    const supabaseClient = getSupabaseClient();
+
     const payload = JSON.parse(event.body || '{}');
     const {
       doctorId,
@@ -74,7 +84,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { data: depositRow, error: depositError } = await supabase
+    const { data: depositRow, error: depositError } = await supabaseClient
       .from('session_deposits')
       .select('id, remaining_sessions')
       .eq('customer_email', parentEmail)
@@ -97,7 +107,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { data: existingAppointment } = await supabase
+    const { data: existingAppointment } = await supabaseClient
       .from('appointments')
       .select('id')
       .eq('doctor_id', doctorId)
@@ -116,7 +126,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { data: appointmentData, error: appointmentError } = await supabase
+    const { data: appointmentData, error: appointmentError } = await supabaseClient
       .from('appointments')
       .insert({
         doctor_id: doctorId,
@@ -136,7 +146,7 @@ exports.handler = async (event) => {
       throw appointmentError;
     }
 
-    const { error: txError } = await supabase
+    const { error: txError } = await supabaseClient
       .from('session_deposit_transactions')
       .insert({
         customer_email: parentEmail,
@@ -153,7 +163,7 @@ exports.handler = async (event) => {
 
     if (txError) {
       console.error('❌ [ERROR] Failed to record deposit transaction:', txError);
-      await supabase.from('appointments').delete().eq('id', appointmentData.id);
+      await supabaseClient.from('appointments').delete().eq('id', appointmentData.id);
       if (txError.code === '22003') {
         return {
           statusCode: 409,
@@ -177,6 +187,18 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    if (error && error.message === 'missing_supabase_env') {
+      console.error('❌ [ERROR] Missing SUPABASE_URL / SUPABASE_SERVICE_KEY environment variables');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          error: 'configuration_error',
+          message: 'Οι περιβαλλοντικές μεταβλητές SUPABASE_URL και SUPABASE_SERVICE_KEY δεν έχουν οριστεί στο Netlify.'
+        })
+      };
+    }
+
     console.error('❌ [ERROR] Deposit booking failed:', error);
     return {
       statusCode: 500,
