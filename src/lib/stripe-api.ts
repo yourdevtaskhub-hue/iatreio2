@@ -1,5 +1,6 @@
 // Stripe API service for Vite/React project
 import { supabase } from './supabase';
+import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
 
 export interface CreateCheckoutSessionData {
   doctorId: string;
@@ -90,9 +91,15 @@ export const createCheckoutSession = async (data: CreateCheckoutSessionData) => 
   }
 };
 
-export const getDoctorPrice = async (doctorId: string): Promise<number> => {
+export const getDoctorPrice = async (doctorId: string, doctorName?: string): Promise<number> => {
   try {
     console.log('🔍 [DEBUG] Fetching price for doctor_id:', doctorId);
+    const override = findDoctorStripeOverride(doctorId, doctorName);
+
+    if (override) {
+      console.log('✅ [DEBUG] Using override price for doctor:', doctorId, override);
+      return override.amountCents;
+    }
     
     const { data: stripeProduct, error } = await supabase
       .from('stripe_products')

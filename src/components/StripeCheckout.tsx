@@ -62,7 +62,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const priceCents = await getDoctorPrice(doctorId);
+        const priceCents = await getDoctorPrice(doctorId, doctorName);
         setPrice(priceCents);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch price');

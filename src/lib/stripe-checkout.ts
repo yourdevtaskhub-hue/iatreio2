@@ -1,6 +1,7 @@
 // Real Stripe Checkout Integration
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
+import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
 
 const getStripe = () => {
   const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51SEsIvBYDGzP3ZGsOqisKJa1bpEL8PF28o1HxpQUopzi9immZjglcyJRBNY655enURhZIYjrEsuEjIWxEucAyf4300PN51sYmy';
@@ -35,24 +36,31 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
     // Check if this is a deposit purchase (no appointment date/time or concerns contains DEPOSIT_PURCHASE)
     const isDepositPurchase = (!data.appointmentDate && !data.appointmentTime) || 
                               (typeof data.concerns === 'string' && data.concerns.startsWith('DEPOSIT_PURCHASE'));
+    const override = findDoctorStripeOverride(data.doctorId, data.doctorName);
+    const effectiveAmountCents = override ? override.amountCents : data.amountCents;
     
     // Get Stripe Price ID from database (only for regular appointments, not deposits)
     let stripePriceId: string | null = null;
     if (!isDepositPurchase) {
       console.log('🔍 [DEBUG] Fetching Stripe product for doctor:', data.doctorId);
-      const { data: stripeProduct, error: productError } = await supabase
-        .from('stripe_products')
-        .select('stripe_price_id')
-        .eq('doctor_id', data.doctorId)
-        .single();
+      if (override) {
+        stripePriceId = override.priceId;
+        console.log('✅ [SUCCESS] Using override price ID:', stripePriceId);
+      } else {
+        const { data: stripeProduct, error: productError } = await supabase
+          .from('stripe_products')
+          .select('stripe_price_id')
+          .eq('doctor_id', data.doctorId)
+          .single();
 
-      if (productError || !stripeProduct) {
-        console.error('❌ [ERROR] Stripe product not found:', productError);
-        throw new Error('Stripe product not found for the selected doctor.');
+        if (productError || !stripeProduct) {
+          console.error('❌ [ERROR] Stripe product not found:', productError);
+          throw new Error('Stripe product not found for the selected doctor.');
+        }
+
+        stripePriceId = stripeProduct.stripe_price_id;
+        console.log('✅ [SUCCESS] Stripe product found:', stripePriceId);
       }
-
-      stripePriceId = stripeProduct.stripe_price_id;
-      console.log('✅ [SUCCESS] Stripe product found:', stripePriceId);
     } else {
       console.log('🔍 [DEBUG] Deposit purchase detected - skipping priceId fetch');
     }
@@ -63,7 +71,7 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
       .from('payments')
       .insert({
         doctor_id: data.doctorId,
-        amount_cents: data.amountCents,
+        amount_cents: effectiveAmountCents,
         currency: 'eur',
         status: 'pending',
         customer_email: data.parentEmail,
@@ -113,8 +121,8 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
             appointmentDate: data.appointmentDate || '',
             appointmentTime: data.appointmentTime || '',
             concerns: data.concerns || '',
-            amountCents: data.amountCents,
-            priceId: stripePriceId || null, // null for deposits
+            amountCents: effectiveAmountCents,
+            priceId: override ? override.priceId : stripePriceId || null, // null for deposits
             sessionsCount: data.sessionsCount || null // for deposit purchases
           };
           

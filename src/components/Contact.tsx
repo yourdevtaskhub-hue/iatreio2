@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3 } from 'lucide-react';
 import profile2 from '../assets/profile2.JPG';
 import { supabase } from '../lib/supabase';
+import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 import StripeCheckout from './StripeCheckout';
@@ -87,6 +88,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   // Φιλτραρισμένοι γιατροί βάσει επιλεγμένης ειδικότητας
   const filteredDoctors = doctors.filter(doctor => {
     if (!selectedSpecialty) return true;
+    if (findDoctorStripeOverride(doctor.id, doctor.name)) {
+      return true;
+    }
     const specialtyMap: { [key: string]: string } = {
       'psychiatrist': 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
       'psychologist': 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
@@ -119,6 +123,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
 
   // Function to translate doctor names for display only (UI)
   const getDoctorDisplayName = (doctor: Doctor) => {
+    let baseDisplay = `${doctor.name} — ${doctor.specialty}`;
+
     if (language === 'en') {
       // Map Greek names to English display names
       const nameMap: { [key: string]: string } = {
@@ -128,17 +134,17 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         'Ιωάννα Πισσάρη': 'Ioanna Pissari',
         'Ειρήνη Στεργίου': 'Eirini Stergiou'
       };
-      
+
       const specialtyMap: { [key: string]: string } = {
         'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια': 'Child and Adolescent Psychiatrist & Psychotherapist',
         'Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Child Psychologist & Psychotherapist',
         'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Clinical Child Psychologist & Psychotherapist'
       };
-      
+
       const displayName = nameMap[doctor.name] || doctor.name;
       const displaySpecialty = specialtyMap[doctor.specialty] || doctor.specialty;
-      
-      return `${displayName} — ${displaySpecialty}`;
+
+      baseDisplay = `${displayName} — ${displaySpecialty}`;
     } else if (language === 'fr') {
       // Map Greek names to French display names
       const nameMap: { [key: string]: string } = {
@@ -148,21 +154,31 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         'Ιωάννα Πισσάρη': 'Ioanna Pissari',
         'Ειρήνη Στεργίου': 'Eirini Stergiou'
       };
-      
+
       const specialtyMap: { [key: string]: string } = {
         'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια': 'Psychiatre pour Enfants et Adolescents & Psychothérapeute',
         'Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Psychologue pour Enfants & Psychothérapeute',
         'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια': 'Psychologue Clinique pour Enfants & Psychothérapeute'
       };
-      
+
       const displayName = nameMap[doctor.name] || doctor.name;
       const displaySpecialty = specialtyMap[doctor.specialty] || doctor.specialty;
-      
-      return `${displayName} — ${displaySpecialty}`;
+
+      baseDisplay = `${displayName} — ${displaySpecialty}`;
     }
-    
-    // For Greek, return original
-    return `${doctor.name} — ${doctor.specialty}`;
+
+    const override = findDoctorStripeOverride(doctor.id, doctor.name);
+    if (override) {
+      const amount = (override.amountCents / 100).toFixed(2);
+      const testLabel = language === 'fr'
+        ? 'Test en direct'
+        : language === 'en'
+        ? 'Live test'
+        : 'Live δοκιμή';
+      return `${baseDisplay} • €${amount} ${testLabel}`;
+    }
+
+    return baseDisplay;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -353,7 +369,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
         psychologist: 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
-        clinicalPsychologist: 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια'
+        clinicalPsychologist: 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
+        liveTest: 'Live δοκιμή (1€)'
       },
       thematologies: 'Θεματολογίες',
       selectThematology: 'Επιλέξτε θεματολογία',
@@ -433,7 +450,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Child and Adolescent Psychiatrist & Psychotherapist',
         psychologist: 'Child Psychologist & Psychotherapist',
-        clinicalPsychologist: 'Clinical Child Psychologist & Psychotherapist'
+        clinicalPsychologist: 'Clinical Child Psychologist & Psychotherapist',
+        liveTest: 'Live Test (1€ doctor)'
       },
       thematologies: 'Thematologies',
       selectThematology: 'Select thematology',
@@ -512,7 +530,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Psychiatre pour Enfants et Adolescents & Psychothérapeute',
         psychologist: 'Psychologue pour Enfants & Psychothérapeute',
-        clinicalPsychologist: 'Psychologue Clinique pour Enfants & Psychothérapeute'
+        clinicalPsychologist: 'Psychologue Clinique pour Enfants & Psychothérapeute',
+        liveTest: 'Test en direct (médecin 1€)'
       },
       thematologies: 'Thématiques',
       selectThematology: 'Sélectionnez une thématique',
@@ -556,13 +575,17 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     const load = async () => {
       console.log('[Contact] load(): fetching doctors & settings');
       const [{ data: doctorsData }, { data: settingsData }] = await Promise.all([
-        supabase.from('doctors').select('*').eq('active', true).order('name'),
+        supabase.from('doctors').select('*').order('name'),
         supabase.from('admin_settings').select('*').eq('id',1).single()
       ]);
       console.log('[Contact] doctors:', doctorsData);
       console.log('[Contact] settings:', settingsData);
-      setDoctors(doctorsData || []);
-      if (doctorsData && doctorsData.length>0) setSelectedDoctorId(doctorsData[0].id);
+      const allowedDoctors = (doctorsData || []).filter(
+        (doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
+      );
+
+      setDoctors(allowedDoctors);
+      if (allowedDoctors.length > 0) setSelectedDoctorId(allowedDoctors[0].id);
       setSettings(settingsData as any);
     };
     load();
@@ -1057,6 +1080,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   <option value="psychiatrist">{content[language].specialtyOptions.psychiatrist}</option>
                   <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
                   <option value="clinicalPsychologist">{content[language].specialtyOptions.clinicalPsychologist}</option>
+                  <option value="liveTest">{content[language].specialtyOptions.liveTest}</option>
                 </motion.select>
               </div>
 

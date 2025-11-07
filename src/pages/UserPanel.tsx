@@ -6,6 +6,8 @@ import Contact from '../components/Contact';
 import ReviewForm from '../components/ReviewForm';
 import { getDoctorPrice } from '../lib/stripe-api';
 import { createRealStripeCheckout } from '../lib/stripe-checkout';
+import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
+import { Doctor } from '../types/appointments';
 import logoIatrio5 from '../assets/logoiatrio5.png';
 import DepositScheduler from '../components/DepositScheduler';
 
@@ -38,13 +40,22 @@ const UserPanel: React.FC = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isPackagesModalOpen, setIsPackagesModalOpen] = useState(false);
-  const [doctors, setDoctors] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorIdPkg, setSelectedDoctorIdPkg] = useState<string>('');
   const [selectedDoctorNamePkg, setSelectedDoctorNamePkg] = useState<string>('');
   const [pricePerSessionCents, setPricePerSessionCents] = useState<number | null>(null);
   const [sessionsCount, setSessionsCount] = useState<number>(5);
   const [payLoading, setPayLoading] = useState<boolean>(false);
   const [deposits, setDeposits] = useState<DepositRecord[]>([]);
+
+  const getDoctorOptionLabel = (doctor: Doctor) => {
+    const override = findDoctorStripeOverride(doctor.id, doctor.name);
+    if (override) {
+      const amount = (override.amountCents / 100).toFixed(2);
+      return `${doctor.name} — €${amount} Live δοκιμή`;
+    }
+    return doctor.name;
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -106,11 +117,16 @@ const UserPanel: React.FC = () => {
   // Φόρτωση γιατρών για προπληρωμένες συνεδρίες
   useEffect(() => {
     const loadDoctors = async () => {
-      const { data } = await supabase.from('doctors').select('*').eq('active', true).order('name');
-      setDoctors(data || []);
-      if (data && data.length > 0) {
-        setSelectedDoctorIdPkg(data[0].id);
-        setSelectedDoctorNamePkg(data[0].name);
+      const { data } = await supabase.from('doctors').select('*').order('name');
+      const doctorsData = (data || []) as Doctor[];
+      const allowedDoctors = doctorsData.filter(
+        (doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
+      );
+
+      setDoctors(allowedDoctors);
+      if (allowedDoctors.length > 0) {
+        setSelectedDoctorIdPkg(allowedDoctors[0].id);
+        setSelectedDoctorNamePkg(allowedDoctors[0].name);
       }
     };
     loadDoctors();
@@ -121,10 +137,10 @@ const UserPanel: React.FC = () => {
     const fetchPrice = async () => {
       if (!selectedDoctorIdPkg) { setPricePerSessionCents(null); return; }
       try {
-        const price = await getDoctorPrice(selectedDoctorIdPkg);
+        const doctorName = doctors.find(d=> d.id===selectedDoctorIdPkg)?.name || '';
+        const price = await getDoctorPrice(selectedDoctorIdPkg, doctorName);
         setPricePerSessionCents(price);
-        const name = doctors.find(d=> d.id===selectedDoctorIdPkg)?.name || '';
-        setSelectedDoctorNamePkg(name);
+        setSelectedDoctorNamePkg(doctorName);
       } catch {
         setPricePerSessionCents(null);
       }
@@ -899,8 +915,8 @@ const UserPanel: React.FC = () => {
                     onChange={(e)=> setSelectedDoctorIdPkg(e.target.value)} 
                     className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-nunito bg-white"
                   >
-                    {doctors.map((d:any)=> (
-                      <option key={d.id} value={d.id}>{d.name}</option>
+                    {doctors.map((d)=> (
+                      <option key={d.id} value={d.id}>{getDoctorOptionLabel(d)}</option>
                     ))}
                   </select>
                 </div>
