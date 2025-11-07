@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../lib/supabase';
 import { User, Mail, Phone, Calendar, LogOut, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star } from 'lucide-react';
@@ -7,6 +7,16 @@ import ReviewForm from '../components/ReviewForm';
 import { getDoctorPrice } from '../lib/stripe-api';
 import { createRealStripeCheckout } from '../lib/stripe-checkout';
 import logoIatrio5 from '../assets/logoiatrio5.png';
+import DepositScheduler from '../components/DepositScheduler';
+
+interface DepositRecord {
+  doctor_id: string;
+  remaining_sessions: number;
+  doctors?: {
+    name: string;
+    specialty?: string;
+  };
+}
 
 const UserPanel: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -34,7 +44,7 @@ const UserPanel: React.FC = () => {
   const [pricePerSessionCents, setPricePerSessionCents] = useState<number | null>(null);
   const [sessionsCount, setSessionsCount] = useState<number>(5);
   const [payLoading, setPayLoading] = useState<boolean>(false);
-  const [deposits, setDeposits] = useState<any[]>([]);
+  const [deposits, setDeposits] = useState<DepositRecord[]>([]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -160,17 +170,23 @@ const UserPanel: React.FC = () => {
   };
 
   // Φέρνει τα deposits του χρήστη
-  useEffect(() => {
-    const fetchDeposits = async () => {
-      if (!email) return;
-      const { data } = await supabase
-        .from('session_deposits')
-        .select('doctor_id, remaining_sessions, doctors(name)')
-        .eq('customer_email', email);
-      setDeposits(data || []);
-    };
-    fetchDeposits();
+  const fetchDeposits = useCallback(async () => {
+    if (!email) return;
+    const { data } = await supabase
+      .from('session_deposits')
+      .select('doctor_id, remaining_sessions, doctors(name, specialty)')
+      .eq('customer_email', email);
+    setDeposits((data as DepositRecord[]) || []);
   }, [email]);
+
+  useEffect(() => {
+    fetchDeposits();
+  }, [fetchDeposits]);
+
+  const totalRemainingSessions = useMemo(
+    () => (deposits || []).reduce((sum, record) => sum + (Number(record?.remaining_sessions) || 0), 0),
+    [deposits]
+  );
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -474,38 +490,41 @@ const UserPanel: React.FC = () => {
                 <h3 className="text-lg font-bold font-poppins text-gray-800">Deposit Συνεδριών</h3>
               </div>
 
-              {(() => {
-                const totalRemaining = (deposits || []).reduce((sum:number, d:any) => sum + (Number(d?.remaining_sessions) || 0), 0);
-                return (
-                  <>
-                    {/* Total pill */}
-                    <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-purple-200 rounded-xl px-4 py-2 mb-3">
-                      <div className="flex items-center gap-2 text-gray-700 font-nunito">
-                        <Coins className="h-4 w-4 text-purple-600" />
-                        <span>Συνολικά διαθέσιμες συνεδρίες</span>
-                      </div>
-                      <span className="text-purple-700 font-poppins font-extrabold">{totalRemaining}</span>
-                    </div>
+              {/* Total pill */}
+              <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-purple-200 rounded-xl px-4 py-2 mb-3">
+                <div className="flex items-center gap-2 text-gray-700 font-nunito">
+                  <Coins className="h-4 w-4 text-purple-600" />
+                  <span>Συνολικά διαθέσιμες συνεδρίες</span>
+                </div>
+                <span className="text-purple-700 font-poppins font-extrabold">{totalRemainingSessions}</span>
+              </div>
 
-                    {/* List per doctor or empty state */}
-                    {deposits && deposits.length > 0 ? (
-                      <div className="space-y-2">
-                        {deposits.map((d:any, idx:number) => (
-                          <div key={idx} className="flex items-center justify-between bg-white/70 border border-purple-100 rounded-xl px-3 py-2">
-                            <span className="text-sm text-gray-700 font-nunito">{d.doctors?.name || 'Γιατρός'}</span>
-                            <span className="text-sm font-poppins text-purple-700 font-semibold">{d.remaining_sessions}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-600 font-nunito bg-white/70 border border-purple-100 rounded-xl px-3 py-3">
-                        Δεν έχετε ακόμη προπληρωμένες συνεδρίες. Μπορείτε να τις αγοράσετε από την επιλογή «Προπληρωμένες Συνεδρίες». 
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+              {/* List per doctor or empty state */}
+              {deposits && deposits.length > 0 ? (
+                <div className="space-y-2">
+                  {deposits.map((record, idx) => (
+                    <div key={`${record.doctor_id}-${idx}`} className="flex items-center justify-between bg-white/70 border border-purple-100 rounded-xl px-3 py-2">
+                      <span className="text-sm text-gray-700 font-nunito">{record.doctors?.name || 'Γιατρός'}</span>
+                      <span className="text-sm font-poppins text-purple-700 font-semibold">{record.remaining_sessions}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600 font-nunito bg-white/70 border border-purple-100 rounded-xl px-3 py-3">
+                  Δεν έχετε ακόμη προπληρωμένες συνεδρίες. Μπορείτε να τις αγοράσετε από την επιλογή «Προπληρωμένες Συνεδρίες».
+                </div>
+              )}
             </div>
+
+            {totalRemainingSessions > 0 && (
+              <DepositScheduler
+                deposits={deposits}
+                parentName={fullName || displayName}
+                parentEmail={email}
+                parentPhone={phone}
+                onBookingCompleted={fetchDeposits}
+              />
+            )}
           </motion.div>
 
           {/* Dashboard Content */}
