@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users, Search, ChevronLeft, ChevronRight, X, Mail, Phone, User, Calendar } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
@@ -1920,50 +1920,53 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
       console.error('Error fetching availability:', error);
     }
   };
-  const [appointments, setAppointments] = useState<{date: string, time: string}[]>([]);
+  const [appointments, setAppointments] = useState<{date: string; time: string; doctor_id: string}[]>([]);
 
   useEffect(()=>{
     if (!doctorId && doctors && doctors.length>0) setDoctorId(doctors[0].id);
-  },[doctors]);
+  },[doctors, doctorId]);
 
-  // Fetch appointments for the current month
+  const fetchAppointmentsForMonth = useCallback(async () => {
+    const [yearStr, monthStr] = month.split('-');
+    const year = Number(yearStr);
+    const monthNum = Number(monthStr);
+    const lastDay = new Date(year, monthNum, 0).getDate();
+    const monthStart = `${yearStr}-${monthStr}-01`;
+    const monthEnd = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
+    try {
+      const { data } = await supabaseAdmin
+        .from('appointments')
+        .select('date, time, doctor_id')
+        .gte('date', monthStart)
+        .lte('date', monthEnd);
+      setAppointments((data || []) as any);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  }, [month]);
+
   useEffect(() => {
-    if (!doctorId) return;
+    fetchAppointmentsForMonth();
+  }, [fetchAppointmentsForMonth]);
 
-    const fetchAppointments = async () => {
-      try {
-        const { data } = await supabaseAdmin
-          .from('appointments')
-          .select('date, time')
-          .eq('doctor_id', doctorId)
-          .gte('date', `${month}-01`)
-          .lte('date', `${month}-31`);
-        setAppointments(data || []);
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      }
-    };
-
-    fetchAppointments();
-
+  useEffect(() => {
     const channel = supabaseAdmin
-      .channel(`admin_calendar_${doctorId}`)
+      .channel('admin_calendar_appointments')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'appointments',
-          filter: `doctor_id=eq.${doctorId}`
+          table: 'appointments'
         },
-        () => fetchAppointments()
+        () => fetchAppointmentsForMonth()
       )
       .subscribe();
 
     return () => {
       supabaseAdmin.removeChannel(channel);
     };
-  }, [doctorId, month]);
+  }, [fetchAppointmentsForMonth]);
 
   // Μεμονωμένη καταχώρηση για συγκεκριμένη ημερομηνία
   const addSingle = async () => {
@@ -2104,10 +2107,9 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
   // Check if a specific time slot is booked
   const isTimeSlotBooked = (date: string, startTime: string, endTime: string): boolean => {
     return appointments.some(apt => {
-      const aptTime = apt.time.slice(0, 5); // Get HH:MM format
-      return apt.date === date && 
-             aptTime >= startTime && 
-             aptTime < endTime;
+      if (doctorId && apt.doctor_id !== doctorId) return false;
+      const aptTime = apt.time.slice(0, 5);
+      return apt.date === date && aptTime >= startTime && aptTime < endTime;
     });
   };
 
