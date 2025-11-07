@@ -1928,8 +1928,9 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
 
   // Fetch appointments for the current month
   useEffect(() => {
+    if (!doctorId) return;
+
     const fetchAppointments = async () => {
-      if (!doctorId) return;
       try {
         const { data } = await supabaseAdmin
           .from('appointments')
@@ -1942,7 +1943,26 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
         console.error('Error fetching appointments:', error);
       }
     };
+
     fetchAppointments();
+
+    const channel = supabaseAdmin
+      .channel(`admin_calendar_${doctorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `doctor_id=eq.${doctorId}`
+        },
+        () => fetchAppointments()
+      )
+      .subscribe();
+
+    return () => {
+      supabaseAdmin.removeChannel(channel);
+    };
   }, [doctorId, month]);
 
   // Μεμονωμένη καταχώρηση για συγκεκριμένη ημερομηνία
