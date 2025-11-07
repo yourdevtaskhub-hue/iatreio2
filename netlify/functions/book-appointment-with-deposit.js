@@ -152,7 +152,7 @@ exports.handler = async (event) => {
         customer_email: parentEmail,
         doctor_id: doctorId,
         delta_sessions: -1,
-        reason: 'booking',
+        reason: 'redeem',
         metadata: {
           appointment_id: appointmentData.id,
           appointment_date: appointmentDate,
