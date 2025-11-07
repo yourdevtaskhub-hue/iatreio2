@@ -27,6 +27,17 @@ const allowedOrigins = [
 ];
 
 exports.handler = async (event) => {
+  console.log('🚀 [BOOK_DEPOSIT] ===== Netlify function invoked =====');
+  console.log('🔍 [BOOK_DEPOSIT] Incoming HTTP method:', event?.httpMethod);
+  console.log('🔍 [BOOK_DEPOSIT] Incoming headers snapshot:', JSON.stringify({
+    origin: event?.headers?.origin || event?.headers?.Origin,
+    referer: event?.headers?.referer,
+    userAgent: event?.headers?.['user-agent'],
+    requestId: event?.headers?.['x-nf-request-id']
+  }, null, 2));
+  console.log('🔍 [BOOK_DEPOSIT] Raw body length:', event?.body ? event.body.length : 0);
+  console.log('🔍 [BOOK_DEPOSIT] Request timestamp:', new Date().toISOString());
+
   const origin = event.headers.origin || event.headers.Origin || '*';
   const allowOrigin = allowedOrigins.includes(origin) ? origin : '*';
 
@@ -38,10 +49,12 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
+    console.log('ℹ️ [BOOK_DEPOSIT] OPTIONS preflight detected. Returning early.');
     return { statusCode: 200, headers, body: '' };
   }
 
   if (event.httpMethod !== 'POST') {
+    console.warn('⚠️ [BOOK_DEPOSIT] Method not allowed:', event.httpMethod);
     return {
       statusCode: 405,
       headers,
@@ -51,8 +64,11 @@ exports.handler = async (event) => {
 
   try {
     const supabaseClient = getSupabaseClient();
+    console.log('✅ [BOOK_DEPOSIT] Supabase client initialised');
 
     const payload = JSON.parse(event.body || '{}');
+    console.log('🔍 [BOOK_DEPOSIT] Parsed payload:', JSON.stringify(payload, null, 2));
+
     const {
       doctorId,
       doctorName,
@@ -73,6 +89,7 @@ exports.handler = async (event) => {
     if (!parentEmail) missing.push('parentEmail');
 
     if (missing.length > 0) {
+      console.warn('⚠️ [BOOK_DEPOSIT] Missing required fields detected:', missing);
       return {
         statusCode: 400,
         headers,
@@ -84,6 +101,7 @@ exports.handler = async (event) => {
       };
     }
 
+    console.log('🔍 [BOOK_DEPOSIT] Fetching deposit row για', { doctorId, parentEmail });
     const { data: depositRow, error: depositError } = await supabaseClient
       .from('session_deposits')
       .select('id, remaining_sessions')
@@ -93,10 +111,14 @@ exports.handler = async (event) => {
 
     if (depositError) {
       console.error('❌ [ERROR] Failed to fetch deposit:', depositError);
+      console.error('❌ [ERROR] Deposit fetch context:', { doctorId, parentEmail });
       throw depositError;
     }
 
+    console.log('🔍 [BOOK_DEPOSIT] Deposit query result:', depositRow);
+
     if (!depositRow || Number(depositRow.remaining_sessions) <= 0) {
+      console.warn('⚠️ [BOOK_DEPOSIT] Insufficient sessions – remaining:', depositRow?.remaining_sessions);
       return {
         statusCode: 409,
         headers,
@@ -107,7 +129,13 @@ exports.handler = async (event) => {
       };
     }
 
-    const { data: existingAppointment } = await supabaseClient
+    console.log('🔍 [BOOK_DEPOSIT] Checking for existing appointment conflict', {
+      doctorId,
+      appointmentDate,
+      appointmentTime
+    });
+
+    const { data: existingAppointment, error: existingAppointmentError } = await supabaseClient
       .from('appointments')
       .select('id')
       .eq('doctor_id', doctorId)
@@ -115,7 +143,13 @@ exports.handler = async (event) => {
       .eq('time', appointmentTime)
       .maybeSingle();
 
+    if (existingAppointmentError) {
+      console.error('❌ [ERROR] Existing appointment lookup failed:', existingAppointmentError);
+      throw existingAppointmentError;
+    }
+
     if (existingAppointment) {
+      console.warn('⚠️ [BOOK_DEPOSIT] Slot already booked:', existingAppointment);
       return {
         statusCode: 409,
         headers,
@@ -126,6 +160,7 @@ exports.handler = async (event) => {
       };
     }
 
+    console.log('🔍 [BOOK_DEPOSIT] Creating appointment εγγραφή...');
     const { data: appointmentData, error: appointmentError } = await supabaseClient
       .from('appointments')
       .insert({
@@ -143,8 +178,17 @@ exports.handler = async (event) => {
 
     if (appointmentError) {
       console.error('❌ [ERROR] Failed to create appointment:', appointmentError);
+      console.error('❌ [ERROR] Appointment create payload:', {
+        doctor_id: doctorId,
+        date: appointmentDate,
+        time: appointmentTime,
+        parent_name: parentName,
+        email: parentEmail
+      });
       throw appointmentError;
     }
+
+    console.log('✅ [BOOK_DEPOSIT] Appointment created successfully:', appointmentData);
 
     const { error: txError } = await supabaseClient
       .from('session_deposit_transactions')
@@ -163,6 +207,13 @@ exports.handler = async (event) => {
 
     if (txError) {
       console.error('❌ [ERROR] Failed to record deposit transaction:', txError);
+      console.error('❌ [ERROR] Transaction payload που απέτυχε:', {
+        customer_email: parentEmail,
+        doctor_id: doctorId,
+        appointment_id: appointmentData?.id,
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime
+      });
       await supabaseClient.from('appointments').delete().eq('id', appointmentData.id);
       if (txError.code === '22003') {
         return {
@@ -176,6 +227,8 @@ exports.handler = async (event) => {
       }
       throw txError;
     }
+
+    console.log('✅ [BOOK_DEPOSIT] Deposit transaction καταχωρήθηκε επιτυχώς για appointment', appointmentData.id);
 
     return {
       statusCode: 200,
@@ -200,6 +253,13 @@ exports.handler = async (event) => {
     }
 
     console.error('❌ [ERROR] Deposit booking failed:', error);
+    console.error('❌ [ERROR] Stack trace:', error?.stack);
+    console.error('❌ [ERROR] Additional context:', {
+      errorName: error?.name,
+      errorCode: error?.code,
+      errorDetails: error?.details,
+      payloadAttempted: event?.body
+    });
     return {
       statusCode: 500,
       headers,

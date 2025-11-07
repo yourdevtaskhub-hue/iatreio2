@@ -18,6 +18,23 @@ const supabase = createClient(
 );
 
 exports.handler = async (event, context) => {
+  console.log('🚀 [CHECKOUT] ===== Netlify function invoked =====');
+  console.log('🔍 [CHECKOUT] HTTP method:', event?.httpMethod);
+  console.log('🔍 [CHECKOUT] Headers snapshot:', JSON.stringify({
+    origin: event?.headers?.origin || event?.headers?.Origin,
+    referer: event?.headers?.referer,
+    userAgent: event?.headers?.['user-agent'],
+    requestId: event?.headers?.['x-nf-request-id']
+  }, null, 2));
+  console.log('🔍 [CHECKOUT] Request timestamp:', new Date().toISOString());
+  console.log('🔍 [CHECKOUT] Raw body length:', event?.body ? event.body.length : 0);
+  console.log('🔍 [CHECKOUT] Context keys:', context ? Object.keys(context) : []);
+  console.log('🔍 [CHECKOUT] Environment flags:', {
+    stripeSecretKeySet: !!process.env.STRIPE_SECRET_KEY,
+    supabaseUrlSet: !!process.env.SUPABASE_URL,
+    supabaseServiceKeySet: !!process.env.SUPABASE_SERVICE_KEY
+  });
+
   // Enable CORS (support both localhost and production)
   const origin = event.headers.origin || event.headers.Origin || '*';
   const allowedOrigins = [
@@ -37,6 +54,7 @@ exports.handler = async (event, context) => {
 
   // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
+    console.log('ℹ️ [CHECKOUT] OPTIONS preflight request - returning empty response');
     return {
       statusCode: 200,
       headers,
@@ -46,6 +64,7 @@ exports.handler = async (event, context) => {
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.warn('⚠️ [CHECKOUT] Method not allowed attempt:', event.httpMethod);
     return {
       statusCode: 405,
       headers,
@@ -70,8 +89,8 @@ exports.handler = async (event, context) => {
       sessionsCount: sessionsCountFromBody // Optional: passed explicitly for deposit purchases
     } = body;
 
-    console.log('🔍 [DEBUG] Raw request body:', JSON.stringify(body, null, 2));
-    console.log('🔍 [DEBUG] Parsed request data:', {
+    console.log('🔍 [CHECKOUT] Raw request body:', JSON.stringify(body, null, 2));
+    console.log('🔍 [CHECKOUT] Parsed request data:', {
       doctorId, 
       doctorName, 
       parentName, 
@@ -96,10 +115,10 @@ exports.handler = async (event, context) => {
     // Priority: 1) Explicit sessionsCount from body, 2) Extract from concerns, 3) null
     let sessionsCount = null;
     
-    console.log('🔍 [DEBUG] === SESSIONS COUNT EXTRACTION ===');
-    console.log('🔍 [DEBUG] sessionsCountFromBody:', sessionsCountFromBody, 'type:', typeof sessionsCountFromBody);
-    console.log('🔍 [DEBUG] concerns:', concerns, 'type:', typeof concerns);
-    console.log('🔍 [DEBUG] finalIsDeposit:', finalIsDeposit);
+    console.log('🔍 [CHECKOUT] === SESSIONS COUNT EXTRACTION ===');
+    console.log('🔍 [CHECKOUT] sessionsCountFromBody:', sessionsCountFromBody, 'type:', typeof sessionsCountFromBody);
+    console.log('🔍 [CHECKOUT] concerns:', concerns, 'type:', typeof concerns);
+    console.log('🔍 [CHECKOUT] finalIsDeposit:', finalIsDeposit);
     
     if (finalIsDeposit) {
       // First, try to use the explicitly passed sessionsCount from request body
@@ -107,9 +126,9 @@ exports.handler = async (event, context) => {
         const parsed = typeof sessionsCountFromBody === 'string' ? parseInt(sessionsCountFromBody, 10) : sessionsCountFromBody;
         if (!isNaN(parsed) && parsed > 0) {
           sessionsCount = parsed;
-          console.log('✅ [SUCCESS] Using sessions count from request body:', sessionsCount);
+          console.log('✅ [CHECKOUT] Using sessions count from request body:', sessionsCount);
         } else {
-          console.warn('⚠️ [WARNING] sessionsCountFromBody is invalid:', sessionsCountFromBody);
+          console.warn('⚠️ [CHECKOUT] sessionsCountFromBody is invalid:', sessionsCountFromBody);
         }
       }
       
@@ -118,23 +137,23 @@ exports.handler = async (event, context) => {
         const sessionsMatch = concerns.match(/sessions=(\d+)/);
         if (sessionsMatch && sessionsMatch[1]) {
           sessionsCount = parseInt(sessionsMatch[1], 10);
-          console.log('✅ [SUCCESS] Extracted sessions count from concerns:', sessionsCount);
+          console.log('✅ [CHECKOUT] Extracted sessions count from concerns:', sessionsCount);
         } else {
-          console.warn('⚠️ [WARNING] Could not extract sessions from concerns:', concerns);
+          console.warn('⚠️ [CHECKOUT] Could not extract sessions from concerns:', concerns);
         }
       }
       
       if (!sessionsCount) {
-        console.error('❌ [ERROR] Could not determine sessions count! Will use generic description.');
-        console.error('❌ [ERROR] sessionsCountFromBody:', sessionsCountFromBody);
-        console.error('❌ [ERROR] concerns:', concerns);
+        console.error('❌ [CHECKOUT] Could not determine sessions count! Will use generic description.');
+        console.error('❌ [CHECKOUT] sessionsCountFromBody:', sessionsCountFromBody);
+        console.error('❌ [CHECKOUT] concerns:', concerns);
       } else {
-        console.log('✅ [SUCCESS] Final sessionsCount:', sessionsCount);
+        console.log('✅ [CHECKOUT] Final sessionsCount:', sessionsCount);
       }
     }
     
-    console.log('🔍 [DEBUG] === END SESSIONS COUNT EXTRACTION ===');
-    console.log('🔍 [DEBUG] Deposit detection:', {
+    console.log('🔍 [CHECKOUT] === END SESSIONS COUNT EXTRACTION ===');
+    console.log('🔍 [CHECKOUT] Deposit detection:', {
       isDeposit,
       isDepositByEmptyFields,
       finalIsDeposit,
@@ -163,8 +182,8 @@ exports.handler = async (event, context) => {
     // For deposits, priceId can be null - that's OK!
     
     if (missing.length > 0) {
-      console.error('❌ [ERROR] Missing required fields:', missing);
-      console.error('❌ [ERROR] Full validation context:', {
+      console.error('❌ [CHECKOUT] Missing required fields:', missing);
+      console.error('❌ [CHECKOUT] Full validation context:', {
         isDeposit: finalIsDeposit,
         hasDoctorId: !!doctorId,
         hasDoctorName: !!doctorName,
@@ -199,10 +218,21 @@ exports.handler = async (event, context) => {
       };
     }
     
-    console.log('✅ [SUCCESS] All validation passed. isDeposit:', finalIsDeposit);
+    console.log('✅ [CHECKOUT] All validation passed. isDeposit:', finalIsDeposit);
+
+    console.log('🔍 [CHECKOUT] Preparing to create payment record with payload:', {
+      doctorId,
+      amountCents,
+      parentEmail,
+      parentName,
+      appointmentDate,
+      appointmentTime,
+      doctorName,
+      finalIsDeposit
+    });
 
     // Create payment record in database
-    console.log('🔍 [DEBUG] Creating payment record in database...');
+    console.log('🔍 [CHECKOUT] Creating payment record in database...');
     const { data: paymentData, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -221,7 +251,16 @@ exports.handler = async (event, context) => {
       .single();
 
     if (paymentError || !paymentData) {
-      console.error('❌ [ERROR] Failed to create payment record:', paymentError);
+      console.error('❌ [CHECKOUT] Failed to create payment record:', paymentError);
+      console.error('❌ [CHECKOUT] Payment insert payload that failed:', {
+        doctorId,
+        amountCents,
+        parentEmail,
+        parentName,
+        appointmentDate,
+        appointmentTime,
+        doctorName
+      });
       return {
         statusCode: 500,
         headers,
@@ -231,14 +270,15 @@ exports.handler = async (event, context) => {
       };
     }
 
-    console.log('✅ [SUCCESS] Payment record created:', paymentData.id);
+    console.log('✅ [CHECKOUT] Payment record created:', paymentData.id);
+    console.log('🔍 [CHECKOUT] Payment row snapshot:', JSON.stringify(paymentData, null, 2));
 
     // Create Stripe Checkout Session
-    console.log('🔍 [DEBUG] Creating Stripe Checkout Session...');
-    console.log('🔍 [DEBUG] isDeposit:', isDeposit);
-    console.log('🔍 [DEBUG] amountCents:', amountCents);
-    console.log('🔍 [DEBUG] priceId:', priceId);
-    console.log('🔍 [DEBUG] Stripe key mode:', process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST') : 'FALLBACK');
+    console.log('🔍 [CHECKOUT] Creating Stripe Checkout Session...');
+    console.log('🔍 [CHECKOUT] isDeposit:', isDeposit);
+    console.log('🔍 [CHECKOUT] amountCents:', amountCents);
+    console.log('🔍 [CHECKOUT] priceId:', priceId);
+    console.log('🔍 [CHECKOUT] Stripe key mode:', process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST') : 'FALLBACK');
     
     // CRITICAL: Always use price_data for live mode to avoid test price issues
     // Test prices don't exist in live Stripe account, so we must use dynamic pricing
@@ -247,7 +287,7 @@ exports.handler = async (event, context) => {
     const isLiveMode = stripeSecretKey.startsWith('sk_live_');
     const isTestPrice = priceId && (priceId.includes('test') || !priceId.match(/^price_[a-zA-Z0-9]{24,}$/));
     
-    console.log('🔍 [DEBUG] Stripe secret key check:', {
+    console.log('🔍 [CHECKOUT] Stripe secret key check:', {
       keyExists: !!process.env.STRIPE_SECRET_KEY,
       envKeyPrefix: stripeSecretKey.substring(0, 10) + '...',
       isLiveMode,
@@ -261,17 +301,17 @@ exports.handler = async (event, context) => {
     let shouldUsePriceData = isDeposit || isLiveMode;
     
     if (isLiveMode && !isDeposit) {
-      console.warn('⚠️ [WARNING] Live mode detected - FORCING price_data (dynamic pricing) instead of priceId to avoid test price conflicts');
+      console.warn('⚠️ [CHECKOUT] Live mode detected - FORCING price_data (dynamic pricing) instead of priceId to avoid test price conflicts');
       shouldUsePriceData = true; // Force price_data in live mode
     }
     
     // Safety check: if no priceId or if test price detected, use price_data
     if (!shouldUsePriceData && (!priceId || isTestPrice)) {
-      console.warn('⚠️ [WARNING] No priceId or test price detected - using price_data');
+      console.warn('⚠️ [CHECKOUT] No priceId or test price detected - using price_data');
       shouldUsePriceData = true;
     }
     
-    console.log('🔍 [DEBUG] Final decision:', {
+    console.log('🔍 [CHECKOUT] Final decision for pricing mode:', {
       shouldUsePriceData,
       isDeposit,
       isLiveMode,
@@ -280,26 +320,26 @@ exports.handler = async (event, context) => {
     
     // Build description with extensive logging
     let description = '';
-    console.log('🔍 [DEBUG] === BUILDING DESCRIPTION ===');
-    console.log('🔍 [DEBUG] finalIsDeposit:', finalIsDeposit);
-    console.log('🔍 [DEBUG] sessionsCount:', sessionsCount, 'type:', typeof sessionsCount);
-    console.log('🔍 [DEBUG] sessionsCount > 0?:', sessionsCount && sessionsCount > 0);
+    console.log('🔍 [CHECKOUT] === BUILDING DESCRIPTION ===');
+    console.log('🔍 [CHECKOUT] finalIsDeposit:', finalIsDeposit);
+    console.log('🔍 [CHECKOUT] sessionsCount:', sessionsCount, 'type:', typeof sessionsCount);
+    console.log('🔍 [CHECKOUT] sessionsCount > 0?:', sessionsCount && sessionsCount > 0);
     
     if (finalIsDeposit) {
       if (sessionsCount && sessionsCount > 0 && !isNaN(sessionsCount)) {
         description = `${sessionsCount} συνεδρίες`;
-        console.log('✅ [SUCCESS] Using sessions count in description:', description);
+        console.log('✅ [CHECKOUT] Using sessions count in description:', description);
       } else {
         description = 'Προπληρωμένες συνεδρίες';
-        console.warn('⚠️ [WARNING] Using generic description because sessionsCount is invalid:', sessionsCount);
+        console.warn('⚠️ [CHECKOUT] Using generic description because sessionsCount is invalid:', sessionsCount);
       }
     } else {
       description = `Συνεδρία ${appointmentDate} ${appointmentTime}`;
-      console.log('🔍 [DEBUG] Using appointment description for regular booking');
+      console.log('🔍 [CHECKOUT] Using appointment description for regular booking');
     }
     
-    console.log('🔍 [DEBUG] Final description:', description);
-    console.log('🔍 [DEBUG] === END BUILDING DESCRIPTION ===');
+    console.log('🔍 [CHECKOUT] Final description:', description);
+    console.log('🔍 [CHECKOUT] === END BUILDING DESCRIPTION ===');
     
     const lineItem = shouldUsePriceData
       ? {
@@ -318,10 +358,10 @@ exports.handler = async (event, context) => {
           quantity: 1,
         };
 
-    console.log('🔍 [DEBUG] === FINAL LINE ITEM ===');
-    console.log('🔍 [DEBUG] Line item:', JSON.stringify(lineItem, null, 2));
-    console.log('🔍 [DEBUG] Description in line item:', lineItem.price_data?.product_data?.description);
-    console.log('🔍 [DEBUG] === END FINAL LINE ITEM ===');
+    console.log('🔍 [CHECKOUT] === FINAL LINE ITEM ===');
+    console.log('🔍 [CHECKOUT] Line item:', JSON.stringify(lineItem, null, 2));
+    console.log('🔍 [CHECKOUT] Description in line item:', lineItem.price_data?.product_data?.description);
+    console.log('🔍 [CHECKOUT] === END FINAL LINE ITEM ===');
 
     let session;
     try {
@@ -345,15 +385,23 @@ exports.handler = async (event, context) => {
           sessions_count: sessionsCount ? sessionsCount.toString() : '',
         },
       };
-      console.log('🔍 [DEBUG] Session data:', JSON.stringify(sessionData, null, 2));
+      console.log('🔍 [CHECKOUT] Session data about to send to Stripe:', JSON.stringify(sessionData, null, 2));
       session = await stripe.checkout.sessions.create(sessionData);
+      console.log('✅ [CHECKOUT] Stripe session creation response received');
     } catch (e) {
-      console.error('❌ [ERROR] Stripe session create failed:', e);
+      console.error('❌ [CHECKOUT] Stripe session create failed:', e);
+      console.error('❌ [CHECKOUT] Stripe error stack:', e?.stack);
+      console.error('❌ [CHECKOUT] Stripe error raw:', JSON.stringify(e, null, 2));
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'stripe_session_failed', message: e.message }) };
     }
 
-    console.log('✅ [SUCCESS] Stripe Checkout Session created:', session.id);
-    console.log('🔍 [DEBUG] Session URL:', session.url);
+    console.log('✅ [CHECKOUT] Stripe Checkout Session created:', session.id);
+    console.log('🔍 [CHECKOUT] Session URL:', session.url);
+    console.log('🔍 [CHECKOUT] Session status snapshot:', {
+      paymentStatus: session?.payment_status,
+      mode: session?.mode,
+      customerDetails: session?.customer_details
+    });
 
     return {
       statusCode: 200,
@@ -365,9 +413,20 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('❌ [ERROR] Stripe Checkout Session creation failed:', error);
-    console.error('❌ [ERROR] Error stack:', error.stack);
-    console.error('❌ [ERROR] Error details:', JSON.stringify(error, null, 2));
+    console.error('❌ [CHECKOUT] Stripe Checkout Session creation failed:', error);
+    console.error('❌ [CHECKOUT] Error stack:', error.stack);
+    console.error('❌ [CHECKOUT] Error details:', JSON.stringify(error, null, 2));
+    console.error('❌ [CHECKOUT] Context snapshot on failure:', {
+      requestBody: event?.body,
+      headers: event?.headers,
+      parsedBodySafe: (() => {
+        try {
+          return JSON.parse(event?.body || '{}');
+        } catch (parseErr) {
+          return { parseError: parseErr?.message };
+        }
+      })()
+    });
     return {
       statusCode: 500,
       headers,

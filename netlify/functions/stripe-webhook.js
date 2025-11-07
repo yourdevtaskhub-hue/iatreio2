@@ -31,6 +31,8 @@ exports.handler = async (event, context) => {
   console.log('  - SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'SET' : 'NOT SET');
   console.log('🔍 [DEBUG] Request timestamp:', new Date().toISOString());
   console.log('🔍 [DEBUG] Request ID:', event.headers['x-nf-request-id'] || 'N/A');
+  console.log('🔍 [DEBUG] Raw body preview (first 500 chars):', event.body ? event.body.substring(0, 500) : 'NO BODY');
+  console.log('🔍 [DEBUG] isBase64Encoded flag:', event.isBase64Encoded);
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -105,6 +107,9 @@ async function handleCheckoutSessionCompleted(session) {
   console.log('🔍 [DEBUG] Session metadata exists:', !!session.metadata);
   console.log('🔍 [DEBUG] Session customer_details exists:', !!session.customer_details);
   console.log('🔍 [DEBUG] Session customer_email exists:', !!session.customer_email);
+  console.log('🔍 [DEBUG] Session payment status:', session.payment_status);
+  console.log('🔍 [DEBUG] Session amount_total:', session.amount_total);
+  console.log('🔍 [DEBUG] Session currency:', session.currency);
 
   const {
     doctor_id,
@@ -141,7 +146,18 @@ async function handleCheckoutSessionCompleted(session) {
     'final_parent_email': parent_email
   });
 
+  console.log('🔍 [DEBUG] Stripe line items presence:', {
+    lineItems: session?.line_items ? 'ATTACHED' : 'NOT PROVIDED',
+    totalDetails: session?.total_details || 'N/A'
+  });
+
   const isDeposit = typeof concerns === 'string' && concerns.startsWith('DEPOSIT_PURCHASE');
+  console.log('🔍 [DEBUG] Deposit detection inside webhook:', {
+    isDeposit,
+    concerns,
+    appointment_date,
+    appointment_time
+  });
 
   // Validate required metadata (για deposit δεν απαιτείται appointment)
   if (!doctor_id || !payment_id || !parent_name || !parent_email || (!isDeposit && (!appointment_date || !appointment_time))) {
@@ -162,6 +178,13 @@ async function handleCheckoutSessionCompleted(session) {
   try {
     // Update payment status
     console.log('🔍 [DEBUG] Updating payment status...');
+    console.log('🔍 [DEBUG] Payment update payload:', {
+      payment_id,
+      sessionId: session.id,
+      status: session.payment_status,
+      amount_total: session.amount_total,
+      amount_subtotal: session.amount_subtotal
+    });
     const { error: updatePaymentError } = await supabase
       .from('payments')
       .update({
@@ -172,6 +195,7 @@ async function handleCheckoutSessionCompleted(session) {
 
     if (updatePaymentError) {
       console.error('❌ [ERROR] Error updating payment record:', updatePaymentError);
+      console.error('❌ [ERROR] Payment update filter context:', { payment_id });
       throw updatePaymentError;
     }
 
@@ -181,6 +205,13 @@ async function handleCheckoutSessionCompleted(session) {
     if (isDeposit) {
       const sessionsMatch = (concerns || '').toString().match(/sessions=(\d+)/);
       const sessions = sessionsMatch ? parseInt(sessionsMatch[1], 10) : 0;
+      console.log('🔍 [DEBUG] Deposit purchase detected. Extracted sessions:', sessions);
+      console.log('🔍 [DEBUG] Deposit payment metadata snapshot:', {
+        payment_id,
+        parent_email,
+        doctor_id,
+        concerns
+      });
 
       // Update payment status
       const { error: updErr } = await supabase
@@ -202,6 +233,14 @@ async function handleCheckoutSessionCompleted(session) {
             metadata: { stripe_session_id: session.id }
           });
         if (txErr) throw txErr;
+        console.log('✅ [SUCCESS] Deposit transaction recorded:', {
+          customer_email: parent_email,
+          doctor_id,
+          delta_sessions: sessions,
+          payment_id
+        });
+      } else {
+        console.warn('⚠️ [WARNING] Deposit purchase without sessions credit (sessions <= 0). Check concerns format.');
       }
 
       console.log('✅ [SUCCESS] Deposit purchase credited');
@@ -219,6 +258,26 @@ async function handleCheckoutSessionCompleted(session) {
       concerns,
       payment_id
     });
+    console.log('🔍 [DEBUG] Checking for existing appointment conflicts before inserting...');
+    const { data: existing, error: existingErr } = await supabase
+      .from('appointments')
+      .select('id')
+      .eq('doctor_id', doctor_id)
+      .eq('date', appointment_date)
+      .eq('time', appointment_time)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingErr) {
+      console.error('❌ [ERROR] Failed to check existing appointment before insert:', existingErr);
+      throw existingErr;
+    }
+
+    if (existing) {
+      console.warn('⚠️ [WARNING] Appointment slot already exists. Will skip creation and log payment linkage.', existing);
+      console.warn('⚠️ [WARNING] Consider investigating double webhook delivery.');
+      return;
+    }
 
     const { data: appointmentData, error: appointmentError } = await supabase
       .from('appointments')
@@ -244,8 +303,33 @@ async function handleCheckoutSessionCompleted(session) {
     console.log('🔍 [DEBUG] Created appointment:', JSON.stringify(appointmentData, null, 2));
     console.log('🎉 [SUCCESS] ===== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY =====');
 
+    console.log('🔍 [DEBUG] Triggering post-processing audit log entry...');
+    try {
+      const { error: auditError } = await supabase
+        .from('webhook_audit_log')
+        .insert({
+          stripe_event_id: session.id,
+          payment_id,
+          doctor_id,
+          parent_email,
+          is_deposit: isDeposit,
+          status: 'completed',
+          payload_snapshot: session
+        });
+
+      if (auditError) {
+        console.warn('⚠️ [WARNING] Failed to write webhook audit log (non-blocking):', auditError);
+      } else {
+        console.log('✅ [SUCCESS] Webhook audit log entry stored');
+      }
+    } catch (auditUnexpectedError) {
+      console.warn('⚠️ [WARNING] Unexpected exception during audit log insertion (ignored):', auditUnexpectedError);
+    }
+
   } catch (dbError) {
     console.error('❌ [ERROR] Database update failed for checkout.session.completed:', dbError);
+    console.error('❌ [ERROR] Stack trace:', dbError?.stack);
+    console.error('❌ [ERROR] Error details object:', JSON.stringify(dbError, null, 2));
     throw dbError;
   }
 }
