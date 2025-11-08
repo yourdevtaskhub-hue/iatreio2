@@ -27,8 +27,8 @@ const getFunctionsBases = (): string[] => {
     bases.push(envBase);
   }
 
-  bases.push('https://parentteenonlineclinic.com/.netlify/functions');
-  bases.push('https://www.parentteenonlineclinic.com/.netlify/functions');
+  bases.push('https://onlineparentteenclinic.com/.netlify/functions');
+  bases.push('https://www.onlineparentteenclinic.com/.netlify/functions');
   bases.push('http://localhost:8888/.netlify/functions');
 
   return Array.from(new Set(bases.filter(Boolean))).map((base) => base.replace(/\/$/, ''));

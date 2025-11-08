@@ -22,8 +22,8 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  'https://parentteenonlineclinic.com',
-  'https://www.parentteenonlineclinic.com'
+  'https://onlineparentteenclinic.com',
+  'https://www.onlineparentteenclinic.com'
 ];
 
 exports.handler = async (event) => {
