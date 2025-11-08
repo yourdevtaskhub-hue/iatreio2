@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, X } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, MapPin, Mail, X } from 'lucide-react';
 
 interface PaymentSuccessPopupProps {
   isVisible: boolean;
@@ -17,17 +17,15 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
   paymentId,
   language = 'gr'
 }) => {
-  const [isClosing, setIsClosing] = useState(false);
-
   const content = {
     gr: {
       title: 'Πληρωμή Επιτυχής!',
       subtitle: 'Σας περιμένουμε στο ιατρείο μας!',
-      successMessage: 'Η πληρωμή σας ολοκληρώθηκε με επιτυχία!',
-      emailConfirmation: 'Θα λάβετε email επιβεβαίωσης με όλες τις λεπτομέρειες του ραντεβού σας.',
-      appointmentDetails: 'Λεπτομέρειες Ραντεβού',
-      date: 'Ημερομηνία: Θα επιβεβαιωθεί με email',
-      time: 'Ώρα: Θα επιβεβαιωθεί με email',
+      successMessage: 'Η πληρωμή σας ολοκληρώθηκε με επιτυχία και το ραντεβού σας έχει καταχωρηθεί στο σύστημά μας!',
+      emailConfirmation: 'Θα λάβετε απόδειξη συναλλαγής στο email σας.',
+      appointmentDetails: 'Επιβεβαίωση Ραντεβού',
+      date: 'Το ραντεβού σας έχει ήδη κρατηθεί. Δεν απαιτείται καμία επιπλέον ενέργεια.',
+      time: 'Θα επικοινωνήσουμε μαζί σας μόνο αν χρειαστεί κάποια αλλαγή.',
       location: 'Τοποθεσία: Online (Διαδικτυακό Ιατρείο)',
       contact: 'Επικοινωνία',
       understood: 'Κατάλαβα',
@@ -36,11 +34,11 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
     en: {
       title: 'Payment Successful!',
       subtitle: 'We look forward to seeing you at our clinic!',
-      successMessage: 'Your payment has been completed successfully!',
-      emailConfirmation: 'You will receive a confirmation email with all the details of your appointment.',
-      appointmentDetails: 'Appointment Details',
-      date: 'Date: Will be confirmed by email',
-      time: 'Time: Will be confirmed by email',
+      successMessage: 'Your payment was processed successfully and your appointment is now confirmed in our system!',
+      emailConfirmation: 'You will receive a transaction receipt at your email address.',
+      appointmentDetails: 'Appointment Confirmation',
+      date: 'Your appointment is already reserved. No further action is required.',
+      time: 'We will reach out only if any update is needed.',
       location: 'Location: Online (Online Clinic)',
       contact: 'Contact',
       understood: 'Understood',
@@ -49,11 +47,11 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
     fr: {
       title: 'Paiement Réussi!',
       subtitle: 'Nous avons hâte de vous voir à notre clinique!',
-      successMessage: 'Votre paiement a été complété avec succès!',
-      emailConfirmation: 'Vous recevrez un email de confirmation avec tous les détails de votre rendez-vous.',
-      appointmentDetails: 'Détails du Rendez-vous',
-      date: 'Date: Sera confirmée par email',
-      time: 'Heure: Sera confirmée par email',
+      successMessage: 'Votre paiement a été traité avec succès et votre rendez-vous est désormais confirmé dans notre système!',
+      emailConfirmation: 'Vous recevrez un reçu de transaction par email.',
+      appointmentDetails: 'Confirmation du Rendez-vous',
+      date: 'Votre rendez-vous est déjà réservé. Aucune action supplémentaire n’est requise.',
+      time: 'Nous vous contacterons uniquement en cas de mise à jour nécessaire.',
       location: 'Lieu: En ligne (Clinique en ligne)',
       contact: 'Contact',
       understood: 'Compris',
@@ -62,10 +60,8 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
   };
 
   const handleClose = () => {
-    setIsClosing(true);
     setTimeout(() => {
       onClose();
-      setIsClosing(false);
     }, 300);
   };
 
@@ -191,12 +187,8 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3 text-blue-700">
-                        <Phone className="w-4 h-4" />
-                        <span className="text-sm">+41 21 123 4567</span>
-                      </div>
-                      <div className="flex items-center space-x-3 text-blue-700">
                         <Mail className="w-4 h-4" />
-                        <span className="text-sm">info@onlineparentteenclinic.com</span>
+                        <span className="text-sm">iatreiodrfytrou@gmail.com</span>
                       </div>
                     </div>
                   </div>
