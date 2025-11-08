@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users, Search, ChevronLeft, ChevronRight, X, Mail, Phone, User, Calendar } from 'lucide-react';
+import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users, Search, ChevronLeft, ChevronRight, X, Mail, Phone, User, Calendar, Info } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
@@ -664,13 +664,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4">
-                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(review.status)}`}>
-                          {getStatusText(review.status)}
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(review.status ?? 'pending')}`}>
+                          {getStatusText(review.status ?? 'pending')}
                         </span>
                       </td>
                       <td className="px-3 sm:px-6 py-4">
                         <div className="text-xs sm:text-sm text-gray-600 font-nunito">
-                          {new Date(review.created_at).toLocaleDateString()}
+                          {review.created_at ? new Date(review.created_at).toLocaleDateString() : '—'}
                         </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4">
@@ -686,6 +686,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                             <>
                               <button
                                 onClick={() => {
+                                  if (!review.id) return;
                                   if (confirm(content[language].confirmApproveText)) {
                                     handleStatusUpdate(review.id, 'approved');
                                   }
@@ -702,6 +703,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                               </button>
                               <button
                                 onClick={() => {
+                                  if (!review.id) return;
                                   if (confirm(content[language].confirmRejectText)) {
                                     handleStatusUpdate(review.id, 'rejected');
                                   }
@@ -1532,8 +1534,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                   <h4 className="font-semibold text-gray-700 mb-2 font-poppins">
                     {content[language].status}
                   </h4>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(selectedReview.status)}`}>
-                    {getStatusText(selectedReview.status)}
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(selectedReview.status ?? 'pending')}`}>
+                    {getStatusText(selectedReview.status ?? 'pending')}
                   </span>
                 </div>
 
@@ -1541,12 +1543,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                   <div>
                     <span className="font-semibold">{content[language].createdAt}:</span>
                     <br />
-                    {new Date(selectedReview.created_at).toLocaleString()}
+                    {selectedReview.created_at ? new Date(selectedReview.created_at).toLocaleString() : '—'}
                   </div>
                   <div>
                     <span className="font-semibold">{content[language].updatedAt}:</span>
                     <br />
-                    {new Date(selectedReview.updated_at).toLocaleString()}
+                    {selectedReview.updated_at ? new Date(selectedReview.updated_at).toLocaleString() : '—'}
                   </div>
                 </div>
               </div>
@@ -1920,7 +1922,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
       console.error('Error fetching availability:', error);
     }
   };
-  const [appointments, setAppointments] = useState<{date: string; time: string; doctor_id: string}[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(()=>{
     if (!doctorId && doctors && doctors.length>0) setDoctorId(doctors[0].id);
@@ -1936,10 +1938,10 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     try {
       const { data } = await supabaseAdmin
         .from('appointments')
-        .select('date, time, doctor_id')
+        .select('id, date, time, doctor_id, parent_name, email, phone, child_age, concerns, specialty, thematology, urgency, is_first_session, created_at')
         .gte('date', monthStart)
         .lte('date', monthEnd);
-      setAppointments((data || []) as any);
+      setAppointments((data || []) as Appointment[]);
     } catch (error) {
       console.error('Error fetching appointments:', error);
     }
@@ -2104,17 +2106,25 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     return `${hh}:${mStr} ${suffix}`;
   };
 
-  // Check if a specific time slot is booked
-  const isTimeSlotBooked = (date: string, startTime: string, endTime: string): boolean => {
-    return appointments.some(apt => {
+  const getAppointmentForSlot = (date: string, startTime: string, endTime?: string) => {
+    return appointments.find(apt => {
       if (doctorId && apt.doctor_id !== doctorId) return false;
       const aptTime = apt.time.slice(0, 5);
-      return apt.date === date && aptTime >= startTime && aptTime < endTime;
-    });
+      if (endTime) {
+        return apt.date === date && aptTime >= startTime && aptTime < endTime;
+      }
+      return apt.date === date && aptTime === startTime;
+    }) || null;
+  };
+
+  // Check if a specific time slot is booked
+  const isTimeSlotBooked = (date: string, startTime: string, endTime: string): boolean => {
+    return !!getAppointmentForSlot(date, startTime, endTime);
   };
 
   const [cancelTarget, setCancelTarget] = useState<{id:string; date:string; start:string; end:string} | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [infoAppointment, setInfoAppointment] = useState<Appointment | null>(null);
 
   const handleCancelAvailability = async () => {
     if (!cancelTarget) return;
@@ -2439,19 +2449,35 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
                   <div className="flex flex-wrap gap-0.5 sm:gap-1 justify-center">
                     {ranges.map((r, i)=> {
                       const isBooked = isTimeSlotBooked(d, r.start, r.end);
+                      const appointmentDetails = isBooked ? getAppointmentForSlot(d, r.start, r.end) : null;
                       return (
-                        <button
-                          key={i}
-                          onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
-                          className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-white text-xs font-medium transition-all transform hover:scale-105 shadow-sm ${
-                            isBooked 
-                              ? 'bg-blue-500 hover:bg-blue-600 hover:shadow-lg' 
-                              : 'bg-green-500 hover:bg-green-600 hover:shadow-lg'
-                          }`}
-                          title={isBooked ? "Κρατημένη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας" : "Διαθέσιμη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας"}
-                        >
-                          {formatGreekTime(r.start)}–{formatGreekTime(r.end)}
-                        </button>
+                        <div key={i} className="relative inline-flex">
+                          <button
+                            onClick={()=> setCancelTarget({ id: r.id, date: d, start: r.start, end: r.end })}
+                            className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg text-white text-xs font-medium transition-all transform hover:scale-105 shadow-sm ${
+                              isBooked 
+                                ? 'bg-blue-500 hover:bg-blue-600 hover:shadow-lg' 
+                                : 'bg-green-500 hover:bg-green-600 hover:shadow-lg'
+                            }`}
+                            title={isBooked ? "Κρατημένη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας" : "Διαθέσιμη συνεδρία - Κλικ για ακύρωση διαθεσιμότητας"}
+                          >
+                            {formatGreekTime(r.start)}–{formatGreekTime(r.end)}
+                          </button>
+                          {isBooked && appointmentDetails && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                event.preventDefault();
+                                setInfoAppointment(appointmentDetails);
+                              }}
+                              className="absolute -top-3 -left-3 sm:-top-3 sm:-left-3 transform -translate-x-1/4 -translate-y-1/4 bg-white text-blue-600 border border-blue-200 rounded-full p-1 shadow-md hover:bg-blue-50"
+                              title="Πληροφορίες κρατήσης"
+                            >
+                              <Info className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -2518,6 +2544,69 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
               >
                 {isCancelling? '⏳ Ακύρωση...' : '🗑️ Ακύρωση Διαθεσιμότητας'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {infoAppointment && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4" onClick={()=> setInfoAppointment(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl border border-blue-200 p-6 relative" onClick={(e)=> e.stopPropagation()}>
+            <button
+              onClick={()=> setInfoAppointment(null)}
+              className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Κλείσιμο"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 mx-auto bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3">
+                <Info className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800">Λεπτομέρειες Κράτησης</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {infoAppointment.date} • {formatGreekTime(infoAppointment.time.slice(0,5))}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <h4 className="text-sm font-semibold text-blue-800 mb-2">Στοιχεία Γονέα</h4>
+                <p className="text-sm text-gray-700"><strong>Όνομα:</strong> {infoAppointment.parent_name || '—'}</p>
+                <p className="text-sm text-gray-700 break-all"><strong>Email:</strong> {infoAppointment.email || '—'}</p>
+                {infoAppointment.phone && (
+                  <p className="text-sm text-gray-700"><strong>Τηλέφωνο:</strong> {infoAppointment.phone}</p>
+                )}
+              </div>
+              <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                <h4 className="text-sm font-semibold text-green-800 mb-2">Συμπληρωμένες Πληροφορίες</h4>
+                {infoAppointment.child_age && (
+                  <p className="text-sm text-gray-700"><strong>Ηλικία παιδιού:</strong> {infoAppointment.child_age}</p>
+                )}
+                {infoAppointment.specialty && (
+                  <p className="text-sm text-gray-700"><strong>Ειδικότητα:</strong> {infoAppointment.specialty}</p>
+                )}
+                {infoAppointment.thematology && (
+                  <p className="text-sm text-gray-700"><strong>Θεματολογία:</strong> {infoAppointment.thematology}</p>
+                )}
+                {infoAppointment.urgency && (
+                  <p className="text-sm text-gray-700"><strong>Επείγον:</strong> {infoAppointment.urgency}</p>
+                )}
+                {infoAppointment.is_first_session !== undefined && (
+                  <p className="text-sm text-gray-700"><strong>Πρώτη συνεδρία:</strong> {infoAppointment.is_first_session ? 'Ναι' : 'Όχι'}</p>
+                )}
+              </div>
+            </div>
+            {infoAppointment.concerns && (
+              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Σχόλια / Ανησυχίες</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-line">{infoAppointment.concerns}</p>
+              </div>
+            )}
+            <div className="mt-4 text-xs text-gray-500 text-right">
+              Καταχωρήθηκε στις{' '}
+              {new Intl.DateTimeFormat('el-GR', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              }).format(new Date(infoAppointment.created_at))}
             </div>
           </div>
         </div>
@@ -2647,7 +2736,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
   const [items, setItems] = useState<Appointment[]>([] as any);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
 
   const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
@@ -2858,16 +2947,25 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
   const [items, setItems] = useState<Appointment[]>([] as any);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
+
+  const TARGET_DOCTOR_NAME = 'Dr. Άννα Μαρία Φύτρου';
+  const TARGET_DOCTOR_SPECIALTY = 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια';
 
   const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
       .from('appointments')
       .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
-      .eq('doctors.name', 'Dr. Άννα Μαρία Φύτρου')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
-    setItems((data || []) as any);
+
+    const filtered = (data || []).filter((item: any) => {
+      const doctorName = item?.doctors?.name;
+      const doctorSpecialty = item?.doctors?.specialty;
+      return doctorName === TARGET_DOCTOR_NAME && doctorSpecialty === TARGET_DOCTOR_SPECIALTY;
+    });
+
+    setItems(filtered as any);
   };
 
   useEffect(() => {

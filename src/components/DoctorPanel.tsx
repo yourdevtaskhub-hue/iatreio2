@@ -17,6 +17,8 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'appointments' | 'wallet'>('appointments');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   
   // Use payments hook for wallet data
   const { payments, stats, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = usePayments(doctorName);
@@ -109,6 +111,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
       if (doctorError) {
         console.error('Error fetching doctor:', doctorError);
         setAppointments([]);
+        setCurrentPage(1);
         setLoading(false);
         return;
       }
@@ -134,12 +137,15 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
       if (error) {
         console.error('Error fetching appointments:', error);
         setAppointments([]);
+        setCurrentPage(1);
       } else {
         setAppointments(data || []);
+        setCurrentPage(1);
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
       setAppointments([]);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
@@ -186,6 +192,20 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
       sessionFee: Math.round(payment.amount_cents / 100), // Convert cents to euros
       status: payment.status
     }));
+  };
+
+  const totalPages = Math.max(1, Math.ceil(appointments.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentAppointments = appointments.slice(startIndex, endIndex);
+
+  const goToPreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    const maxPage = Math.max(1, Math.ceil(appointments.length / itemsPerPage));
+    setCurrentPage(prev => Math.min(prev + 1, maxPage));
   };
 
   return (
@@ -320,108 +340,137 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                 <p className="text-gray-500 text-sm">Τα νέα ραντεβού θα εμφανίζονται εδώ αυτόματα</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        📅 {content[language].date}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        🕘 {content[language].time}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        👨‍👩‍👧‍👦 {content[language].parentName}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        👶 {content[language].childAge}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        📞 {content[language].phone}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        ✉️ {content[language].email}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        🏥 {content[language].specialty}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        ⚡ {content[language].urgency}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
-                        🆕 {content[language].firstSession}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {appointments.map((appointment: any, index: number) => (
-                      <motion.tr
-                        key={appointment.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="hover:bg-blue-50 transition-all duration-200"
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          📅 {content[language].date}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          🕘 {content[language].time}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          👨‍👩‍👧‍👦 {content[language].parentName}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          👶 {content[language].childAge}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          📞 {content[language].phone}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          ✉️ {content[language].email}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          🏥 {content[language].specialty}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          ⚡ {content[language].urgency}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 font-poppins">
+                          🆕 {content[language].firstSession}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {currentAppointments.map((appointment: any, index: number) => (
+                        <motion.tr
+                          key={appointment.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className="hover:bg-blue-50 transition-all duration-200"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
+                              {appointment.date}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
+                              {appointment.time}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-800 font-poppins text-lg">
+                              {appointment.parent_name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
+                              {appointment.child_age || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-600 font-nunito">
+                              {appointment.phone || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-600 font-nunito">
+                              {appointment.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
+                              {appointment.specialty || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className={`px-3 py-2 rounded-lg text-sm font-semibold font-nunito ${
+                              appointment.urgency === 'Άμεσο' 
+                                ? 'bg-red-100 text-red-800' 
+                                : appointment.urgency === 'Κανονικό'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {appointment.urgency || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className={`px-3 py-2 rounded-lg text-sm font-semibold font-nunito ${
+                              appointment.is_first_session 
+                                ? 'bg-orange-100 text-orange-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {appointment.is_first_session ? 'Ναι' : 'Όχι'}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-xs sm:text-sm text-gray-500">
+                      Εμφάνιση {startIndex + 1}-{Math.min(endIndex, appointments.length)} από {appointments.length} κρατήσεις
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        <td className="px-6 py-4">
-                          <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
-                            {appointment.date}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
-                            {appointment.time}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-gray-800 font-poppins text-lg">
-                            {appointment.parent_name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
-                            {appointment.child_age || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600 font-nunito">
-                            {appointment.phone || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600 font-nunito">
-                            {appointment.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
-                            {appointment.specialty || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className={`px-3 py-2 rounded-lg text-sm font-semibold font-nunito ${
-                            appointment.urgency === 'Άμεσο' 
-                              ? 'bg-red-100 text-red-800' 
-                              : appointment.urgency === 'Κανονικό'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {appointment.urgency || '-'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className={`px-3 py-2 rounded-lg text-sm font-semibold font-nunito ${
-                            appointment.is_first_session 
-                              ? 'bg-orange-100 text-orange-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {appointment.is_first_session ? 'Ναι' : 'Όχι'}
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        Προηγούμενη
+                      </button>
+                      <span className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-blue-100 text-blue-700 rounded-md font-medium">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Επόμενη
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         ) : (

@@ -114,6 +114,27 @@ const UserPanel: React.FC = () => {
     loadUser();
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const enforceStayOnPanel = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    enforceStayOnPanel();
+
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      enforceStayOnPanel();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [loading]);
+
   // Φόρτωση γιατρών για προπληρωμένες συνεδρίες
   useEffect(() => {
     const loadDoctors = async () => {
