@@ -41,7 +41,7 @@ export interface AdminSettings {
 export interface SlotInfo {
   time: string; // HH:MM
   available: boolean;
-  reason?: 'booked' | 'outside' | 'locked';
+  reason?: 'booked' | 'outside' | 'locked' | 'withinThreeHours';
 }
 
 export interface WaitingListEntry {

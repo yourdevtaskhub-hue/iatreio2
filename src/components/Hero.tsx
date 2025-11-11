@@ -13,7 +13,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       title: 'Διαδικτυακό Ιατρείο Γονέων και Εφήβων',
       subtitle: 'Υποστήριξη της Ψυχικής Υγείας των εφήβων και των γονέων τους με επαγγελματισμό, κατανόηση και πλήρη εχεμύθεια.',
       cta: 'Κλείστε Ραντεβού',
-      learnMore: 'Μάθετε Περισσότερα',
+      learnMore: 'Σύνδεση / Εγγραφή Λογαριασμού',
       experience: 'Χρόνια Εμπειρίας',
       families: 'Οικογένειες',
       location: 'Λωζάνη, Ελβετία'
@@ -22,7 +22,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       title: 'Online Parent Teen Clinic',
       subtitle: 'Support for the Mental Health of adolescents and their parents with professionalism, understanding and complete confidentiality.',
       cta: 'Book Appointment',
-      learnMore: 'Learn More',
+      learnMore: 'Login / Create Account',
       experience: 'Years Experience',
       families: 'Families',
       location: 'Lausanne, Switzerland'
@@ -31,7 +31,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
       title: 'Clinique en ligne Parents et Adolescents',
       subtitle: 'Soutien pour la Santé Mentale des adolescents et de leurs parents avec professionnalisme, compréhension et confidentialité totale.',
       cta: 'Prendre rendez-vous',
-      learnMore: 'En savoir plus',
+      learnMore: 'Connexion / Créer un compte',
       experience: 'Années d\'expérience',
       families: 'Familles',
       location: 'Lausanne, Suisse'
@@ -179,8 +179,8 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={scrollToServices}
-            className="border-2 border-gray-300 text-gray-700 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium hover:border-rose-soft hover:text-rose-soft transition-all duration-300 font-poppins w-full sm:w-auto"
+            onClick={() => { window.location.href = '/auth'; }}
+            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center font-poppins w-full sm:w-auto"
           >
             {content[language].learnMore}
           </motion.button>

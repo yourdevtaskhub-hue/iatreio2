@@ -4,6 +4,7 @@ import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Use
 import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
+import { parseClosureReason } from '../utils/closureReason';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 
 interface AdminPanelProps {
@@ -1568,7 +1569,10 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
   const [doctorId, setDoctorId] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
-  const [reason, setReason] = useState<string>('');
+  const [reasonGr, setReasonGr] = useState<string>('');
+  const [reasonEn, setReasonEn] = useState<string>('');
+  const [reasonFr, setReasonFr] = useState<string>('');
+
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
@@ -1589,7 +1593,9 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
   const resetForm = () => {
     setDateFrom('');
     setDateTo('');
-    setReason('');
+    setReasonGr('');
+    setReasonEn('');
+    setReasonFr('');
     setDoctorId('all');
     setEditingId(null);
   };
@@ -1598,10 +1604,17 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
     if (!dateFrom || !dateTo) { alert('Παρακαλώ ορίστε Ημερομηνία Από/Έως.'); return; }
     setSaving(true);
     try {
+      const trimmedReasons = {
+        gr: reasonGr.trim(),
+        en: reasonEn.trim(),
+        fr: reasonFr.trim()
+      };
+      const hasTranslations = Object.values(trimmedReasons).some(value => value.length > 0);
+
       const payload: any = {
         date_from: dateFrom,
         date_to: dateTo,
-        reason: reason || null,
+        reason: hasTranslations ? JSON.stringify(trimmedReasons) : null,
       };
       if (doctorId !== 'all') payload.doctor_id = doctorId;
 
@@ -1632,7 +1645,10 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
     setDoctorId(it.doctor_id || 'all');
     setDateFrom(it.date_from);
     setDateTo(it.date_to);
-    setReason(it.reason || '');
+    const parsed = parseClosureReason(it.reason);
+    setReasonGr(parsed.gr || parsed.fallback || '');
+    setReasonEn(parsed.en || '');
+    setReasonFr(parsed.fr || '');
   };
 
   const handleDelete = async (id: string) => {
@@ -1715,8 +1731,41 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
               <div className="h-8 w-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mr-2">📝</div>
               <div className="text-sm font-semibold text-gray-800 font-poppins">4) Μήνυμα / Αιτιολογία</div>
             </div>
-            <p className="text-xs text-gray-500 font-nunito mb-3">Γράψτε ένα σύντομο, ζεστό μήνυμα που θα δουν οι επισκέπτες.</p>
-            <textarea value={reason} onChange={e=>setReason(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito" rows={5} placeholder="Π.χ. Κλειστά λόγω Πάσχα – Καλές Γιορτές!" />
+            <p className="text-xs text-gray-500 font-nunito mb-3">
+              Το μήνυμα προβάλλεται στο πολυγλωσσικό site. Συμπληρώστε τις γλώσσες που χρειάζονται.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1 font-nunito">🇬🇷 Ελληνικά</label>
+                <textarea
+                  value={reasonGr}
+                  onChange={e=>setReasonGr(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito"
+                  rows={3}
+                  placeholder="Π.χ. Κλειστά λόγω Πάσχα – Καλές Γιορτές!"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1 font-nunito">🇬🇧 English</label>
+                <textarea
+                  value={reasonEn}
+                  onChange={e=>setReasonEn(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito"
+                  rows={3}
+                  placeholder="e.g. Closed for the holidays – Warm wishes!"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1 font-nunito">🇫🇷 Français</label>
+                <textarea
+                  value={reasonFr}
+                  onChange={e=>setReasonFr(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition font-nunito"
+                  rows={3}
+                  placeholder="ex. Fermé pour les fêtes – Joyeuses Fêtes !"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Step 5 */}
@@ -1746,7 +1795,26 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
             <div>
               <div className="font-semibold mb-1 text-gray-800">Προεπισκόπηση μηνύματος στον επισκέπτη</div>
               <div className="text-sm text-gray-800">Από <strong>{dateFrom}</strong> έως <strong>{dateTo}</strong>.</div>
-              {reason && <div className="text-sm text-gray-700 mt-1">{reason}</div>}
+              {(() => {
+                const previewMessages = [
+                  { label: '🇬🇷', value: reasonGr.trim() },
+                  { label: '🇬🇧', value: reasonEn.trim() },
+                  { label: '🇫🇷', value: reasonFr.trim() }
+                ].filter(entry => entry.value.length > 0);
+
+                if (previewMessages.length === 0) return null;
+
+                return (
+                  <div className="text-sm text-gray-700 mt-1 space-y-1">
+                    {previewMessages.map(entry => (
+                      <div key={entry.label}>
+                        <span className="font-medium mr-1">{entry.label}</span>
+                        <span>{entry.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -1776,12 +1844,24 @@ const ClinicClosuresManager: React.FC<ClinicClosuresManagerProps> = ({ doctors }
               <tbody>
                 {items.map((it:any)=>{
                   const doc = (doctors||[]).find(d=> d.id === it.doctor_id);
+                  const reasonTranslations = parseClosureReason(it.reason);
+                  const { gr, en, fr, fallback } = reasonTranslations;
+                  const hasAnyReason = gr || en || fr || fallback;
                   return (
                     <tr key={it.id} className="border-t">
                       <td className="p-2">{it.doctor_id ? `${doc?.name || it.doctor_id}` : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-800">Όλοι οι γιατροί</span>}</td>
                       <td className="p-2">{it.date_from}</td>
                       <td className="p-2">{it.date_to}</td>
-                      <td className="p-2">{it.reason || '-'}</td>
+                      <td className="p-2">
+                        {hasAnyReason ? (
+                          <div className="space-y-1">
+                            {gr && <div><span className="font-medium mr-1">🇬🇷</span>{gr}</div>}
+                            {en && <div><span className="font-medium mr-1">🇬🇧</span>{en}</div>}
+                            {fr && <div><span className="font-medium mr-1">🇫🇷</span>{fr}</div>}
+                            {!gr && !en && !fr && fallback && <div>{fallback}</div>}
+                          </div>
+                        ) : '—'}
+                      </td>
                       <td className="p-2 space-x-2">
                         <button onClick={()=>handleEdit(it)} className="px-3 py-1 bg-white border rounded-xl hover:bg-gray-50">✏️ Επεξεργασία</button>
                         <button onClick={()=>handleDelete(it.id)} className="px-3 py-1 bg-red-500 text-white rounded-xl hover:bg-red-600">🗑️ Διαγραφή</button>

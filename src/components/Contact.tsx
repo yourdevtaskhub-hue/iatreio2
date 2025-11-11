@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3 } from 'lucide-react';
 import profile2 from '../assets/profile2.JPG';
@@ -7,6 +7,24 @@ import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 import StripeCheckout from './StripeCheckout';
+import { getLocalizedClosureReason } from '../utils/closureReason';
+
+const RESTRICTED_DOCTOR_NAMES = new Set(['Ιωάννα Πισσάρη', 'Σοφία Σπυριάδου']);
+const THREE_HOUR_LIMIT_MINUTES = 3 * 60;
+
+const isSlotWithinThreeHours = (date: string, time: string, timezone: string, referenceNow?: Date) => {
+  if (!date || !time) return false;
+  const baseNow = referenceNow ? new Date(referenceNow) : getCurrentDateInTimezone(timezone);
+  const [year, month, day] = date.split('-').map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
+  const slotDate = new Date(baseNow);
+  slotDate.setFullYear(year);
+  slotDate.setMonth(month - 1);
+  slotDate.setDate(day);
+  slotDate.setHours(hours, minutes, 0, 0);
+  const diffMinutes = (slotDate.getTime() - baseNow.getTime()) / 60000;
+  return diffMinutes < THREE_HOUR_LIMIT_MINUTES;
+};
 
 interface ContactProps {
   language: 'gr' | 'en' | 'fr';
@@ -120,6 +138,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId) || null;
+  const isRestrictedDoctor = !!selectedDoctor && RESTRICTED_DOCTOR_NAMES.has(selectedDoctor.name);
+  const hasThreeHourRestrictedSlots = isRestrictedDoctor && slots.some(slot => slot.reason === 'withinThreeHours');
+  const userTimezone = useMemo(() => getUserTimezone(), []);
+  const todayDateString = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date()), [userTimezone]);
 
   // Function to translate doctor names for display only (UI)
   const getDoctorDisplayName = (doctor: Doctor) => {
@@ -388,10 +411,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       doctor: 'Γιατρός',
       selectDoctor: 'Επιλέξτε γιατρό',
       slotLegend: 'Διαθεσιμότητα: Πράσινο διαθέσιμο, Κόκκινο μη διαθέσιμο',
+      threeHourRestrictionMessage: 'Για τις συνεδρίες με τις κλινικές παιδοψυχολόγους Ιωάννα Πισσάρη και Σοφία Σπυριάδου μπορείτε να κλείσετε ραντεβού μέχρι 3 ώρες πριν την ώρα της συνεδρίας.',
+      threeHourRestrictionTooltip: 'Η κράτηση είναι διαθέσιμη μέχρι 3 ώρες πριν τη συνεδρία.',
       appointmentDatePlaceholder: 'Επιλέξτε την ημερομηνία που σας ενδιαφέρει',
       privacy: 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.',
       recordingPolicy: 'Πολιτική ηχογράφησης & καταγραφής: Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.',
-      parentalConsent: 'Ως γονεϊκό ζευγάρι αποδεχόμαστε ο/η ιατρός και η ομάδα του/της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.',
+      parentalConsent: 'Ως γονεϊκό ζευγάρι αποδεχόμαστε η γιατρός και η ομάδα της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.',
       sendMessage: 'Αποστολή Μηνύματος',
       privacyGuaranteed: 'Εγγυημένη Ιδιωτικότητα',
       privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.',
@@ -469,6 +494,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       doctor: 'Doctor',
       selectDoctor: 'Select doctor',
       slotLegend: 'Availability: Green available, Red unavailable',
+      threeHourRestrictionMessage: 'For sessions with clinical child psychologists Ioanna Pissari and Sofia Spyriadou you can book up to 3 hours before the session start time.',
+      threeHourRestrictionTooltip: 'Booking allowed up to 3 hours before the session.',
       appointmentDatePlaceholder: 'Select your preferred date',
       privacy: 'I understand that this form is not for emergency situations. For immediate help, please contact emergency services or go to your nearest emergency room.',
       recordingPolicy: 'Recording & Archiving Policy: For reasons of privacy and ethics, recording and/or videotaping of sessions is strictly prohibited. In case of violation of this policy, penalties will be imposed.',
@@ -549,6 +576,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       doctor: 'Médecin',
       selectDoctor: 'Sélectionnez un médecin',
       slotLegend: 'Disponibilité: Vert disponible, Rouge non disponible',
+      threeHourRestrictionMessage: 'Pour les séances avec les psychologues cliniciennes pour enfants Ioanna Pissari et Sofia Spyriadou, vous pouvez réserver jusqu’à 3 heures avant l’heure du rendez-vous.',
+      threeHourRestrictionTooltip: 'Réservation possible jusqu’à 3 heures avant la séance.',
       appointmentDatePlaceholder: 'Sélectionnez la date qui vous intéresse',
       privacy: 'Je comprends que ce formulaire n\'est pas pour les situations d\'urgence. Pour une aide immédiate, veuillez contacter les services d\'urgence ou aller au service d\'urgence le plus proche.',
       recordingPolicy: 'Politique d\'enregistrement & d\'archivage: Pour des raisons de confidentialité et d\'éthique, l\'enregistrement et/ou la vidéosurveillance des sessions est strictement interdite. En cas de violation de cette politique, des sanctions seront imposées.',
@@ -581,7 +610,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       console.log('[Contact] doctors:', doctorsData);
       console.log('[Contact] settings:', settingsData);
       const allowedDoctors = (doctorsData || []).filter(
-        (doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
+        (doctor: Doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
       );
 
       setDoctors(allowedDoctors);
@@ -616,8 +645,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       console.log('[Contact] fetchMonth for', calendarMonth, 'doctor:', selectedDoctorId);
       const start = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
       const end = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth()+1, 0);
-      const s = toDateString(start, getUserTimezone());
-      const e = toDateString(end, getUserTimezone());
+      const s = toDateString(start, userTimezone);
+      const e = toDateString(end, userTimezone);
       const { data } = await supabase
         .from('availability')
         .select('date')
@@ -630,7 +659,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       // setAvailableDays(map); // Commented out as availableDays is not used
     };
     fetchMonth();
-  }, [calendarMonth, selectedDoctorId]);
+  }, [calendarMonth, selectedDoctorId, userTimezone]);
 
   // Υπολογισμός slots για επιλεγμένη ημερομηνία/γιατρό
   useEffect(() => {
@@ -646,7 +675,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         .gte('date_to', formData.appointmentDate);
       if (closures && closures.length > 0) {
         const c = closures[0];
-        setClosureNotice({ from: c.date_from, to: c.date_to, reason: c.reason || undefined });
+        const localizedReason = getLocalizedClosureReason(c.reason, language);
+        setClosureNotice({
+          from: c.date_from,
+          to: c.date_to,
+          reason: localizedReason || undefined
+        });
         setSlots([]);
         setSelectedTime('');
         return;
@@ -672,18 +706,26 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       const bookedSet = new Set<string>((booked||[]).map((b: { time: string })=> toHHMM(b.time)));
 
       const slotMap = new Map<string, SlotInfo>();
+      const nowRestrictionTz = getCurrentDateInTimezone(userTimezone);
+      const doctorForRestriction = doctors.find(d => d.id === selectedDoctorId);
+      const applyThreeHourRule = !!doctorForRestriction && RESTRICTED_DOCTOR_NAMES.has(doctorForRestriction.name);
       (av||[]).forEach((a: any) => {
         // Αν μια availability δεν έχει valid εύρος, αγνόησέ την
         if (!a || !a.start_time || !a.end_time || !a.increment_minutes) return;
         const [sh, sm] = a.start_time.split(':').map(Number);
         const [eh, em] = a.end_time.split(':').map(Number);
-        let cur = sh*60+sm;
-        const end = eh*60+em;
+        let cur = sh * 60 + sm;
+        let end = eh * 60 + em;
+        if (Number.isNaN(cur) || Number.isNaN(end)) return;
+        if (end <= cur) {
+          end += 24 * 60; // υποστήριξη slots που περνούν τα μεσάνυχτα
+        }
         const step = a.increment_minutes as 30|60;
         if (step !== 30 && step !== 60) return;
         while (cur < end) {
-          const hh = Math.floor(cur/60).toString().padStart(2,'0');
-          const mm = (cur%60).toString().padStart(2,'0');
+          const dayMinutes = ((cur % (24 * 60)) + (24 * 60)) % (24 * 60);
+          const hh = Math.floor(dayMinutes/60).toString().padStart(2,'0');
+          const mm = (dayMinutes%60).toString().padStart(2,'0');
           const t = `${hh}:${mm}`;
           let available = !bookedSet.has(t);
           let reason: SlotInfo['reason'] | undefined = bookedSet.has(t)? 'booked': undefined;
@@ -691,6 +733,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
             const hourStart = `${hh}:00`;
             const half = `${hh}:30`;
             if (bookedSet.has(hourStart) || bookedSet.has(half)) { available = false; reason = 'locked'; }
+          }
+          if (available && applyThreeHourRule) {
+            if (isSlotWithinThreeHours(formData.appointmentDate, t, userTimezone, nowRestrictionTz)) {
+              available = false;
+              reason = 'withinThreeHours';
+            }
           }
           const existing = slotMap.get(t);
           if (existing) {
@@ -707,7 +755,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       setSelectedTime('');
     };
     compute();
-  }, [formData.appointmentDate, selectedDoctorId, settings]);
+  }, [formData.appointmentDate, selectedDoctorId, settings, language, doctors, userTimezone]);
 
   return (
     <section id="contact" className={onlyForm ? "py-0 bg-white" : "py-20 bg-white"}>
@@ -1148,7 +1196,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                   placeholder={content[language].appointmentDatePlaceholder}
-                  min={toDateString(getCurrentDateInTimezone(getUserTimezone()), getUserTimezone())}
+                  min={todayDateString}
                   style={{ direction: 'ltr' }}
                 />
                 {/* Display appointment guidelines */}
@@ -1169,6 +1217,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 <div className="col-span-2">
                   {!closureNotice && (
                     <div className="text-xs text-gray-500 mb-2 font-quicksand">{content[language].slotLegend}</div>
+                  )}
+                  {hasThreeHourRestrictedSlots && (
+                    <div className="mb-3 text-xs text-purple-800 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2 font-nunito">
+                      {content[language].threeHourRestrictionMessage}
+                    </div>
                   )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {closureNotice ? (
@@ -1194,9 +1247,22 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                       <div className="text-gray-500 col-span-full">{language==='gr'? 'Δεν υπάρχουν διαθέσιμα για την ημέρα.': 'No availability for the day.'}</div>
                     ) : (
                       slots.map(s=> (
-                        <button type="button" disabled={!s.available} onClick={()=> s.available && setSelectedTime(s.time)} key={s.time} className={`px-3 py-2 rounded-xl text-center text-sm font-semibold border transition ${s.available? 'bg-green-100 text-green-800 hover:ring-2 hover:ring-green-400':'bg-red-100 text-red-700 cursor-not-allowed'} ${selectedTime===s.time? 'ring-2 ring-purple-soft':''}`}>
-                          {s.time}
-                        </button>
+                        <div key={s.time} className="flex flex-col items-stretch">
+                          <button
+                            type="button"
+                            disabled={!s.available}
+                            onClick={()=> s.available && setSelectedTime(s.time)}
+                            title={!s.available && s.reason === 'withinThreeHours' ? content[language].threeHourRestrictionTooltip : undefined}
+                            className={`px-3 py-2 rounded-xl text-center text-sm font-semibold border transition ${s.available? 'bg-green-100 text-green-800 hover:ring-2 hover:ring-green-400':'bg-red-100 text-red-700 cursor-not-allowed'} ${selectedTime===s.time? 'ring-2 ring-purple-soft':''}`}
+                          >
+                            {s.time}
+                          </button>
+                          {!s.available && s.reason === 'withinThreeHours' && (
+                            <span className="mt-1 text-[11px] leading-snug text-purple-700 font-nunito">
+                              {content[language].threeHourRestrictionTooltip}
+                            </span>
+                          )}
+                        </div>
                       ))
                     )}
                   </div>

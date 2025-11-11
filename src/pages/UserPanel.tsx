@@ -20,7 +20,11 @@ interface DepositRecord {
   };
 }
 
-const UserPanel: React.FC = () => {
+interface UserPanelProps {
+  language: 'gr' | 'en' | 'fr';
+}
+
+const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
@@ -48,11 +52,32 @@ const UserPanel: React.FC = () => {
   const [payLoading, setPayLoading] = useState<boolean>(false);
   const [deposits, setDeposits] = useState<DepositRecord[]>([]);
 
+  const translate = useCallback(
+    (gr: string, en: string, fr: string) => {
+      if (language === 'en') return en;
+      if (language === 'fr') return fr;
+      return gr;
+    },
+    [language]
+  );
+
+  const locale = useMemo(() => {
+    switch (language) {
+      case 'en':
+        return 'en-GB';
+      case 'fr':
+        return 'fr-FR';
+      default:
+        return 'el-GR';
+    }
+  }, [language]);
+
   const getDoctorOptionLabel = (doctor: Doctor) => {
     const override = findDoctorStripeOverride(doctor.id, doctor.name);
     if (override) {
       const amount = (override.amountCents / 100).toFixed(2);
-      return `${doctor.name} — €${amount} Live δοκιμή`;
+      const liveLabel = translate('Live δοκιμή', 'Live test', 'Test en direct');
+      return `${doctor.name} — €${amount} ${liveLabel}`;
     }
     return doctor.name;
   };
@@ -264,23 +289,23 @@ const UserPanel: React.FC = () => {
     setPwError(null);
     setPwSuccess(null);
     if (!newPassword || newPassword.length < 8) {
-      setPwError('Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
+      setPwError(translate('Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.', 'Password must be at least 8 characters long.', 'Le mot de passe doit comporter au moins 8 caractères.'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPwError('Ο νέος κωδικός και η επιβεβαίωση δεν ταιριάζουν.');
+      setPwError(translate('Ο νέος κωδικός και η επιβεβαίωση δεν ταιριάζουν.', 'The new password and its confirmation do not match.', 'Le nouveau mot de passe et sa confirmation ne correspondent pas.'));
       return;
     }
     try {
       setPwLoading(true);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      setPwSuccess('Ο κωδικός αλλάχθηκε με επιτυχία.');
+      setPwSuccess(translate('Ο κωδικός αλλάχθηκε με επιτυχία.', 'Password changed successfully.', 'Mot de passe modifié avec succès.'));
       setNewPassword('');
       setConfirmPassword('');
       setIsPwModalOpen(false);
     } catch (e: any) {
-      setPwError(e?.message || 'Αποτυχία αλλαγής κωδικού.');
+      setPwError(e?.message || translate('Αποτυχία αλλαγής κωδικού.', 'Failed to change password.', 'Échec de la modification du mot de passe.'));
     } finally {
       setPwLoading(false);
     }
@@ -296,7 +321,7 @@ const UserPanel: React.FC = () => {
       await supabase.auth.signOut();
       window.location.href = '/';
     } catch (e: any) {
-      setDeleteError(e?.message || 'Η διαγραφή απέτυχε.');
+      setDeleteError(e?.message || translate('Η διαγραφή απέτυχε.', 'Account deletion failed.', 'La suppression du compte a échoué.'));
     } finally {
       setDeleteLoading(false);
     }
@@ -312,8 +337,16 @@ const UserPanel: React.FC = () => {
   // Υπολογίζουμε δυναμικά τον χαιρετισμό με βάση το τρέχον όνομα
   const displayName = getUserDisplayName();
   const greeting = displayName
-    ? `Καλώς ήρθατε στο ιατρείο μας, ${displayName}!`
-    : 'Καλώς ήρθατε στο ιατρείο μας!';
+    ? translate(
+        `Καλώς ήρθατε στο ιατρείο μας, ${displayName}!`,
+        `Welcome to our clinic, ${displayName}!`,
+        `Bienvenue dans notre cabinet, ${displayName} !`
+      )
+    : translate(
+        'Καλώς ήρθατε στο ιατρείο μας!',
+        'Welcome to our clinic!',
+        'Bienvenue dans notre cabinet !'
+      );
 
   if (loading) {
     return (
@@ -332,12 +365,12 @@ const UserPanel: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-200 py-8 shadow-lg">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
               <img 
                 src={logoIatrio5} 
                 alt="Logo" 
-                className="h-16 w-16 sm:h-20 sm:w-20 lg:h-16 lg:w-16 xl:h-20 xl:w-20 flex-shrink-0"
+                className="h-16 w-16 sm:h-20 sm:w-20 lg:h-16 lg:w-16 xl:h-20 xl:w-20 flex-shrink-0 mx-auto sm:mx-0"
                 style={{
                   imageOrientation: 'from-image',
                   WebkitTransform: 'none',
@@ -348,8 +381,8 @@ const UserPanel: React.FC = () => {
                   transformOrigin: 'center center'
                 }}
               />
-              <div className="flex flex-col justify-center">
-                <h1 className="text-3xl font-bold text-white font-poppins">
+              <div className="flex flex-col justify-center text-center sm:text-left mt-4 sm:mt-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white font-poppins">
                   {greeting}
                 </h1>
                 <h2 className="text-white font-bold text-lg font-dancing-script leading-tight">
@@ -357,76 +390,99 @@ const UserPanel: React.FC = () => {
                 </h2>
               </div>
             </div>
-  
-  {/* Change Password Modal */}
-  {isPwModalOpen && (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold font-poppins">Αλλαγή κωδικού</h3>
-          <button onClick={() => setIsPwModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm mb-1 font-nunito">Νέος κωδικός</label>
-            <input type="password" value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} className="w-full border rounded-xl px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm mb-1 font-nunito">Επιβεβαίωση νέου κωδικού</label>
-            <input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} className="w-full border rounded-xl px-3 py-2" />
-          </div>
-          {pwError && <div className="text-red-600 text-sm">{pwError}</div>}
-          {pwSuccess && <div className="text-green-600 text-sm">{pwSuccess}</div>}
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setIsPwModalOpen(false)} className="px-4 py-2 rounded-xl border">Άκυρο</button>
-            <button disabled={pwLoading} onClick={handleChangePassword} className="px-4 py-2 rounded-xl bg-purple-600 text-white">
-              {pwLoading ? 'Αποθήκευση…' : 'Αποθήκευση'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
 
-  {/* Delete Account Modal */}
-  {isDeleteModalOpen && (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold font-poppins text-red-600">Διαγραφή λογαριασμού</h3>
-          <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <p className="text-sm text-gray-700 font-nunito mb-4">Η ενέργεια είναι μη αναστρέψιμη. Θα διαγραφεί ο λογαριασμός σας και τα στοιχεία προφίλ. Είσαι σίγουρος/η;</p>
-        {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
-        <div className="flex justify-end gap-2">
-          <button onClick={() => setIsDeleteModalOpen(false)} className="px-4 py-2 rounded-xl border">Άκυρο</button>
-          <button disabled={deleteLoading} onClick={handleDeleteAccount} className="px-4 py-2 rounded-xl bg-red-600 text-white">
-            {deleteLoading ? 'Διαγραφή…' : 'Διαγραφή'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLogout}
-              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl transition-colors font-nunito"
+              className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl transition-colors font-nunito w-full sm:w-auto"
             >
               <LogOut className="h-5 w-5" />
-              <span>Αποσύνδεση</span>
+              <span>{translate('Αποσύνδεση', 'Logout', 'Se déconnecter')}</span>
             </motion.button>
           </div>
         </div>
       </div>
 
+      {/* Change Password Modal */}
+      {isPwModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold font-poppins">
+                {translate('Αλλαγή κωδικού', 'Change password', 'Changer le mot de passe')}
+              </h3>
+              <button onClick={() => setIsPwModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1 font-nunito">
+                  {translate('Νέος κωδικός', 'New password', 'Nouveau mot de passe')}
+                </label>
+                <input type="password" value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} className="w-full border rounded-xl px-3 py-2" />
+              </div>
+              <div>
+                <label className="block text-sm mb-1 font-nunito">
+                  {translate('Επιβεβαίωση νέου κωδικού', 'Confirm new password', 'Confirmer le nouveau mot de passe')}
+                </label>
+                <input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} className="w-full border rounded-xl px-3 py-2" />
+              </div>
+              {pwError && <div className="text-red-600 text-sm">{pwError}</div>}
+              {pwSuccess && <div className="text-green-600 text-sm">{pwSuccess}</div>}
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setIsPwModalOpen(false)} className="px-4 py-2 rounded-xl border">
+                  {translate('Άκυρο', 'Cancel', 'Annuler')}
+                </button>
+                <button disabled={pwLoading} onClick={handleChangePassword} className="px-4 py-2 rounded-xl bg-purple-600 text-white">
+                  {pwLoading
+                    ? translate('Αποθήκευση…', 'Saving…', 'Enregistrement…')
+                    : translate('Αποθήκευση', 'Save', 'Enregistrer')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold font-poppins text-red-600">
+                {translate('Διαγραφή λογαριασμού', 'Delete account', 'Supprimer le compte')}
+              </h3>
+              <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-700 font-nunito mb-4">
+              {translate(
+                'Η ενέργεια είναι μη αναστρέψιμη. Θα διαγραφεί ο λογαριασμός σας και τα στοιχεία προφίλ. Είσαι σίγουρος/η;',
+                'This action cannot be undone. Your account and profile details will be deleted. Are you sure?',
+                'Cette action est irréversible. Votre compte et vos informations de profil seront supprimés. Êtes-vous sûr(e) ?'
+              )}
+            </p>
+            {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setIsDeleteModalOpen(false)} className="px-4 py-2 rounded-xl border">
+                {translate('Άκυρο', 'Cancel', 'Annuler')}
+              </button>
+              <button disabled={deleteLoading} onClick={handleDeleteAccount} className="px-4 py-2 rounded-xl bg-red-600 text-white">
+                {deleteLoading
+                  ? translate('Διαγραφή…', 'Deleting…', 'Suppression…')
+                  : translate('Διαγραφή', 'Delete', 'Supprimer')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -451,14 +507,17 @@ const UserPanel: React.FC = () => {
                       <div className="w-8 h-8 border-4 border-white/60 border-t-purple-600 rounded-full animate-spin" />
                     </div>
                   )}
-                  <label className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow cursor-pointer hover:bg-gray-50" title="Ανέβασμα/Λήψη εικόνας">
+                  <label
+                    className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow cursor-pointer hover:bg-gray-50"
+                    title={translate('Ανέβασμα/Λήψη εικόνας', 'Upload/Take picture', 'Télécharger/Prendre une photo')}
+                  >
                     {/* Σε κινητό το capture ανοίγει την κάμερα, σε desktop ανοίγει file picker */}
                     <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} className="hidden" />
                     <Camera className="h-4 w-4 text-gray-700" />
                   </label>
                 </div>
                 <h2 className="text-xl font-bold font-poppins mb-2">
-                  {fullName || 'Χρήστης'}
+                  {fullName || translate('Χρήστης', 'User', 'Utilisateur')}
                 </h2>
                 <p className="text-gray-500 text-sm font-nunito">{email}</p>
               </div>
@@ -482,7 +541,9 @@ const UserPanel: React.FC = () => {
                   >
                     <Phone className="h-5 w-5 text-purple-600" />
                     <div>
-                      <p className="text-xs text-gray-500 font-nunito">Τηλέφωνο</p>
+                    <p className="text-xs text-gray-500 font-nunito">
+                      {translate('Τηλέφωνο', 'Phone', 'Téléphone')}
+                    </p>
                       <p className="text-sm font-medium font-nunito">{phone}</p>
                     </div>
                   </motion.div>
@@ -494,8 +555,12 @@ const UserPanel: React.FC = () => {
                 >
                   <Shield className="h-5 w-5 text-green-600" />
                   <div>
-                    <p className="text-xs text-gray-500 font-nunito">Κατάσταση</p>
-                    <p className="text-sm font-medium text-green-600 font-nunito">Επαληθευμένος</p>
+                    <p className="text-xs text-gray-500 font-nunito">
+                      {translate('Κατάσταση', 'Status', 'Statut')}
+                    </p>
+                    <p className="text-sm font-medium text-green-600 font-nunito">
+                      {translate('Επαληθευμένος', 'Verified', 'Vérifié')}
+                    </p>
                   </div>
                 </motion.div>
 
@@ -505,14 +570,14 @@ const UserPanel: React.FC = () => {
                     className="flex items-center justify-center gap-2 bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 py-2 rounded-xl shadow hover:opacity-95"
                   >
                     <Key className="h-4 w-4" />
-                    Αλλαγή κωδικού
+                    {translate('Αλλαγή κωδικού', 'Change password', 'Changer le mot de passe')}
                   </button>
                   <button
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="flex items-center justify-center gap-2 bg-white text-red-600 border border-red-200 px-4 py-2 rounded-xl shadow hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Διαγραφή λογαριασμού
+                    {translate('Διαγραφή λογαριασμού', 'Delete account', 'Supprimer le compte')}
                   </button>
                 </div>
               </div>
@@ -524,14 +589,16 @@ const UserPanel: React.FC = () => {
                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 via-pink-500 to-rose-500 text-white shadow-lg">
                   <Gift className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold font-poppins text-gray-800">Deposit Συνεδριών</h3>
+                <h3 className="text-lg font-bold font-poppins text-gray-800">
+                  {translate('Deposit Συνεδριών', 'Session Deposits', 'Dépôts de séances')}
+                </h3>
               </div>
 
               {/* Total pill */}
               <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-purple-200 rounded-xl px-4 py-2 mb-3">
                 <div className="flex items-center gap-2 text-gray-700 font-nunito">
                   <Coins className="h-4 w-4 text-purple-600" />
-                  <span>Συνολικά διαθέσιμες συνεδρίες</span>
+                  <span>{translate('Συνολικά διαθέσιμες συνεδρίες', 'Total available sessions', 'Séances disponibles au total')}</span>
                 </div>
                 <span className="text-purple-700 font-poppins font-extrabold">{totalRemainingSessions}</span>
               </div>
@@ -541,14 +608,18 @@ const UserPanel: React.FC = () => {
                 <div className="space-y-2">
                   {deposits.map((record, idx) => (
                     <div key={`${record.doctor_id}-${idx}`} className="flex items-center justify-between bg-white/70 border border-purple-100 rounded-xl px-3 py-2">
-                      <span className="text-sm text-gray-700 font-nunito">{record.doctors?.name || 'Γιατρός'}</span>
+                      <span className="text-sm text-gray-700 font-nunito">{record.doctors?.name || translate('Γιατρός', 'Doctor', 'Médecin')}</span>
                       <span className="text-sm font-poppins text-purple-700 font-semibold">{record.remaining_sessions}</span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-sm text-gray-600 font-nunito bg-white/70 border border-purple-100 rounded-xl px-3 py-3">
-                  Δεν έχετε ακόμη προπληρωμένες συνεδρίες. Μπορείτε να τις αγοράσετε από την επιλογή «Προπληρωμένες Συνεδρίες».
+                  {translate(
+                    'Δεν έχετε ακόμη προπληρωμένες συνεδρίες. Μπορείτε να τις αγοράσετε από την επιλογή «Προπληρωμένες Συνεδρίες».',
+                    'You do not have any prepaid sessions yet. You can purchase them through the “Prepaid Sessions” option.',
+                    'Vous n’avez pas encore de séances prépayées. Vous pouvez les acheter via l’option « Séances prépayées ».'
+                  )}
                 </div>
               )}
             </div>
@@ -560,6 +631,7 @@ const UserPanel: React.FC = () => {
                 parentEmail={email}
                 parentPhone={phone}
                 onBookingCompleted={fetchDeposits}
+                language={language}
               />
             )}
           </motion.div>
@@ -574,8 +646,11 @@ const UserPanel: React.FC = () => {
             {/* Welcome Card */}
             <div className="bg-gradient-to-r from-rose-soft to-purple-soft rounded-2xl shadow-xl p-8 text-white">
               <p className="text-white/90 leading-relaxed font-nunito">
-                Είμαστε εδώ για να σας υποστηρίξουμε σε κάθε βήμα του ταξιδιού προς την ψυχική ευημερία. 
-                Χρησιμοποιήστε το προφίλ σας για να διαχειριστείτε τα ραντεβού σας και να έχετε πρόσβαση στις υπηρεσίες μας.
+                {translate(
+                  'Είμαστε εδώ για να σας υποστηρίξουμε σε κάθε βήμα του ταξιδιού προς την ψυχική ευημερία. Χρησιμοποιήστε το προφίλ σας για να διαχειριστείτε τα ραντεβού σας και να έχετε πρόσβαση στις υπηρεσίες μας.',
+                  'We are here to support you at every step of your mental wellness journey. Use your profile to manage appointments and access our services.',
+                  'Nous sommes ici pour vous accompagner à chaque étape de votre parcours vers le bien-être mental. Utilisez votre profil pour gérer vos rendez-vous et accéder à nos services.'
+                )}
               </p>
             </div>
 
@@ -585,7 +660,7 @@ const UserPanel: React.FC = () => {
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsBookingModalOpen(true)}
-                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-3xl shadow-lg p-7 text-left hover:shadow-xl transition-all group border-2 border-purple-200/50 hover:border-purple-400 min-h-[220px]"
+                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-3xl shadow-lg p-7 text-left hover:shadow-xl transition-all group border-2 border-purple-200/50 hover:border-purple-400 min-h-[200px] sm:min-h-[220px]"
               >
                 {/* Subtle animated background */}
                 <motion.div 
@@ -611,18 +686,26 @@ const UserPanel: React.FC = () => {
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h4 className="font-bold font-poppins text-xl text-gray-800">Κλείσε Μεμονωμένο Ραντεβού</h4>
-                      <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-poppins tracking-wide font-semibold">ΝΕΟ</span>
+                      <h4 className="font-bold font-poppins text-xl text-gray-800">
+                        {translate('Κλείσε Μεμονωμένο Ραντεβού', 'Book a Single Appointment', 'Réserver une séance unique')}
+                      </h4>
+                      <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-poppins tracking-wide font-semibold">
+                        {translate('ΝΕΟ', 'NEW', 'NOUVEAU')}
+                      </span>
                     </div>
                     
                     <div className="space-y-1.5 mb-3">
                       <div className="flex items-center gap-2 text-gray-700">
                         <CheckCircle2 className="h-3.5 w-3.5 text-purple-600 flex-shrink-0" />
-                        <p className="text-sm font-nunito">Άμεση κράτηση μιας συνεδρίας</p>
+                        <p className="text-sm font-nunito">
+                          {translate('Άμεση κράτηση μιας συνεδρίας', 'Instantly book a session', 'Réservez immédiatement une séance')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 text-gray-700">
                         <CheckCircle2 className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
-                        <p className="text-sm font-nunito">Επιλογή του ειδικού της επιλογής σου</p>
+                        <p className="text-sm font-nunito">
+                          {translate('Επιλογή του ειδικού της επιλογής σου', 'Choose the specialist you prefer', 'Choisissez le spécialiste de votre choix')}
+                        </p>
                       </div>
                     </div>
                     
@@ -630,7 +713,7 @@ const UserPanel: React.FC = () => {
                     whileHover={{ x: 3 }}
                     className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-md hover:shadow-lg transition-all"
                   >
-                      <span>Άνοιγμα Φόρμας Κράτησης</span>
+                      <span>{translate('Άνοιγμα Φόρμας Κράτησης', 'Open Booking Form', 'Ouvrir le formulaire de réservation')}</span>
                       <motion.svg 
                         animate={{ x: [0, 3, 0] }}
                         transition={{ 
@@ -721,7 +804,9 @@ const UserPanel: React.FC = () => {
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h4 className="font-bold font-poppins text-xl text-gray-800">Προπληρωμένες Συνεδρίες</h4>
+                      <h4 className="font-bold font-poppins text-xl text-gray-800">
+                        {translate('Προπληρωμένες Συνεδρίες', 'Prepaid Sessions', 'Séances prépayées')}
+                      </h4>
                       <motion.span 
                         animate={{ 
                           scale: [1, 1.1, 1],
@@ -732,22 +817,28 @@ const UserPanel: React.FC = () => {
                         }}
                         className="text-[11px] px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-poppins tracking-wide font-bold shadow-md"
                       >
-                        ⭐ ΜΟΝΑΔΙΚΟ
+                        ⭐ {translate('ΜΟΝΑΔΙΚΟ', 'EXCLUSIVE', 'EXCLUSIF')}
                       </motion.span>
                     </div>
                     
                     <div className="space-y-2 mb-3">
                       <div className="flex items-center gap-2 text-gray-700">
                         <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <p className="text-sm font-nunito font-medium">Αγοράστε συνεδρίες εκ των προτέρων</p>
+                        <p className="text-sm font-nunito font-medium">
+                          {translate('Αγοράστε συνεδρίες εκ των προτέρων', 'Purchase sessions in advance', 'Achetez des séances à l’avance')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 text-gray-700">
                         <Clock className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                        <p className="text-sm font-nunito font-medium">Εξαργυρώστε τις όποτε επιθυμείτε</p>
+                        <p className="text-sm font-nunito font-medium">
+                          {translate('Εξαργυρώστε τις όποτε επιθυμείτε', 'Redeem them whenever you wish', 'Utilisez-les quand vous le souhaitez')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 text-gray-700">
                         <Gift className="h-4 w-4 text-pink-600 flex-shrink-0" />
-                        <p className="text-sm font-nunito font-medium">Μεγιστοποιήστε την ευελιξία σας</p>
+                        <p className="text-sm font-nunito font-medium">
+                          {translate('Μεγιστοποιήστε την ευελιξία σας', 'Maximize your flexibility', 'Maximisez votre flexibilité')}
+                        </p>
                       </div>
                     </div>
                     
@@ -755,7 +846,7 @@ const UserPanel: React.FC = () => {
                       whileHover={{ x: 4 }}
                       className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
                     >
-                      <span>Αγορά Προπληρωμένων Συνεδριών</span>
+                      <span>{translate('Αγορά Προπληρωμένων Συνεδριών', 'Purchase Prepaid Sessions', 'Acheter des séances prépayées')}</span>
                       <motion.svg 
                         animate={{ x: [0, 4, 0] }}
                         transition={{ 
@@ -790,22 +881,32 @@ const UserPanel: React.FC = () => {
 
             {/* Information Card */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="text-xl font-bold mb-4 font-poppins">Πληροφορίες Λογαριασμού</h3>
+              <h3 className="text-xl font-bold mb-4 font-poppins">
+                {translate('Πληροφορίες Λογαριασμού', 'Account Information', 'Informations du compte')}
+              </h3>
               <div className="space-y-3 font-nunito">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Μέλος από</span>
+                  <span className="text-gray-600">
+                    {translate('Μέλος από', 'Member since', 'Membre depuis')}
+                  </span>
                   <span className="font-medium">
-                    {user?.created_at ? new Date(user.created_at).toLocaleDateString('el-GR') : '-'}
+                    {user?.created_at ? new Date(user.created_at).toLocaleDateString(locale) : '-'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Τελευταία σύνδεση</span>
+                  <span className="text-gray-600">
+                    {translate('Τελευταία σύνδεση', 'Last login', 'Dernière connexion')}
+                  </span>
                   <span className="font-medium">
-                    {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString('el-GR') : 'Τώρα'}
+                    {user?.last_sign_in_at
+                      ? new Date(user.last_sign_in_at).toLocaleDateString(locale)
+                      : translate('Τώρα', 'Now', 'Maintenant')}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">ID Χρήστη</span>
+                  <span className="text-gray-600">
+                    {translate('ID Χρήστη', 'User ID', 'ID utilisateur')}
+                  </span>
                   <span className="font-medium text-xs text-gray-500">{user?.id?.substring(0, 8)}...</span>
                 </div>
               </div>
@@ -815,7 +916,7 @@ const UserPanel: React.FC = () => {
 
             {/* Review Form (μόνο η φόρμα) */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <ReviewForm language={'gr'} defaultName={fullName || (email ? email.split('@')[0] : '')} />
+              <ReviewForm language={language} defaultName={fullName || (email ? email.split('@')[0] : '')} />
             </div>
           </motion.div>
         </div>
@@ -824,16 +925,18 @@ const UserPanel: React.FC = () => {
       {/* Booking Modal with Contact Form */}
       {isBookingModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setIsBookingModalOpen(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto" onClick={(e)=> e.stopPropagation()}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto mx-auto" onClick={(e)=> e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-bold font-poppins">Στείλτε ένα Μήνυμα</h3>
+              <h3 className="text-lg font-bold font-poppins">
+                {translate('Στείλτε ένα Μήνυμα', 'Send a Message', 'Envoyer un message')}
+              </h3>
               <button onClick={() => setIsBookingModalOpen(false)} className="text-gray-500 hover:text-gray-700">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-2 sm:p-4">
               <Contact 
-                language={'gr'} 
+                language={language} 
                 onlyForm
                 prefill={{
                   parentName: fullName || (email ? email.split('@')[0] : ''),
@@ -853,7 +956,7 @@ const UserPanel: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto border-2 border-purple-200/50" 
+            className="bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto border-2 border-purple-200/50 mx-auto" 
             onClick={(e)=> e.stopPropagation()}
           >
             {/* Header with gradient */}
@@ -878,8 +981,16 @@ const UserPanel: React.FC = () => {
                     <Wallet className="h-6 w-6 text-white" />
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-bold font-poppins text-white">Προπληρωμένες Συνεδρίες</h3>
-                    <p className="text-white/90 text-sm font-nunito mt-1">Δημιουργήστε Deposit για Μελλοντική Εξαργύρωση</p>
+                    <h3 className="text-2xl font-bold font-poppins text-white">
+                      {translate('Προπληρωμένες Συνεδρίες', 'Prepaid Sessions', 'Séances prépayées')}
+                    </h3>
+                    <p className="text-white/90 text-sm font-nunito mt-1">
+                      {translate(
+                        'Δημιουργήστε Deposit για Μελλοντική Εξαργύρωση',
+                        'Create a deposit for future redemption',
+                        'Créez un dépôt pour une utilisation ultérieure'
+                      )}
+                    </p>
                   </div>
                 </div>
                 <motion.button 
@@ -905,19 +1016,33 @@ const UserPanel: React.FC = () => {
                     <Star className="h-5 w-5" />
                   </motion.div>
                   <div className="flex-1">
-                    <h4 className="font-bold font-poppins text-gray-800 mb-2">Γιατί Προπληρωμένες Συνεδρίες;</h4>
+                    <h4 className="font-bold font-poppins text-gray-800 mb-2">
+                      {translate('Γιατί Προπληρωμένες Συνεδρίες;', 'Why choose prepaid sessions?', 'Pourquoi des séances prépayées ?')}
+                    </h4>
                     <div className="space-y-2 text-sm font-nunito text-gray-700">
                       <div className="flex items-center gap-2">
                         <Coins className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                        <span>Αγοράστε <strong>όσες συνεδρίες</strong> θέλετε</span>
+                        <span>
+                          {translate('Αγοράστε ', 'Buy ', 'Achetez ')}
+                          <strong>{translate('όσες συνεδρίες', 'as many sessions', 'autant de séances')}</strong>
+                          {translate(' θέλετε', ' as you need', ' que vous souhaitez')}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Wallet className="h-4 w-4 text-pink-600 flex-shrink-0" />
-                        <span>Πιστώνονται <strong>αυτόματα στο deposit</strong> του λογαριασμού σας</span>
+                        <span>
+                          {translate('Πιστώνονται ', 'They are credited ', 'Elles sont créditées ')}
+                          <strong>{translate('αυτόματα στο deposit', 'automatically to the deposit', 'automatiquement sur le dépôt')}</strong>
+                          {translate(' του λογαριασμού σας', ' of your account', ' de votre compte')}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-rose-600 flex-shrink-0" />
-                        <span>Εξαργυρώστε τις <strong>όποτε επιθυμείτε</strong> μελλοντικά</span>
+                        <span>
+                          {translate('Εξαργυρώστε τις ', 'Redeem them ', 'Utilisez-les ')}
+                          <strong>{translate('όποτε επιθυμείτε', 'whenever you wish', 'quand vous le souhaitez')}</strong>
+                          {translate(' μελλοντικά', ' in the future', ' ultérieurement')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -929,7 +1054,7 @@ const UserPanel: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
                     <User className="h-4 w-4 text-purple-600" />
-                    Γιατρός
+                    {translate('Γιατρός', 'Doctor', 'Médecin')}
                   </label>
                   <select 
                     value={selectedDoctorIdPkg} 
@@ -944,7 +1069,7 @@ const UserPanel: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
                     <Coins className="h-4 w-4 text-pink-600" />
-                    Τιμή ανά συνεδρία
+                    {translate('Τιμή ανά συνεδρία', 'Price per session', 'Prix par séance')}
                   </label>
                   <div className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 font-semibold text-gray-800 font-nunito">
                     {pricePerSessionCents? `€${(pricePerSessionCents/100).toFixed(2)}`: '-'}
@@ -956,7 +1081,7 @@ const UserPanel: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-rose-600" />
-                    Πλήθος συνεδριών
+                    {translate('Πλήθος συνεδριών', 'Number of sessions', 'Nombre de séances')}
                   </label>
                   <input 
                     type="number" 
@@ -969,7 +1094,7 @@ const UserPanel: React.FC = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2 font-poppins text-gray-700 flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-purple-600" />
-                    Συνολικό Deposit
+                    {translate('Συνολικό Deposit', 'Total deposit', 'Dépôt total')}
                   </label>
                   <div className="w-full border-2 border-purple-400 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg font-poppins shadow-lg">
                     €{(totalAmountCents/100).toFixed(2)}
@@ -982,7 +1107,18 @@ const UserPanel: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <Gift className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <p className="text-sm font-nunito text-gray-700 leading-relaxed">
-                    <strong className="text-blue-800">Σημαντικό:</strong> Οι προπληρωμένες συνεδρίες που αγοράζετε <strong>πιστώνονται αυτόματα στο deposit</strong> του λογαριασμού σας και μπορείτε να τις εξαργυρώσετε οποτεδήποτε στο μέλλον, βάσει διαθεσιμότητας, αποκλειστικά με τον επιλεγμένο γιατρό.
+                    <strong className="text-blue-800">{translate('Σημαντικό:', 'Important:', 'Important :')}</strong>{' '}
+                    {translate(
+                      'Οι προπληρωμένες συνεδρίες που αγοράζετε ',
+                      'The prepaid sessions you purchase ',
+                      'Les séances prépayées que vous achetez '
+                    )}
+                    <strong>{translate('πιστώνονται αυτόματα στο deposit', 'are automatically credited to the deposit', 'sont automatiquement créditées sur le dépôt')}</strong>
+                    {translate(
+                      ' του λογαριασμού σας και μπορείτε να τις εξαργυρώσετε οποτεδήποτε στο μέλλον, βάσει διαθεσιμότητας, αποκλειστικά με τον επιλεγμένο γιατρό.',
+                      ' of your account and can be redeemed at any time in the future, subject to availability, exclusively with the selected doctor.',
+                      ' de votre compte et peuvent être utilisées à tout moment dans le futur, sous réserve de disponibilité, exclusivement avec le médecin sélectionné.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -1013,12 +1149,16 @@ const UserPanel: React.FC = () => {
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                     />
-                    <span className="relative z-10">Μετάβαση στο Stripe…</span>
+                    <span className="relative z-10">
+                      {translate('Μετάβαση στο Stripe…', 'Redirecting to Stripe…', 'Redirection vers Stripe…')}
+                    </span>
                   </>
                 ) : (
                   <>
                     <CreditCard className="h-6 w-6 relative z-10" />
-                    <span className="relative z-10">Πληρωμή & Δημιουργία Deposit</span>
+                    <span className="relative z-10">
+                      {translate('Πληρωμή & Δημιουργία Deposit', 'Pay & Create Deposit', 'Paiement et création du dépôt')}
+                    </span>
                     <ArrowRight className="h-5 w-5 relative z-10" />
                   </>
                 )}

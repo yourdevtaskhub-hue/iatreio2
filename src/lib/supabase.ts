@@ -30,7 +30,8 @@ const getSupabaseAdmin = () => {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
-        detectSessionInUrl: false
+        detectSessionInUrl: false,
+        storageKey: 'supabase-admin-service-role'
       }
     });
   }

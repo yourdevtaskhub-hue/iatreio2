@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -21,7 +21,15 @@ import PaymentSuccessPopup from './components/PaymentSuccessPopup';
 import { usePaymentSuccess } from './hooks/usePaymentSuccess';
 
 function App() {
-  const [language, setLanguage] = useState('gr');
+  const [language, setLanguage] = useState<'gr' | 'en' | 'fr'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('appLanguage');
+      if (stored === 'en' || stored === 'fr' || stored === 'gr') {
+        return stored;
+      }
+    }
+    return 'gr';
+  });
   const [currentPage, setCurrentPage] = useState('home');
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   
@@ -53,15 +61,25 @@ function App() {
     }
   }, [paymentSuccess.isSuccess]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('appLanguage', language);
+    }
+  }, [language]);
+
+  const handleLanguageChange = useCallback((lang: 'gr' | 'en' | 'fr') => {
+    setLanguage(lang);
+  }, []);
+
   // Simple routing
   const renderPage = () => {
     switch (currentPage) {
       case 'admin':
         return <Admin />;
       case 'auth':
-        return <Auth language={language as any} />;
+        return <Auth language={language} />;
       case 'panel':
-        return <UserPanel />;
+        return <UserPanel language={language} />;
       case 'eirini':
         return <EiriniPanel language={language} onLogout={() => setCurrentPage('home')} />;
       case 'ioanna':
@@ -71,8 +89,8 @@ function App() {
       default:
         return (
           <>
-            <Header language={language} setLanguage={setLanguage} />
-            <Hero language={language} setLanguage={setLanguage} />
+            <Header language={language} setLanguage={handleLanguageChange} />
+            <Hero language={language} setLanguage={handleLanguageChange} />
             <TrustSection language={language} />
             <About language={language} />
             <TeamMembers language={language} />

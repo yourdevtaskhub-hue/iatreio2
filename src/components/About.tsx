@@ -4,6 +4,7 @@ import { GraduationCap, Award, Users, Clock, Star, X } from 'lucide-react';
 // import drProfile from '../assets/profile.png';
 import happyTeen from '../assets/happyteen.jpg';
 import specialtyTitleImg from '../assets/ΤΙΤΛΟΣ ΕΙΔΙΚΟΤΗΤΑΣ.png';
+import specialtyTitlePrimaryImg from '../assets/ΤΙΤΛΟΣ1ΗΣ ΕΙΔΙΚΟΤΗΤΑΣ.png';
 import recognitionImg from '../assets/Αναγνωριση.png';
 import psychotherapyImg from '../assets/Ψυχοθεραπεία.png';
 
@@ -393,7 +394,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                   </div>
                   <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
                     <div className="space-y-4">
-                      {[specialtyTitleImg, recognitionImg, psychotherapyImg].map((image, idx)=> (
+                      {[specialtyTitlePrimaryImg, specialtyTitleImg, recognitionImg, psychotherapyImg].map((image, idx)=> (
                         <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                           <img
                             src={image}
