@@ -18,6 +18,8 @@ export interface CreateCheckoutSessionData {
   concerns: string;
   amountCents: number;
   sessionsCount?: number; // Optional: for deposit purchases
+  scheduleDetails?: Array<{ date: string; time: string }>;
+  manualSessionsLabel?: string;
 }
 
 export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) => {
@@ -123,7 +125,9 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
             concerns: data.concerns || '',
             amountCents: effectiveAmountCents,
             priceId: override ? override.priceId : stripePriceId || null, // null for deposits
-            sessionsCount: data.sessionsCount || null // for deposit purchases
+            sessionsCount: data.sessionsCount || null, // for deposit purchases
+            scheduleDetails: Array.isArray(data.scheduleDetails) ? data.scheduleDetails : null,
+            manualSessionsLabel: data.manualSessionsLabel || null
           };
           
           console.log('🔍 [DEBUG] === FRONTEND: Sending to Netlify Function ===');

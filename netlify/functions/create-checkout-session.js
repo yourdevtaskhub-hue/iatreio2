@@ -86,7 +86,9 @@ exports.handler = async (event, context) => {
       concerns, 
       amountCents, 
       priceId,
-      sessionsCount: sessionsCountFromBody // Optional: passed explicitly for deposit purchases
+      sessionsCount: sessionsCountFromBody, // Optional: passed explicitly for deposit purchases
+      scheduleDetails: scheduleDetailsFromBody,
+      manualSessionsLabel
     } = body;
 
     console.log('🔍 [CHECKOUT] Raw request body:', JSON.stringify(body, null, 2));
@@ -101,15 +103,32 @@ exports.handler = async (event, context) => {
       amountCents, 
       priceId,
       sessionsCountFromBody,
+      scheduleDetailsFromBody,
+      manualSessionsLabel,
       amountCentsType: typeof amountCents,
       amountCentsValue: amountCents
     });
+
+    const normalizedScheduleDetails = Array.isArray(scheduleDetailsFromBody)
+      ? scheduleDetailsFromBody
+          .map((item, index) => {
+            if (!item) return null;
+            const date = typeof item.date === 'string' ? item.date.trim() : '';
+            const time = typeof item.time === 'string' ? item.time.trim() : '';
+            if (!date || !time) return null;
+            return { index: index + 1, date, time };
+          })
+          .filter(Boolean)
+      : [];
+
+    console.log('🔍 [CHECKOUT] Normalized schedule details:', normalizedScheduleDetails);
 
     // Check if this is a deposit purchase
     const isDeposit = (typeof concerns === 'string') && concerns.startsWith('DEPOSIT_PURCHASE');
     // Also check if appointment date/time are empty (deposit indicator)
     const isDepositByEmptyFields = (!appointmentDate || appointmentDate === '') && (!appointmentTime || appointmentTime === '');
-    const finalIsDeposit = isDeposit || isDepositByEmptyFields;
+    const isManualDeposit = (typeof concerns === 'string') && concerns.startsWith('MANUAL_DEPOSIT#');
+    const finalIsDeposit = isDeposit || isDepositByEmptyFields || isManualDeposit;
     
     // Extract sessions count for deposit purchases
     // Priority: 1) Explicit sessionsCount from body, 2) Extract from concerns, 3) null
@@ -143,6 +162,11 @@ exports.handler = async (event, context) => {
         }
       }
       
+      if (!sessionsCount && normalizedScheduleDetails.length > 0) {
+        sessionsCount = normalizedScheduleDetails.length;
+        console.log('✅ [CHECKOUT] Using schedule details count as sessions count:', sessionsCount);
+      }
+
       if (!sessionsCount) {
         console.error('❌ [CHECKOUT] Could not determine sessions count! Will use generic description.');
         console.error('❌ [CHECKOUT] sessionsCountFromBody:', sessionsCountFromBody);
@@ -166,12 +190,25 @@ exports.handler = async (event, context) => {
 
     // Validate required fields
     // CRITICAL: For deposits, we allow empty appointmentDate/Time and null priceId
+    const normalizedAmountCents = Math.round(Number(amountCents));
+    if (!Number.isFinite(normalizedAmountCents) || normalizedAmountCents <= 0) {
+      console.error('❌ [CHECKOUT] Invalid amountCents provided:', amountCents);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid amountCents provided for checkout session.',
+          received: amountCents
+        })
+      };
+    }
+
     const missing = [];
     if (!doctorId) missing.push('doctorId');
     if (!doctorName) missing.push('doctorName');
     if (!parentName) missing.push('parentName');
     if (!parentEmail) missing.push('parentEmail');
-    if (!amountCents || amountCents === 0) missing.push('amountCents');
+    if (!normalizedAmountCents || normalizedAmountCents === 0) missing.push('amountCents');
     
     // Only require appointmentDate/Time and priceId if NOT a deposit
     if (!finalIsDeposit) {
@@ -189,7 +226,7 @@ exports.handler = async (event, context) => {
         hasDoctorName: !!doctorName,
         hasParentName: !!parentName,
         hasParentEmail: !!parentEmail,
-        hasAmountCents: !!amountCents && amountCents !== 0,
+        hasAmountCents: !!normalizedAmountCents && normalizedAmountCents !== 0,
         hasAppointmentDate: !!appointmentDate && appointmentDate !== '',
         hasAppointmentTime: !!appointmentTime && appointmentTime !== '',
         hasPriceId: !!priceId,
@@ -208,7 +245,7 @@ exports.handler = async (event, context) => {
             hasDoctorName: !!doctorName,
             hasParentName: !!parentName,
             hasParentEmail: !!parentEmail,
-            hasAmountCents: !!amountCents && amountCents !== 0,
+            hasAmountCents: !!normalizedAmountCents && normalizedAmountCents !== 0,
             hasAppointmentDate: !!appointmentDate && appointmentDate !== '',
             hasAppointmentTime: !!appointmentTime && appointmentTime !== '',
             hasPriceId: !!priceId,
@@ -222,7 +259,7 @@ exports.handler = async (event, context) => {
 
     console.log('🔍 [CHECKOUT] Preparing to create payment record with payload:', {
       doctorId,
-      amountCents,
+      amountCents: normalizedAmountCents,
       parentEmail,
       parentName,
       appointmentDate,
@@ -237,7 +274,7 @@ exports.handler = async (event, context) => {
       .from('payments')
       .insert({
         doctor_id: doctorId,
-        amount_cents: amountCents,
+        amount_cents: normalizedAmountCents,
         currency: 'eur',
         status: 'pending',
         customer_email: parentEmail,
@@ -254,7 +291,7 @@ exports.handler = async (event, context) => {
       console.error('❌ [CHECKOUT] Failed to create payment record:', paymentError);
       console.error('❌ [CHECKOUT] Payment insert payload that failed:', {
         doctorId,
-        amountCents,
+        amountCents: normalizedAmountCents,
         parentEmail,
         parentName,
         appointmentDate,
@@ -276,7 +313,7 @@ exports.handler = async (event, context) => {
     // Create Stripe Checkout Session
     console.log('🔍 [CHECKOUT] Creating Stripe Checkout Session...');
     console.log('🔍 [CHECKOUT] isDeposit:', isDeposit);
-    console.log('🔍 [CHECKOUT] amountCents:', amountCents);
+    console.log('🔍 [CHECKOUT] amountCents:', normalizedAmountCents);
     console.log('🔍 [CHECKOUT] priceId:', priceId);
     console.log('🔍 [CHECKOUT] Stripe key mode:', process.env.STRIPE_SECRET_KEY ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST') : 'FALLBACK');
     
@@ -325,29 +362,48 @@ exports.handler = async (event, context) => {
     console.log('🔍 [CHECKOUT] sessionsCount:', sessionsCount, 'type:', typeof sessionsCount);
     console.log('🔍 [CHECKOUT] sessionsCount > 0?:', sessionsCount && sessionsCount > 0);
     
+    const scheduleSummaryText = normalizedScheduleDetails.length
+      ? normalizedScheduleDetails
+          .map(item => `${item.index}) ${item.date} ${item.time}`)
+          .join(' | ')
+      : '';
+
     if (finalIsDeposit) {
-      if (sessionsCount && sessionsCount > 0 && !isNaN(sessionsCount)) {
-        description = `${sessionsCount} συνεδρίες`;
+      const effectiveSessionsCount = sessionsCount && sessionsCount > 0 ? sessionsCount : normalizedScheduleDetails.length;
+      if (manualSessionsLabel) {
+        description = manualSessionsLabel;
+      } else if (effectiveSessionsCount && scheduleSummaryText) {
+        description = `${effectiveSessionsCount} συνεδρίες: ${scheduleSummaryText}`;
+        console.log('✅ [CHECKOUT] Using detailed schedule description:', description);
+      } else if (effectiveSessionsCount) {
+        description = `${effectiveSessionsCount} συνεδρίες`;
         console.log('✅ [CHECKOUT] Using sessions count in description:', description);
       } else {
         description = 'Προπληρωμένες συνεδρίες';
         console.warn('⚠️ [CHECKOUT] Using generic description because sessionsCount is invalid:', sessionsCount);
       }
     } else {
-      description = `Συνεδρία ${appointmentDate} ${appointmentTime}`;
+      if (manualSessionsLabel) {
+        description = manualSessionsLabel;
+      } else {
+        description = `Συνεδρία ${appointmentDate} ${appointmentTime}`;
+      }
       console.log('🔍 [CHECKOUT] Using appointment description for regular booking');
     }
     
     console.log('🔍 [CHECKOUT] Final description:', description);
     console.log('🔍 [CHECKOUT] === END BUILDING DESCRIPTION ===');
-    
+    const productName = finalIsDeposit
+      ? `${manualSessionsLabel || 'Deposit συνεδριών'} — ${doctorName}`
+      : `Ραντεβού με ${doctorName}`;
+ 
     const lineItem = shouldUsePriceData
       ? {
           price_data: {
             currency: 'eur',
-            unit_amount: amountCents,
+            unit_amount: normalizedAmountCents,
             product_data: { 
-              name: finalIsDeposit ? `Deposit συνεδριών — ${doctorName}` : `Ραντεβού με ${doctorName}`,
+              name: productName,
               description: description
             },
           },
@@ -381,8 +437,11 @@ exports.handler = async (event, context) => {
           appointment_time: isDeposit ? '' : appointmentTime,
           doctor_name: doctorName,
           concerns: concerns || '',
-          amount_cents: amountCents.toString(),
+          amount_cents: normalizedAmountCents.toString(),
           sessions_count: sessionsCount ? sessionsCount.toString() : '',
+          schedule_details: scheduleSummaryText,
+          schedule_details_json: normalizedScheduleDetails.length ? JSON.stringify(normalizedScheduleDetails) : '',
+          manual_sessions_label: manualSessionsLabel || ''
         },
       };
       console.log('🔍 [CHECKOUT] Session data about to send to Stripe:', JSON.stringify(sessionData, null, 2));

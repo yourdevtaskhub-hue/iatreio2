@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3 } from 'lucide-react';
+import { Mail, MapPin, Clock, Calendar, Shield, Heart, Send, Instagram, Facebook, X, Clock3, CreditCard, Loader2 } from 'lucide-react';
 import profile2 from '../assets/profile2.JPG';
 import { supabase } from '../lib/supabase';
 import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
@@ -8,6 +8,8 @@ import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 import StripeCheckout from './StripeCheckout';
 import { getLocalizedClosureReason } from '../utils/closureReason';
+import { getDoctorPrice } from '../lib/stripe-api';
+import { createRealStripeCheckout } from '../lib/stripe-checkout';
 
 const RESTRICTED_DOCTOR_NAMES = new Set(['Ιωάννα Πισσάρη', 'Σοφία Σπυριάδου']);
 const THREE_HOUR_LIMIT_MINUTES = 3 * 60;
@@ -138,11 +140,37 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
+  const [showManualDepositPopup, setShowManualDepositPopup] = useState(false);
+  const [manualDepositForm, setManualDepositForm] = useState({
+    parentName: '',
+    email: '',
+    phone: '',
+    doctorId: '',
+    sessionsCount: 1,
+    schedules: [{ date: '', time: '' }],
+    notes: ''
+  });
+  const [manualDepositPrice, setManualDepositPrice] = useState<number | null>(null);
+  const [manualDepositPriceLoading, setManualDepositPriceLoading] = useState(false);
+  const [manualDepositError, setManualDepositError] = useState<string | null>(null);
+  const [isSubmittingManualDeposit, setIsSubmittingManualDeposit] = useState(false);
+  const [manualDepositAgreements, setManualDepositAgreements] = useState({
+    policy: false,
+    recording: false,
+    consent: false
+  });
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId) || null;
   const isRestrictedDoctor = !!selectedDoctor && RESTRICTED_DOCTOR_NAMES.has(selectedDoctor.name);
   const hasThreeHourRestrictedSlots = isRestrictedDoctor && slots.some(slot => slot.reason === 'withinThreeHours');
   const userTimezone = useMemo(() => getUserTimezone(), []);
   const todayDateString = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date()), [userTimezone]);
+  const manualDepositTotalCents = manualDepositPrice !== null ? manualDepositPrice * manualDepositForm.sessionsCount : null;
+  const manualDepositTotalFormatted = manualDepositTotalCents !== null
+    ? (manualDepositTotalCents / 100).toLocaleString(
+        language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      )
+    : '—';
 
   // Function to translate doctor names for display only (UI)
   const getDoctorDisplayName = (doctor: Doctor) => {
@@ -349,6 +377,193 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     const { name, value } = e.target;
     setWaitlistFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const openManualDepositModal = () => {
+    setManualDepositError(null);
+    setManualDepositPrice(null);
+    setIsSubmittingManualDeposit(false);
+    setManualDepositAgreements({ policy: false, recording: false, consent: false });
+    setManualDepositForm({
+      parentName: formData.parentName || '',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      doctorId: selectedDoctorId || '',
+      sessionsCount: 1,
+      schedules: [{ date: '', time: '' }],
+      notes: ''
+    });
+    setShowManualDepositPopup(true);
+  };
+
+  const handleManualDepositInputChange = (field: keyof typeof manualDepositForm, value: string | number) => {
+    setManualDepositForm(prev => {
+      if (field === 'sessionsCount') {
+        const count = Math.max(1, Number(value) || 1);
+        const updatedSchedules = Array.from({ length: count }, (_, idx) => prev.schedules[idx] || { date: '', time: '' });
+        return {
+          ...prev,
+          sessionsCount: count,
+          schedules: updatedSchedules
+        };
+      }
+      return {
+        ...prev,
+        [field]: value
+      } as typeof manualDepositForm;
+    });
+  };
+
+  const handleManualDepositScheduleChange = (index: number, field: 'date' | 'time', value: string) => {
+    setManualDepositForm(prev => {
+      const schedules = [...prev.schedules];
+      schedules[index] = { ...schedules[index], [field]: value };
+      return { ...prev, schedules };
+    });
+  };
+
+  const handleManualDepositSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingManualDeposit) return;
+
+    const manualStrings = content[language].manualDeposit;
+    if (!manualDepositForm.parentName.trim()) {
+      setManualDepositError(manualStrings.validation.name);
+      return;
+    }
+    if (!manualDepositForm.email.trim() || !manualDepositForm.email.includes('@')) {
+      setManualDepositError(manualStrings.validation.email);
+      return;
+    }
+    if (!manualDepositForm.doctorId) {
+      setManualDepositError(manualStrings.validation.doctor);
+      return;
+    }
+    if (!manualDepositForm.sessionsCount || manualDepositForm.sessionsCount < 1) {
+      setManualDepositError(manualStrings.validation.sessions);
+      return;
+    }
+    const hasEmptySchedule = manualDepositForm.schedules.some(s => !s.date.trim() || !s.time.trim());
+    if (hasEmptySchedule) {
+      const message = manualDepositForm.schedules.some(s => !s.date.trim())
+        ? manualStrings.validation.date
+        : manualStrings.validation.time;
+      setManualDepositError(message);
+      return;
+    }
+    if (manualDepositPrice === null) {
+      setManualDepositError(manualStrings.priceLoading);
+      return;
+    }
+    if (!manualDepositAgreements.policy || !manualDepositAgreements.recording || !manualDepositAgreements.consent) {
+      setManualDepositError(manualStrings.validation.policy);
+      return;
+    }
+
+    const doctor = doctors.find(d => d.id === manualDepositForm.doctorId);
+    if (!doctor) {
+      setManualDepositError(manualStrings.validation.doctor);
+      return;
+    }
+
+    const sanitizedSchedules = manualDepositForm.schedules.map((schedule, index) => ({
+      index: index + 1,
+      date: schedule.date.trim(),
+      time: schedule.time.trim()
+    }));
+
+    const scheduleDetailsString = sanitizedSchedules
+      .map((item) => `Session ${item.index}: ${item.date} ${item.time}`)
+      .join(' | ');
+    const scheduleDetailsPayload = sanitizedSchedules.map(({ date, time }) => ({ date, time }));
+
+    const totalCents = Math.round(Number(manualDepositPrice) * Number(manualDepositForm.sessionsCount));
+    if (!Number.isFinite(totalCents) || totalCents <= 0) {
+      setManualDepositError(content[language].manualDeposit.error);
+      return;
+    }
+
+    const firstSchedule = sanitizedSchedules[0] || { date: '', time: '' };
+    const trimmedUserNotes = manualDepositForm.notes?.trim() || '';
+    const notesPayload = {
+      userNotes: trimmedUserNotes,
+      schedules: scheduleDetailsPayload,
+      summary: scheduleDetailsString
+    };
+    const combinedNotes = JSON.stringify(notesPayload);
+
+    const sessionsCount = manualDepositForm.sessionsCount;
+    const sessionsLabel = (() => {
+      const count = sessionsCount;
+      if (language === 'en') {
+        return count === 1 ? '1 session' : `${count} sessions`;
+      }
+      if (language === 'fr') {
+        return count === 1 ? '1 séance' : `${count} séances`;
+      }
+      return count === 1 ? '1 συνεδρία' : `${count} συνεδρίες`;
+    })();
+
+    setIsSubmittingManualDeposit(true);
+    setManualDepositError(null);
+
+    try {
+      const { data: inserted, error: insertError } = await supabase
+        .from('manual_deposit_requests')
+        .insert({
+          doctor_id: manualDepositForm.doctorId,
+          doctor_name: doctor.name,
+          session_count: manualDepositForm.sessionsCount,
+          appointment_date: firstSchedule.date,
+          appointment_time: firstSchedule.time,
+          parent_name: manualDepositForm.parentName,
+          parent_email: manualDepositForm.email,
+          parent_phone: manualDepositForm.phone || null,
+          amount_cents: totalCents,
+          notes: combinedNotes || null,
+          status: 'pending',
+          error_message: null
+        })
+        .select()
+        .single();
+
+      if (insertError || !inserted) {
+        throw insertError || new Error('Failed to create deposit request.');
+      }
+
+      try {
+        const checkoutResult = await createRealStripeCheckout({
+          doctorId: manualDepositForm.doctorId,
+          doctorName: doctor.name,
+          parentName: manualDepositForm.parentName,
+          parentEmail: manualDepositForm.email,
+          appointmentDate: '',
+          appointmentTime: '',
+          concerns: `MANUAL_DEPOSIT#${inserted.id}`,
+          amountCents: totalCents,
+          sessionsCount: manualDepositForm.sessionsCount,
+          scheduleDetails: scheduleDetailsPayload,
+          manualSessionsLabel: sessionsLabel
+        });
+
+        if (checkoutResult?.paymentId) {
+          await supabase
+            .from('manual_deposit_requests')
+            .update({ payment_id: checkoutResult.paymentId, status: 'pending_checkout' })
+            .eq('id', inserted.id);
+        }
+      } catch (checkoutError: any) {
+        await supabase
+          .from('manual_deposit_requests')
+          .update({ status: 'checkout_failed', error_message: checkoutError?.message || null })
+          .eq('id', inserted.id);
+        throw checkoutError;
+      }
+    } catch (error: any) {
+      console.error('Manual deposit error:', error);
+      setManualDepositError(error?.message || content[language].manualDeposit.error);
+      setIsSubmittingManualDeposit(false);
+    }
+  };
   const content = {
     gr: {
       title: 'Επικοινωνία',
@@ -430,7 +645,35 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistPhone: 'Τηλέφωνο',
       waitlistMessage: 'Σύντομο Μήνυμα (προαιρετικό)',
       waitlistSubmit: 'Αποστολή Αιτήματος',
-      waitlistCancel: 'Ακύρωση'
+      waitlistCancel: 'Ακύρωση',
+      manualDeposit: {
+        button: 'Κατάθεση',
+        title: 'Κατάθεση Συνεδριών',
+        subtitle: 'Συμπληρώστε τα στοιχεία της κατάθεσης και προχωρήστε στην πληρωμή μέσω Stripe.',
+        parentName: 'Όνομα Γονέα',
+        email: 'Email',
+        phone: 'Τηλέφωνο',
+        doctor: 'Γιατρός',
+        sessions: 'Πλήθος συνεδριών',
+        appointmentDate: 'Ημερομηνία συνεδρίας',
+        appointmentTime: 'Ώρα συνεδρίας',
+        notes: 'Σημειώσεις (προαιρετικό)',
+        total: 'Πληρωτέο ποσό',
+        priceLoading: 'Υπολογισμός τιμής...',
+        submit: 'Μετάβαση στην πληρωμή',
+        cancel: 'Κλείσιμο',
+        perSession: 'ανά συνεδρία',
+        validation: {
+          name: 'Συμπληρώστε το όνομά σας.',
+          email: 'Συμπληρώστε έγκυρο email.',
+          doctor: 'Επιλέξτε γιατρό.',
+          sessions: 'Ο αριθμός συνεδριών πρέπει να είναι τουλάχιστον 1.',
+          date: 'Συμπληρώστε την ημερομηνία.',
+          time: 'Συμπληρώστε την ώρα.',
+          policy: 'Παρακαλώ αποδεχθείτε όλους τους όρους.'
+        },
+        error: 'Παρουσιάστηκε σφάλμα κατά τη διαδικασία. Παρακαλώ δοκιμάστε ξανά.'
+      }
     },
     en: {
       title: 'Contact',
@@ -513,7 +756,35 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistPhone: 'Phone',
       waitlistMessage: 'Brief Message (optional)',
       waitlistSubmit: 'Submit Request',
-      waitlistCancel: 'Cancel'
+      waitlistCancel: 'Cancel',
+      manualDeposit: {
+        button: 'Deposit',
+        title: 'Manual Deposit Booking',
+        subtitle: 'Fill in the session details and proceed to payment through Stripe.',
+        parentName: 'Parent/Guardian Name',
+        email: 'Email',
+        phone: 'Phone',
+        doctor: 'Doctor',
+        sessions: 'Number of sessions',
+        appointmentDate: 'Session date',
+        appointmentTime: 'Session time',
+        notes: 'Notes (optional)',
+        total: 'Total amount',
+        priceLoading: 'Calculating price...',
+        submit: 'Proceed to payment',
+        cancel: 'Close',
+        perSession: 'per session',
+        validation: {
+          name: 'Please enter your name.',
+          email: 'Please enter a valid email.',
+          doctor: 'Please select a doctor.',
+          sessions: 'Sessions must be at least 1.',
+          date: 'Please provide the date.',
+          time: 'Please provide the time.',
+          policy: 'Please accept all policies to continue.'
+        },
+        error: 'Something went wrong. Please try again.'
+      }
     },
     fr: {
       title: 'Contact',
@@ -576,8 +847,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       doctor: 'Médecin',
       selectDoctor: 'Sélectionnez un médecin',
       slotLegend: 'Disponibilité: Vert disponible, Rouge non disponible',
-      threeHourRestrictionMessage: 'Pour les séances avec les psychologues cliniciennes pour enfants Ioanna Pissari et Sofia Spyriadou, vous pouvez réserver jusqu’à 3 heures avant l’heure du rendez-vous.',
-      threeHourRestrictionTooltip: 'Réservation possible jusqu’à 3 heures avant la séance.',
+      threeHourRestrictionMessage: 'Pour les séances avec les psychologues cliniciennes pour enfants Ioanna Pissari et Sofia Spyriadou, vous pouvez réserver jusqu\'à 3 heures avant l\'heure du rendez-vous.',
+      threeHourRestrictionTooltip: 'Réservation possible jusqu\'à 3 heures avant la séance.',
       appointmentDatePlaceholder: 'Sélectionnez la date qui vous intéresse',
       privacy: 'Je comprends que ce formulaire n\'est pas pour les situations d\'urgence. Pour une aide immédiate, veuillez contacter les services d\'urgence ou aller au service d\'urgence le plus proche.',
       recordingPolicy: 'Politique d\'enregistrement & d\'archivage: Pour des raisons de confidentialité et d\'éthique, l\'enregistrement et/ou la vidéosurveillance des sessions est strictement interdite. En cas de violation de cette politique, des sanctions seront imposées.',
@@ -595,9 +866,70 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistPhone: 'Téléphone',
       waitlistMessage: 'Message Bref (optionnel)',
       waitlistSubmit: 'Soumettre la Demande',
-      waitlistCancel: 'Annuler'
+      waitlistCancel: 'Annuler',
+      manualDeposit: {
+        button: 'Dépôt',
+        title: 'Dépôt manuel de séances',
+        subtitle: 'Renseignez les détails de la séance puis procédez au paiement via Stripe.',
+        parentName: 'Nom du parent / tuteur',
+        email: 'Email',
+        phone: 'Téléphone',
+        doctor: 'Médecin',
+        sessions: 'Nombre de séances',
+        appointmentDate: 'Date de séance',
+        appointmentTime: 'Heure de séance',
+        notes: 'Notes (optionnel)',
+        total: 'Montant à payer',
+        priceLoading: 'Calcul du tarif...',
+        submit: 'Procéder au paiement',
+        cancel: 'Fermer',
+        perSession: 'par séance',
+        validation: {
+          name: 'Veuillez saisir votre nom.',
+          email: 'Veuillez saisir un email valide.',
+          doctor: 'Veuillez choisir un médecin.',
+          sessions: 'Le nombre de séances doit être au moins égal à 1.',
+          date: 'Veuillez indiquer la date.',
+          time: 'Veuillez indiquer l\'heure.',
+          policy: 'Veuillez accepter toutes les conditions pour continuer.'
+        },
+        error: 'Une erreur est survenue. Veuillez réessayer.'
+      }
     }
   };
+
+  useEffect(() => {
+    if (!showManualDepositPopup) return;
+    if (!manualDepositForm.doctorId) {
+      setManualDepositPrice(null);
+      return;
+    }
+
+    let isActive = true;
+    setManualDepositPriceLoading(true);
+    setManualDepositError(null);
+
+    const doctorName = doctors.find(d => d.id === manualDepositForm.doctorId)?.name;
+
+    getDoctorPrice(manualDepositForm.doctorId, doctorName)
+      .then((price) => {
+        if (!isActive) return;
+        setManualDepositPrice(price);
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        console.error('Failed to load doctor price for manual deposit:', error);
+        setManualDepositError(error?.message || content[language].manualDeposit.error);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setManualDepositPriceLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [showManualDepositPopup, manualDepositForm.doctorId, doctors, language]);
 
   // Φόρτωση γιατρών και ρύθμισης
   useEffect(() => {
@@ -1488,8 +1820,287 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 {content[language].privacyDesc}
               </p>
             </motion.div>
+
           </motion.div>
         </div>
+        <div className="mt-6 max-w-3xl mx-auto flex justify-center">
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            type="button"
+            onClick={openManualDepositModal}
+            className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-purple-800 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <CreditCard className="h-5 w-5" />
+            <span>{content[language].manualDeposit.button}</span>
+          </motion.button>
+        </div>
+
+        {/* Manual Deposit Popup */}
+        <AnimatePresence>
+          {showManualDepositPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={() => {
+                if (!isSubmittingManualDeposit) {
+                  setShowManualDepositPopup(false);
+                  setIsSubmittingManualDeposit(false);
+                }
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 40 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[95vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white rounded-t-3xl p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold font-poppins">{content[language].manualDeposit.title}</h3>
+                      <p className="text-sm text-white/80 font-nunito mt-1">
+                        {content[language].manualDeposit.subtitle}
+                      </p>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => !isSubmittingManualDeposit && setShowManualDepositPopup(false)}
+                      className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <X className="h-5 w-5 text-white" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-5">
+                  <form onSubmit={handleManualDepositSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.parentName}
+                        </label>
+                        <input
+                          type="text"
+                          value={manualDepositForm.parentName}
+                          onChange={(e) => handleManualDepositInputChange('parentName', e.target.value)}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.email}
+                        </label>
+                        <input
+                          type="email"
+                          value={manualDepositForm.email}
+                          onChange={(e) => handleManualDepositInputChange('email', e.target.value)}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.phone}
+                        </label>
+                        <input
+                          type="tel"
+                          value={manualDepositForm.phone}
+                          onChange={(e) => handleManualDepositInputChange('phone', e.target.value)}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.doctor}
+                        </label>
+                        <select
+                          value={manualDepositForm.doctorId}
+                          onChange={(e) => handleManualDepositInputChange('doctorId', e.target.value)}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          required
+                        >
+                          <option value="">{content[language].selectDoctor}</option>
+                          {doctors.map((doctor) => (
+                            <option key={doctor.id} value={doctor.id}>
+                              {getDoctorDisplayName(doctor)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.sessions}
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={manualDepositForm.sessionsCount}
+                          onChange={(e) => handleManualDepositInputChange('sessionsCount', Math.max(1, Number(e.target.value)))}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          required
+                        />
+                      </div>
+                    <div className="space-y-4">
+                      {manualDepositForm.schedules.map((schedule, index) => (
+                        <div key={`schedule-${index}`} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                              {`${content[language].manualDeposit.appointmentDate} ${index + 1}`}
+                            </label>
+                            <input
+                              type="text"
+                              value={schedule.date}
+                              onChange={(e) => handleManualDepositScheduleChange(index, 'date', e.target.value)}
+                              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                              placeholder={language === 'gr' ? 'π.χ. 25/11/2025' : language === 'fr' ? 'ex. 25/11/2025' : 'e.g. 25/11/2025'}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                              {`${content[language].manualDeposit.appointmentTime} ${index + 1}`}
+                            </label>
+                            <input
+                              type="text"
+                              value={schedule.time}
+                              onChange={(e) => handleManualDepositScheduleChange(index, 'time', e.target.value)}
+                              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                              placeholder={language === 'gr' ? 'π.χ. 18:30' : language === 'fr' ? 'ex. 18:30' : 'e.g. 18:30'}
+                              required
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    </div>
+
+                    <div className="space-y-3 text-sm text-red-600 font-nunito">
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={manualDepositAgreements.policy}
+                          onChange={(e) =>
+                            setManualDepositAgreements(prev => ({ ...prev, policy: e.target.checked }))
+                          }
+                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                        />
+                        <span className="leading-relaxed">
+                          {content[language].privacy}
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={manualDepositAgreements.recording}
+                          onChange={(e) =>
+                            setManualDepositAgreements(prev => ({ ...prev, recording: e.target.checked }))
+                          }
+                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                        />
+                        <span className="leading-relaxed">
+                          {content[language].recordingPolicy}
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={manualDepositAgreements.consent}
+                          onChange={(e) =>
+                            setManualDepositAgreements(prev => ({ ...prev, consent: e.target.checked }))
+                          }
+                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                        />
+                        <span className="leading-relaxed">
+                          {content[language].parentalConsent}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                        {content[language].manualDeposit.notes}
+                      </label>
+                      <textarea
+                        value={manualDepositForm.notes}
+                        onChange={(e) => handleManualDepositInputChange('notes', e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                        rows={3}
+                        placeholder=""
+                      ></textarea>
+                    </div>
+
+                    <div className="bg-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 font-poppins">{content[language].manualDeposit.total}</p>
+                        <p className="text-xs text-gray-500 font-nunito">
+                          {manualDepositPriceLoading
+                            ? content[language].manualDeposit.priceLoading
+                            : manualDepositPrice !== null
+                            ? `€${(manualDepositPrice / 100).toFixed(2)} ${content[language].manualDeposit.perSession}`
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="text-2xl font-extrabold text-purple-700 font-poppins">
+                        {manualDepositTotalCents !== null ? `€${manualDepositTotalFormatted}` : '—'}
+                      </div>
+                    </div>
+
+                    {manualDepositError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 font-nunito text-sm">
+                        {manualDepositError}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => !isSubmittingManualDeposit && setShowManualDepositPopup(false)}
+                        className="px-4 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors font-semibold"
+                        disabled={isSubmittingManualDeposit}
+                      >
+                        {content[language].manualDeposit.cancel}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={
+                          isSubmittingManualDeposit ||
+                          manualDepositPriceLoading ||
+                          manualDepositPrice === null
+                        }
+                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {isSubmittingManualDeposit ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>{content[language].manualDeposit.priceLoading}</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4" />
+                            <span>{content[language].manualDeposit.submit}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Beautiful Waitlist Popup */}
         <AnimatePresence>

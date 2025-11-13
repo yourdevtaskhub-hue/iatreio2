@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle, Eye, RefreshCw, DollarSign, TrendingUp, Users, Search, ChevronLeft, ChevronRight, X, Mail, Phone, User, Calendar, Info } from 'lucide-react';
 import { supabaseAdmin } from '../lib/supabase';
@@ -6,6 +6,7 @@ import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
 import { parseClosureReason } from '../utils/closureReason';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
+import { normalizeDoctorOverrideKey } from '../config/stripe-doctor-overrides';
 
 interface AdminPanelProps {
   language: 'gr' | 'en';
@@ -20,7 +21,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   // Appointments state
-  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'waitinglist' | 'wallet' | 'closures' | 'customers'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'appointments' | 'waitinglist' | 'wallet' | 'closures' | 'manualDeposits' | 'customers'>('reviews');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
@@ -35,13 +36,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     totalSessions: 0,
     completedSessions: 0,
     pendingSessions: 0,
-    averageSession: 0
+    averageSession: 0,
+    anna: {
+      totalRevenue: 0,
+      thisMonth: 0,
+      lastMonth: 0,
+      totalSessions: 0,
+      completedSessions: 0,
+      pendingSessions: 0,
+      averageSession: 0
+    }
   });
   const [walletLoading, setWalletLoading] = useState(false);
   
   // Waiting list state
   const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
   const [waitingListLoading, setWaitingListLoading] = useState(false);
+  const [manualDeposits, setManualDeposits] = useState<any[]>([]);
+  const [manualDepositsLoading, setManualDepositsLoading] = useState(false);
+  const [manualDepositsPage, setManualDepositsPage] = useState(1);
+  const manualDepositsPerPage = 5;
+  const [fytrouManualDeposits, setFytrouManualDeposits] = useState<any[]>([]);
+  const [fytrouDepositsPage, setFytrouDepositsPage] = useState(1);
+  const [walletSearch, setWalletSearch] = useState('');
   
   // Customers state
   const [customers, setCustomers] = useState<any[]>([]);
@@ -93,6 +110,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       completedSessions: 'Ολοκληρωμένες',
       pendingSessions: 'Εκκρεμείς',
       averageSession: 'Μέσο Εισόδημα/Συνεδρία',
+      annaLabel: 'Dr. Άννα Μαρία Φύτρου',
+      annaRevenue: 'Έσοδα Δρ. Φύτρου',
+      annaThisMonth: 'Μηνιαία έσοδα Δρ. Φύτρου',
+      annaSessions: 'Συνεδρίες Δρ. Φύτρου',
+      annaAverage: 'Μέσο ανά συνεδρία (Δρ. Φύτρου)',
+      annaCompletedShort: 'Ολοκλ.',
+      annaPendingShort: 'Εκκρ.',
       recentTransactions: 'Πρόσφατες Συναλλαγές',
       noTransactions: 'Δεν υπάρχουν συναλλαγές',
       // Waiting list content
@@ -107,7 +131,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       preferredTime: 'Προτιμώμενη Ώρα',
       message: 'Μήνυμα',
       submittedAt: 'Υποβλήθηκε',
-      refresh: 'Ανανέωση'
+      refresh: 'Ανανέωση',
+      manualDepositsTab: 'Κατάθεση-Κουμπί',
+      manualDepositsTitle: 'Καταθέσεις μέσω κουμπιού',
+      manualDepositsSubtitle: 'Κρατήσεις που προήλθαν από την επιλογή "Κατάθεση"',
+      manualDepositsNoEntries: 'Δεν έχουν καταχωρηθεί καταθέσεις.',
+      manualDepositsRefresh: 'Ανανέωση Λίστας',
+      manualDepositColumns: {
+        createdAt: 'Ημερομηνία',
+        parent: 'Γονέας',
+        doctor: 'Γιατρός',
+        sessions: 'Συνεδρίες',
+        amount: 'Ποσό',
+        date: 'Ημ. συνεδρίας',
+        time: 'Ώρα',
+        status: 'Κατάσταση',
+        paymentId: 'Payment ID',
+        notes: 'Σημειώσεις'
+      },
+      manualDepositStatus: {
+        pending: 'Εκκρεμεί',
+        completed: 'Ολοκληρώθηκε',
+        checkout_failed: 'Απέτυχε',
+        pending_checkout: 'Σε εξέλιξη'
+      },
+      manualDepositActions: {
+        markCompleted: 'Σήμανση ως ολοκληρωμένο',
+        markPending: 'Επαναφορά σε εκκρεμότητα'
+      }
     },
     en: {
       title: 'Ιατρείο Panel - Reviews Management',
@@ -149,6 +200,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       completedSessions: 'Completed',
       pendingSessions: 'Pending',
       averageSession: 'Average per Session',
+      annaLabel: 'Dr. Anna Maria Fytrou',
+      annaRevenue: 'Dr. Fytrou revenue',
+      annaThisMonth: 'Monthly revenue (Dr. Fytrou)',
+      annaSessions: 'Dr. Fytrou sessions',
+      annaAverage: 'Average per session (Dr. Fytrou)',
+      annaCompletedShort: 'Completed',
+      annaPendingShort: 'Pending',
       recentTransactions: 'Recent Transactions',
       noTransactions: 'No transactions found',
       // Waiting list content
@@ -163,7 +221,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       preferredTime: 'Preferred Time',
       message: 'Message',
       submittedAt: 'Submitted',
-      refresh: 'Refresh'
+      refresh: 'Refresh',
+      manualDepositsTab: 'Deposit Button',
+      manualDepositsTitle: 'Manual Deposits',
+      manualDepositsSubtitle: 'Payments created via the "Deposit" button on the public site',
+      manualDepositsNoEntries: 'No manual deposits recorded.',
+      manualDepositsRefresh: 'Refresh List',
+      manualDepositColumns: {
+        createdAt: 'Date',
+        parent: 'Parent',
+        doctor: 'Doctor',
+        sessions: 'Sessions',
+        amount: 'Amount',
+        date: 'Session date',
+        time: 'Session time',
+        status: 'Status',
+        paymentId: 'Payment ID',
+        notes: 'Notes'
+      },
+      manualDepositStatus: {
+        pending: 'Pending',
+        completed: 'Completed',
+        checkout_failed: 'Checkout failed',
+        pending_checkout: 'Processing'
+      },
+      manualDepositActions: {
+        markCompleted: 'Mark as completed',
+        markPending: 'Mark as pending'
+      }
     }
   };
 
@@ -242,43 +327,99 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const fetchWalletData = async () => {
     try {
       setWalletLoading(true);
-      
-      // Fetch all payments
-      const { data: paymentsData, error: paymentsError } = await supabaseAdmin
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false });
+
+      const [{ data: paymentsData, error: paymentsError }, { data: doctorsData }] = await Promise.all([
+        supabaseAdmin
+          .from('payments')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabaseAdmin
+          .from('doctors')
+          .select('id, name')
+      ]);
 
       if (paymentsError) {
         throw paymentsError;
       }
 
-      setPayments(paymentsData || []);
+      const paymentsList = paymentsData || [];
+      setPayments(paymentsList);
 
-      // Calculate stats
+      // Helpers to identify Dr. Fytrou
+      const normalizeName = (value: string | null | undefined) =>
+        (value || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/δρ\./g, 'dr')
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      const annaKeywords = [
+        'dr anna maria fytrou',
+        'anna maria fytrou',
+        'fytrou anna maria',
+        'dr anna maria fytroy',
+        'anna maria fytroy'
+      ];
+
+      const isAnnaName = (name: string | null | undefined) => {
+        const normalized = normalizeName(name);
+        if (!normalized) return false;
+        return annaKeywords.some(keyword => normalized.includes(keyword));
+      };
+
+      const annaDoctorId =
+        (doctorsData || []).find((doc: any) => isAnnaName(doc.name))?.id || null;
+
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-      const totalRevenue = paymentsData
-        ?.filter((p: any) => p.status === 'completed')
-        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
+      const parseDate = (value: string | null | undefined) => (value ? new Date(value) : null);
 
-      const thisMonthRevenue = paymentsData
-        ?.filter((p: any) => p.status === 'completed' && new Date(p.created_at) >= thisMonth)
-        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
+      const completedPayments = paymentsList.filter((p: any) => p.status === 'completed');
+      const thisMonthCompleted = completedPayments.filter((p: any) => {
+        const createdAt = parseDate(p.created_at);
+        return createdAt ? createdAt >= thisMonth : false;
+      });
+      const lastMonthCompleted = completedPayments.filter((p: any) => {
+        const createdAt = parseDate(p.created_at);
+        return createdAt ? createdAt >= lastMonth && createdAt <= lastMonthEnd : false;
+      });
 
-      const lastMonthRevenue = paymentsData
-        ?.filter((p: any) => p.status === 'completed' && 
-          new Date(p.created_at) >= lastMonth && 
-          new Date(p.created_at) <= lastMonthEnd)
-        .reduce((sum: number, p: any) => sum + p.amount_cents, 0) || 0;
-
-      const totalSessions = paymentsData?.length || 0;
-      const completedSessions = paymentsData?.filter((p: any) => p.status === 'completed').length || 0;
-      const pendingSessions = paymentsData?.filter((p: any) => p.status === 'pending').length || 0;
+      const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const thisMonthRevenue = thisMonthCompleted.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const lastMonthRevenue = lastMonthCompleted.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const totalSessions = paymentsList.length;
+      const completedSessions = completedPayments.length;
+      const pendingSessions = paymentsList.filter((p: any) => p.status === 'pending').length;
       const averageSession = completedSessions > 0 ? totalRevenue / completedSessions : 0;
+
+      const isAnnaPayment = (payment: any) =>
+        (payment?.doctor_id && annaDoctorId && payment.doctor_id === annaDoctorId) ||
+        isAnnaName(payment?.doctor_name);
+
+      const annaPayments = paymentsList.filter(isAnnaPayment);
+      const annaCompleted = annaPayments.filter((p: any) => p.status === 'completed');
+      const annaThisMonthCompleted = annaCompleted.filter((p: any) => {
+        const createdAt = parseDate(p.created_at);
+        return createdAt ? createdAt >= thisMonth : false;
+      });
+      const annaLastMonthCompleted = annaCompleted.filter((p: any) => {
+        const createdAt = parseDate(p.created_at);
+        return createdAt ? createdAt >= lastMonth && createdAt <= lastMonthEnd : false;
+      });
+
+      const annaTotalRevenue = annaCompleted.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const annaThisMonthRevenue = annaThisMonthCompleted.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const annaLastMonthRevenue = annaLastMonthCompleted.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0);
+      const annaTotalSessions = annaPayments.length;
+      const annaCompletedSessions = annaCompleted.length;
+      const annaPendingSessions = annaPayments.filter((p: any) => p.status === 'pending').length;
+      const annaAverageSession = annaCompletedSessions > 0 ? annaTotalRevenue / annaCompletedSessions : 0;
 
       setWalletStats({
         totalRevenue,
@@ -287,9 +428,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         totalSessions,
         completedSessions,
         pendingSessions,
-        averageSession
+        averageSession,
+        anna: {
+          totalRevenue: annaTotalRevenue,
+          thisMonth: annaThisMonthRevenue,
+          lastMonth: annaLastMonthRevenue,
+          totalSessions: annaTotalSessions,
+          completedSessions: annaCompletedSessions,
+          pendingSessions: annaPendingSessions,
+          averageSession: annaAverageSession
+        }
       });
-
     } catch (error) {
       console.error('Error fetching wallet data:', error);
     } finally {
@@ -373,6 +522,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
+  const fetchManualDeposits = async () => {
+    try {
+      setManualDepositsLoading(true);
+      const { data, error } = await supabaseAdmin
+        .from('manual_deposit_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      const enhanced = (data || []).map((entry: any) => ({
+        ...entry,
+        _parsedNotes: parseManualDepositNotes(entry.notes)
+      }));
+      setManualDeposits(enhanced);
+      setManualDepositsPage(1);
+
+      const fytrouDoctorId = enhanced.find((entry: any) => normalizeDoctorOverrideKey(entry?.doctor_name) === normalizeDoctorOverrideKey('Dr. Άννα Μαρία Φύτρου'))?.doctor_id
+        || (await supabaseAdmin
+          .from('doctors')
+          .select('id')
+          .eq('name', 'Dr. Άννα Μαρία Φύτρου')
+          .maybeSingle()
+        ).data?.id || null;
+
+      const fytrouDeposits = fytrouDoctorId
+        ? enhanced.filter((entry: any) => entry.doctor_id === fytrouDoctorId)
+        : enhanced.filter((entry: any) => normalizeDoctorOverrideKey(entry?.doctor_name).includes(normalizeDoctorOverrideKey('Dr. Άννα Μαρία Φύτρου')));
+      setFytrouManualDeposits(fytrouDeposits);
+      setFytrouDepositsPage(1);
+    } catch (error) {
+      console.error('Error fetching manual deposits:', error);
+    } finally {
+      setManualDepositsLoading(false);
+    }
+  };
+
   const fetchCustomers = async () => {
     try {
       setCustomersLoading(true);
@@ -450,12 +635,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     fetchAppointmentsMeta();
     fetchWalletData();
     fetchWaitingList();
+    fetchManualDeposits();
     fetchCustomers();
   }, []);
 
   useEffect(() => {
     if (activeTab === 'customers') {
       fetchCustomers();
+    }
+    if (activeTab === 'manualDeposits') {
+      fetchManualDeposits();
     }
   }, [activeTab]);
 
@@ -506,6 +695,155 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
+  const manualDepositStatusLabel = (status: string) => {
+    const statusMap = content[language].manualDepositStatus as Record<string, string>;
+    return statusMap[status] || status;
+  };
+
+  const manualDepositStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'checkout_failed':
+        return 'bg-red-100 text-red-800';
+      case 'pending_checkout':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  const parseManualDepositNotes = (notes: string | null | undefined) => {
+    if (!notes) {
+      return { userNotes: '', sessions: [] as string[] };
+    }
+
+    // Try JSON payload first
+    try {
+      const parsed = JSON.parse(notes);
+      if (parsed && Array.isArray(parsed.schedules)) {
+        const sessions = parsed.schedules
+          .map((item: any, idx: number) => {
+            const date = (item?.date || '').toString().trim();
+            const time = (item?.time || '').toString().trim();
+            if (!date || !time) return null;
+            return `Session ${idx + 1}: ${date} ${time}`;
+          })
+          .filter(Boolean) as string[];
+        const userNotes = typeof parsed.userNotes === 'string' ? parsed.userNotes.trim() : '';
+        return { userNotes, sessions };
+      }
+    } catch {
+      // Non-JSON notes - fall back to regex parsing
+    }
+
+    const sessionRegex = /Session\s*\d+:[^|\n]+/gi;
+    const sessions = (notes.match(sessionRegex) || []).map(s => s.replace(/\s+/g, ' ').trim());
+    let userNotes = notes;
+    sessions.forEach(sessionText => {
+      userNotes = userNotes.replace(sessionText, '');
+    });
+    userNotes = userNotes.replace(/\|\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    return { userNotes, sessions };
+  };
+
+  const updateManualDepositStatus = async (id: string, nextStatus: string) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('manual_deposit_requests')
+        .update({ status: nextStatus })
+        .eq('id', id);
+      if (error) throw error;
+
+      setManualDeposits(prev =>
+        prev.map(entry =>
+          entry.id === id ? { ...entry, status: nextStatus } : entry
+        )
+      );
+      setFytrouManualDeposits(prev =>
+        prev.map(entry =>
+          entry.id === id ? { ...entry, status: nextStatus } : entry
+        )
+      );
+    } catch (error) {
+      console.error('Failed to update manual deposit status:', error);
+      alert(content[language].error);
+    }
+  };
+
+  const deleteManualDeposit = async (id: string) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('manual_deposit_requests')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+
+      setManualDeposits(prev => {
+        const next = prev.filter(entry => entry.id !== id);
+        const totalPages = Math.max(1, Math.ceil(next.length / manualDepositsPerPage));
+        setManualDepositsPage(current => Math.min(current, totalPages));
+        return next;
+      });
+
+      setFytrouManualDeposits(prev => {
+        const next = prev.filter(entry => entry.id !== id);
+        const totalPages = Math.max(1, Math.ceil(next.length / manualDepositsPerPage));
+        setFytrouDepositsPage(current => Math.min(current, totalPages));
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to delete manual deposit:', error);
+      alert(content[language].error);
+    }
+  };
+
+  const filteredPayments = useMemo(() => {
+    const term = walletSearch.trim().toLowerCase();
+    if (!term) return payments;
+    return payments.filter((payment: any) => {
+      const amountEuros = (payment.amount_cents ?? 0) / 100;
+      const searchableFields = [
+        payment.parent_name,
+        payment.parent_email,
+        payment.doctor_name,
+        payment.appointment_date,
+        payment.appointment_time,
+        payment.status,
+        amountEuros.toFixed(2),
+        amountEuros.toString()
+      ];
+      return searchableFields.some(
+        (field) => typeof field === 'string' && field.toLowerCase().includes(term)
+      );
+    });
+  }, [payments, walletSearch]);
+  const transactionsCount = filteredPayments.length;
+  const displayedPayments = useMemo(
+    () => filteredPayments.slice(0, 10),
+    [filteredPayments]
+  );
+
+  const manualDepositsTotalPages = Math.max(1, Math.ceil(Math.max(manualDeposits.length, 1) / manualDepositsPerPage));
+  const manualDepositsStart = (manualDepositsPage - 1) * manualDepositsPerPage;
+  const manualDepositsEnd = manualDepositsStart + manualDepositsPerPage;
+  const paginatedManualDeposits = manualDeposits.slice(manualDepositsStart, manualDepositsEnd);
+  const depositPaginationLabels = language === 'gr'
+    ? {
+        range: (start: number, end: number, total: number) => `Εμφάνιση ${start}-${end} από ${total} καταθέσεις`,
+        prev: 'Προηγούμενη',
+        next: 'Επόμενη'
+      }
+    : {
+        range: (start: number, end: number, total: number) => `Showing ${start}-${end} of ${total} deposits`,
+        prev: 'Previous',
+        next: 'Next'
+      };
+  const fytrouDepositsTotalPages = Math.max(1, Math.ceil(Math.max(fytrouManualDeposits.length, 1) / manualDepositsPerPage));
+  const fytrouDepositsStart = (fytrouDepositsPage - 1) * manualDepositsPerPage;
+  const fytrouDepositsEnd = fytrouDepositsStart + manualDepositsPerPage;
+  const paginatedFytrouDeposits = fytrouManualDeposits.slice(fytrouDepositsStart, fytrouDepositsEnd);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -547,6 +885,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
             <button onClick={() => setActiveTab('appointments')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='appointments'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>{apptContent[language].tabTitle}</button>
             <button onClick={() => setActiveTab('waitinglist')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='waitinglist'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>📋 {content[language].waitingList}</button>
             <button onClick={() => setActiveTab('closures')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='closures'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>🏖️ Διακοπές / Κλείσιμο</button>
+            <button onClick={() => setActiveTab('manualDeposits')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='manualDeposits'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>💳 {content[language].manualDepositsTab}</button>
             <button onClick={() => setActiveTab('wallet')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='wallet'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>💰 {content[language].wallet}</button>
             <button onClick={() => setActiveTab('customers')} className={`px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base ${activeTab==='customers'?'bg-gradient-to-r from-rose-soft to-purple-soft text-white':'text-gray-700'}`}>👥 Χρήστες-Πληροφοριές</button>
           </div>
@@ -733,6 +1072,356 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         </>
         )}
 
+        {activeTab === 'manualDeposits' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div className="bg-white rounded-2xl shadow p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 font-poppins">
+                  {content[language].manualDepositsTitle}
+                </h3>
+                <p className="text-sm text-gray-600 font-nunito mt-1">
+                  {content[language].manualDepositsSubtitle}
+                </p>
+              </div>
+              <button
+                onClick={fetchManualDeposits}
+                disabled={manualDepositsLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${manualDepositsLoading ? 'animate-spin' : ''}`} />
+                <span>{content[language].manualDepositsRefresh}</span>
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow overflow-hidden">
+              {manualDepositsLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-soft mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-nunito">{content[language].loading}</p>
+                </div>
+              ) : manualDeposits.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-gray-600 font-nunito text-lg">
+                    {content[language].manualDepositsNoEntries}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px]">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.createdAt}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.parent}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.doctor}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.sessions}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.amount}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.date}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.time}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.status}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.paymentId}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.notes}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].actions}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {paginatedManualDeposits.map((entry) => (
+                        <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.created_at ? new Date(entry.created_at).toLocaleString() : '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-gray-800 font-poppins text-sm">{entry.parent_name}</div>
+                            <div className="text-xs text-gray-500 font-nunito">{entry.parent_email}</div>
+                            {entry.parent_phone && (
+                              <div className="text-xs text-gray-500 font-nunito">{entry.parent_phone}</div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.doctor_name || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.session_count || 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            €{entry.amount_cents ? (entry.amount_cents / 100).toFixed(2) : '0.00'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.appointment_date || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.appointment_time || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${manualDepositStatusBadge(entry.status)}`}>
+                              {manualDepositStatusLabel(entry.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
+                            {entry.payment_id || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
+                            {entry._parsedNotes?.userNotes ? (
+                              <p className="mb-2 whitespace-pre-line">{entry._parsedNotes.userNotes}</p>
+                            ) : null}
+                            {entry._parsedNotes?.sessions?.length ? (
+                              <ul className="list-disc list-inside space-y-1 text-gray-600">
+                                {entry._parsedNotes.sessions.map((session: string) => (
+                                  <li key={session}>{session}</li>
+                                ))}
+                              </ul>
+                            ) : null}
+                            {!entry._parsedNotes?.userNotes && !(entry._parsedNotes?.sessions?.length) && (
+                              <span>—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              {entry.status !== 'completed' && (
+                                <button
+                                  onClick={() => updateManualDepositStatus(entry.id, 'completed')}
+                                  className="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold"
+                                >
+                                  {content[language].manualDepositActions.markCompleted}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm(language === 'gr' ? 'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώρηση;' : 'Are you sure you want to delete this entry?')) {
+                                    deleteManualDeposit(entry.id);
+                                  }
+                                }}
+                                className="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold"
+                              >
+                                {language === 'gr' ? 'Διαγραφή' : 'Delete'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {manualDeposits.length > 0 && (
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <div className="text-sm text-gray-500 font-nunito">
+                  {depositPaginationLabels.range(
+                    manualDepositsStart + 1,
+                    Math.min(manualDepositsEnd, manualDeposits.length),
+                    manualDeposits.length
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setManualDepositsPage(prev => Math.max(prev - 1, 1))}
+                    disabled={manualDepositsPage === 1}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {depositPaginationLabels.prev}
+                  </button>
+                  <span className="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 font-semibold">
+                    {manualDepositsPage} / {manualDepositsTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setManualDepositsPage(prev => Math.min(prev + 1, manualDepositsTotalPages))}
+                    disabled={manualDepositsPage === manualDepositsTotalPages}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {depositPaginationLabels.next}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 bg-purple-50">
+                <h4 className="text-lg font-bold text-gray-800 font-poppins">
+                  {language === 'gr' ? 'Καταθέσεις μόνο για Dr. Άννα Μαρία Φύτρου' : 'Dr. Fytrou manual deposits'}
+                </h4>
+              </div>
+              {manualDepositsLoading ? (
+                <div className="p-6 text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-400 mx-auto mb-3"></div>
+                  <p className="text-gray-600 font-nunito">{content[language].loading}</p>
+                </div>
+              ) : fytrouManualDeposits.length === 0 ? (
+                <div className="p-6 text-center text-gray-600 font-nunito">
+                  {language === 'gr' ? 'Δεν υπάρχουν καταθέσεις για τη Δρ. Φύτρου.' : 'No deposits for Dr. Fytrou.'}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px]">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.createdAt}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.parent}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.sessions}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.amount}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.date}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.time}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.status}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.paymentId}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].manualDepositColumns.notes}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
+                          {content[language].actions}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {paginatedFytrouDeposits.map((entry) => (
+                        <tr key={entry.id} className="hover:bg-purple-50 transition-colors">
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.created_at ? new Date(entry.created_at).toLocaleString() : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            <div className="font-semibold text-gray-800 font-poppins text-sm">{entry.parent_name}</div>
+                            <div className="text-xs text-gray-500 font-nunito">{entry.parent_email}</div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.session_count || 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            €{entry.amount_cents ? (entry.amount_cents / 100).toFixed(2) : '0.00'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.appointment_date || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
+                            {entry.appointment_time || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${manualDepositStatusBadge(entry.status)}`}>
+                              {manualDepositStatusLabel(entry.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
+                            {entry.payment_id || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
+                            {entry._parsedNotes?.userNotes ? (
+                              <p className="mb-2 whitespace-pre-line">{entry._parsedNotes.userNotes}</p>
+                            ) : null}
+                            {entry._parsedNotes?.sessions?.length ? (
+                              <ul className="list-disc list-inside space-y-1 text-gray-600">
+                                {entry._parsedNotes.sessions.map((session: string) => (
+                                  <li key={session}>{session}</li>
+                                ))}
+                              </ul>
+                            ) : null}
+                            {!entry._parsedNotes?.userNotes && !(entry._parsedNotes?.sessions?.length) && (
+                              <span>—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              {entry.status !== 'completed' && (
+                                <button
+                                  onClick={() => updateManualDepositStatus(entry.id, 'completed')}
+                                  className="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold"
+                                >
+                                  {content[language].manualDepositActions.markCompleted}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm(language === 'gr' ? 'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώρηση;' : 'Are you sure you want to delete this entry?')) {
+                                    deleteManualDeposit(entry.id);
+                                  }
+                                }}
+                                className="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold"
+                              >
+                                {language === 'gr' ? 'Διαγραφή' : 'Delete'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {fytrouManualDeposits.length > 0 && (
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <div className="text-sm text-gray-500 font-nunito">
+                  {depositPaginationLabels.range(
+                    fytrouDepositsStart + 1,
+                    Math.min(fytrouDepositsEnd, fytrouManualDeposits.length),
+                    fytrouManualDeposits.length
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setFytrouDepositsPage(prev => Math.max(prev - 1, 1))}
+                    disabled={fytrouDepositsPage === 1}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {depositPaginationLabels.prev}
+                  </button>
+                  <span className="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 font-semibold">
+                    {fytrouDepositsPage} / {fytrouDepositsTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setFytrouDepositsPage(prev => Math.min(prev + 1, fytrouDepositsTotalPages))}
+                    disabled={fytrouDepositsPage === fytrouDepositsTotalPages}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {depositPaginationLabels.next}
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {activeTab === 'appointments' && settings && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-6">
             <div className="bg-white rounded-2xl shadow p-6">
@@ -780,6 +1469,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                     <p className="text-3xl font-bold">€{Math.round(walletStats.totalRevenue / 100).toLocaleString()}</p>
                   </div>
                 </div>
+                <div className="mt-4 bg-white/20 rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                    {content[language].annaLabel}
+                  </p>
+                  <p className="text-xl font-bold text-white">
+                    €{Math.round(walletStats.anna.totalRevenue / 100).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-white/80 mt-1">
+                    {content[language].annaRevenue}
+                  </p>
+                </div>
               </motion.div>
 
               {/* This Month */}
@@ -797,6 +1497,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                     <p className="text-blue-100 text-sm font-medium">{content[language].thisMonth}</p>
                     <p className="text-3xl font-bold">€{Math.round(walletStats.thisMonth / 100).toLocaleString()}</p>
                   </div>
+                </div>
+                <div className="mt-4 bg-white/20 rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                    {content[language].annaLabel}
+                  </p>
+                  <p className="text-xl font-bold text-white">
+                    €{Math.round(walletStats.anna.thisMonth / 100).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-white/80 mt-1">
+                    {content[language].annaThisMonth}
+                  </p>
                 </div>
               </motion.div>
 
@@ -816,6 +1527,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                     <p className="text-3xl font-bold">{walletStats.totalSessions}</p>
                   </div>
                 </div>
+                <div className="mt-4 bg-white/20 rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                    {content[language].annaLabel}
+                  </p>
+                  <p className="text-xl font-bold text-white">
+                    {walletStats.anna.totalSessions}
+                  </p>
+                  <p className="text-xs text-white/80 mt-1">
+                    {content[language].annaSessions}
+                  </p>
+                  <p className="text-xs text-white/70 mt-1">
+                    {content[language].annaCompletedShort}: {walletStats.anna.completedSessions} | {content[language].annaPendingShort}: {walletStats.anna.pendingSessions}
+                  </p>
+                </div>
               </motion.div>
 
               {/* Average per Session */}
@@ -834,6 +1559,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                     <p className="text-3xl font-bold">€{Math.round(walletStats.averageSession / 100)}</p>
                   </div>
                 </div>
+                <div className="mt-4 bg-white/20 rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                    {content[language].annaLabel}
+                  </p>
+                  <p className="text-xl font-bold text-white">
+                    €{Math.round(walletStats.anna.averageSession / 100)}
+                  </p>
+                  <p className="text-xs text-white/80 mt-1">
+                    {content[language].annaAverage}
+                  </p>
+                </div>
               </motion.div>
             </div>
 
@@ -845,17 +1581,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
               className="bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden"
             >
               <div className="bg-gradient-to-r from-gray-500 to-gray-600 px-8 py-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
-                    <span className="text-white text-xl">📋</span>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                      <span className="text-white text-xl">📋</span>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white font-poppins">
+                        {content[language].recentTransactions}
+                      </h2>
+                      <p className="text-gray-100 text-sm font-nunito">
+                        {transactionsCount} {content[language].recentTransactions.toLowerCase()}
+                        {walletSearch.trim() ? ' (φιλτραρισμένες)' : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white font-poppins">
-                      {content[language].recentTransactions}
-                    </h2>
-                    <p className="text-gray-100 text-sm">
-                      {payments.length} {content[language].recentTransactions.toLowerCase()}
-                    </p>
+                  <div className="relative w-full md:w-72">
+                    <input
+                      type="text"
+                      value={walletSearch}
+                      onChange={(e) => setWalletSearch(e.target.value)}
+                      placeholder={language === 'gr' ? 'Αναζήτηση γονέα, γιατρού ή ποσού...' : 'Search parent, doctor or amount...'}
+                      className="w-full pl-4 pr-10 py-2 rounded-xl bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    />
+                    <span className="absolute inset-y-0 right-3 flex items-center text-white/70">🔍</span>
                   </div>
                 </div>
               </div>
@@ -866,7 +1615,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-soft mx-auto mb-4"></div>
                     <p className="text-gray-600 font-nunito">Φόρτωση...</p>
                   </div>
-                ) : payments.length === 0 ? (
+                ) : filteredPayments.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-gray-400 text-2xl">📋</span>
@@ -875,7 +1624,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {payments.slice(0, 10).map((payment, index) => (
+                    {displayedPayments.map((payment: any, index: number) => (
                       <motion.div
                         key={payment.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -885,8 +1634,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            payment.status === 'completed' 
-                              ? 'bg-green-100 text-green-600' 
+                            payment.status === 'completed'
+                              ? 'bg-green-100 text-green-600'
                               : 'bg-yellow-100 text-yellow-600'
                           }`}>
                             <span className="text-xl">
@@ -902,8 +1651,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                         <div className="text-right">
                           <p className="text-lg font-bold text-gray-800">€{Math.round(payment.amount_cents / 100)}</p>
                           <p className={`text-sm font-medium ${
-                            payment.status === 'completed' 
-                              ? 'text-green-600' 
+                            payment.status === 'completed'
+                              ? 'text-green-600'
                               : 'text-yellow-600'
                           }`}>
                             {payment.status === 'completed' ? 'Ολοκληρώθηκε' : 'Εκκρεμεί'}
