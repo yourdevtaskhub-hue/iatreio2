@@ -151,9 +151,35 @@ async function handleCheckoutSessionCompleted(session) {
     totalDetails: session?.total_details || 'N/A'
   });
 
-  const isDeposit = typeof concerns === 'string' && concerns.startsWith('DEPOSIT_PURCHASE');
+  const concernsString = typeof concerns === 'string' ? concerns : '';
+  const isDepositPurchase = concernsString.startsWith('DEPOSIT_PURCHASE');
+  const isManualDeposit = concernsString.startsWith('MANUAL_DEPOSIT#');
+  const metadataSessionsCount = session.metadata?.sessions_count
+    ? parseInt(session.metadata.sessions_count, 10)
+    : null;
+  const scheduleDetailsFromMetadata = (() => {
+    const raw = session.metadata?.schedule_details_json;
+    if (!raw || typeof raw !== 'string') return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(item => item && typeof item === 'object');
+    } catch (error) {
+      console.warn('⚠️ [WARNING] Failed to parse schedule_details_json metadata:', error);
+      return [];
+    }
+  })();
+
+  const inferredDepositFromMetadata = !appointment_date && !appointment_time && (!!metadataSessionsCount || scheduleDetailsFromMetadata.length > 0);
+  const isDeposit = isDepositPurchase || isManualDeposit || inferredDepositFromMetadata;
+
   console.log('🔍 [DEBUG] Deposit detection inside webhook:', {
     isDeposit,
+    isDepositPurchase,
+    isManualDeposit,
+    inferredDepositFromMetadata,
+    metadataSessionsCount,
+    scheduleDetailsFromMetadataCount: scheduleDetailsFromMetadata.length,
     concerns,
     appointment_date,
     appointment_time
@@ -203,8 +229,22 @@ async function handleCheckoutSessionCompleted(session) {
 
     // Αν είναι αγορά deposit: πίστωση υπολοίπου και όχι δημιουργία ραντεβού
     if (isDeposit) {
-      const sessionsMatch = (concerns || '').toString().match(/sessions=(\d+)/);
-      const sessions = sessionsMatch ? parseInt(sessionsMatch[1], 10) : 0;
+      let sessions = Number.isFinite(metadataSessionsCount) && metadataSessionsCount > 0 ? metadataSessionsCount : 0;
+
+      if (!sessions) {
+        const sessionsMatch = concernsString.match(/sessions=(\d+)/);
+        if (sessionsMatch) {
+          const parsed = parseInt(sessionsMatch[1], 10);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            sessions = parsed;
+          }
+        }
+      }
+
+      if (!sessions && scheduleDetailsFromMetadata.length > 0) {
+        sessions = scheduleDetailsFromMetadata.length;
+      }
+
       console.log('🔍 [DEBUG] Deposit purchase detected. Extracted sessions:', sessions);
       console.log('🔍 [DEBUG] Deposit payment metadata snapshot:', {
         payment_id,
@@ -240,7 +280,11 @@ async function handleCheckoutSessionCompleted(session) {
           payment_id
         });
       } else {
-        console.warn('⚠️ [WARNING] Deposit purchase without sessions credit (sessions <= 0). Check concerns format.');
+        console.warn('⚠️ [WARNING] Deposit purchase without sessions credit (sessions <= 0). Check metadata/concerns format.', {
+          metadataSessionsCount,
+          scheduleDetailsFromMetadataCount: scheduleDetailsFromMetadata.length,
+          concerns: concernsString
+        });
       }
 
       console.log('✅ [SUCCESS] Deposit purchase credited');
