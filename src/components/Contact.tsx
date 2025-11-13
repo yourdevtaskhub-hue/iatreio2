@@ -658,6 +658,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         appointmentDate: 'Ημερομηνία συνεδρίας',
         appointmentTime: 'Ώρα συνεδρίας',
         notes: 'Σημειώσεις (προαιρετικό)',
+        warningTitle: 'Σημαντική ενημέρωση',
+        warningLines: [
+          'Η κατάθεση ισχύει μόνο εάν έχει προηγηθεί επικοινωνία με το ιατρείο και έχει συμφωνηθεί η ημερομηνία και η ώρα των συνεδριών.',
+          'Αν δεν έχει γίνει επικοινωνία, παρακαλούμε μην προχωρήσετε με την κατάθεση.',
+          'Αντ\' αυτού, συμπληρώστε τα στοιχεία σας και κάντε κράτηση μέσω της φόρμας «Στείλτε ένα Μήνυμα».'
+        ],
         total: 'Πληρωτέο ποσό',
         priceLoading: 'Υπολογισμός τιμής...',
         submit: 'Μετάβαση στην πληρωμή',
@@ -769,6 +775,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         appointmentDate: 'Session date',
         appointmentTime: 'Session time',
         notes: 'Notes (optional)',
+        warningTitle: 'Important notice',
+        warningLines: [
+          'This deposit applies only if you have already contacted the clinic and agreed on the session dates and times.',
+          'If no communication has taken place, please do not proceed with the deposit.',
+          'Instead, fill in your details and request an appointment through the "Send a Message" form.'
+        ],
         total: 'Total amount',
         priceLoading: 'Calculating price...',
         submit: 'Proceed to payment',
@@ -879,6 +891,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         appointmentDate: 'Date de séance',
         appointmentTime: 'Heure de séance',
         notes: 'Notes (optionnel)',
+        warningTitle: 'Avis important',
+        warningLines: [
+          'Ce dépôt s\'applique uniquement si vous avez déjà contacté la clinique et convenu des dates et heures des séances.',
+          'Si aucune communication n\'a eu lieu, merci de ne pas poursuivre avec le dépôt.',
+          'Remplissez plutôt vos coordonnées et demandez un rendez-vous via le formulaire « Envoyez un message ».'
+        ],
         total: 'Montant à payer',
         priceLoading: 'Calcul du tarif...',
         submit: 'Procéder au paiement',
@@ -2040,6 +2058,19 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                         rows={3}
                         placeholder=""
                       ></textarea>
+                    </div>
+
+                    <div className="mt-4 bg-gradient-to-r from-yellow-50 via-pink-50 to-purple-50 border border-yellow-200 rounded-2xl px-4 py-3 shadow-sm">
+                      <p className="font-poppins font-semibold text-purple-900 text-sm mb-1">
+                        {content[language].manualDeposit.warningTitle}
+                      </p>
+                      <div className="space-y-2">
+                        {(content[language].manualDeposit.warningLines || []).map((line: string, index: number) => (
+                          <p key={`manual-warning-${index}`} className="font-nunito text-sm text-purple-900 leading-relaxed">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="bg-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
