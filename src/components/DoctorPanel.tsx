@@ -257,6 +257,13 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
 
     try {
       const parsed = JSON.parse(notes);
+      // New format with dateTime
+      if (parsed && typeof parsed.dateTime === 'string') {
+        const dateTime = parsed.dateTime.trim();
+        const userNotes = typeof parsed.userNotes === 'string' ? parsed.userNotes.trim() : '';
+        return { userNotes, sessions: dateTime ? [dateTime] : [] };
+      }
+      // Old format with schedules array (backward compatibility)
       if (parsed && Array.isArray(parsed.schedules)) {
         const sessions = parsed.schedules
           .map((item: any, idx: number) => {
@@ -283,32 +290,6 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
     return { userNotes, sessions };
   };
 
-  const manualDepositStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pending_checkout':
-        return content[language].statusPendingCheckout;
-      case 'completed':
-        return content[language].statusCompleted;
-      case 'checkout_failed':
-        return content[language].statusCheckoutFailed;
-      default:
-        return content[language].statusPending;
-    }
-  };
-
-  const manualDepositStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-700';
-      case 'checkout_failed':
-        return 'bg-red-100 text-red-700';
-      case 'pending_checkout':
-        return 'bg-blue-100 text-blue-700';
-      default:
-        return 'bg-yellow-100 text-yellow-700';
-    }
-  };
-
   const fetchManualDeposits = async (targetDoctorId?: string) => {
     const resolvedDoctorId = targetDoctorId || doctorRecordId;
     if (!resolvedDoctorId) return;
@@ -333,24 +314,6 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
       console.error('Error fetching manual deposits:', error);
     } finally {
       setManualDepositsLoading(false);
-    }
-  };
-
-  const updateManualDepositStatus = async (id: string, nextStatus: string) => {
-    try {
-      const { error } = await supabaseAdmin
-        .from('manual_deposit_requests')
-        .update({ status: nextStatus })
-        .eq('id', id);
-      if (error) throw error;
-
-      setManualDeposits(prev =>
-        prev.map(entry =>
-          entry.id === id ? { ...entry, status: nextStatus } : entry
-        )
-      );
-    } catch (error) {
-      console.error('Error updating manual deposit status:', error);
     }
   };
 
@@ -922,7 +885,6 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].manualDepositColumns.parent}</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].manualDepositColumns.sessions}</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].manualDepositColumns.amount}</th>
-                        <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].manualDepositColumns.status}</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].manualDepositColumns.notes}</th>
                         <th className="px-4 py-3 text-left font-semibold text-gray-600">{content[language].actions}</th>
                       </tr>
@@ -947,11 +909,6 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                           </td>
                           <td className="px-4 py-3 text-gray-700">{entry.session_count || 0}</td>
                           <td className="px-4 py-3 text-gray-700 font-semibold">€{entry.amount_cents ? (entry.amount_cents / 100).toFixed(2) : '0.00'}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${manualDepositStatusBadge(entry.status)}`}>
-                              {manualDepositStatusLabel(entry.status)}
-                            </span>
-                          </td>
                           <td className="px-4 py-3 text-gray-700">
                             {entry._parsedNotes?.userNotes ? (
                               <p className="mb-2 whitespace-pre-line">{entry._parsedNotes.userNotes}</p>
@@ -967,14 +924,6 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              {entry.status !== 'completed' && (
-                                <button
-                                  onClick={() => updateManualDepositStatus(entry.id, 'completed')}
-                                  className="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold"
-                                >
-                                  {content[language].markCompleted}
-                                </button>
-                              )}
                               <button
                                 onClick={() => {
                                   if (confirm(content[language].deleteConfirm)) {

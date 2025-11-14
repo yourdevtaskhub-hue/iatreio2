@@ -62,7 +62,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
         initial={{ opacity: 0, x: -30, y: -30 }}
         animate={{ opacity: 1, x: 0, y: 0, rotate: -6 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-[120px] sm:top-[140px] md:top-[160px] lg:top-[180px] xl:top-[200px] left-2 sm:left-4 md:left-8 lg:left-16 xl:left-32 z-10"
+        className="absolute top-[100px] sm:top-[120px] md:top-[140px] lg:top-[100px] xl:top-[120px] 2xl:top-[140px] left-2 sm:left-4 md:left-8 lg:left-16 xl:left-32 z-10"
         style={{
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden'
@@ -180,7 +180,7 @@ const Hero: React.FC<HeroProps> = ({ language }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => { window.location.href = '/auth'; }}
-            className="bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center font-poppins w-full sm:w-auto"
+            className="bg-gradient-to-r from-purple-soft to-blue-soft text-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base lg:text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center font-poppins w-full sm:w-auto"
           >
             {content[language].learnMore}
           </motion.button>

@@ -8,7 +8,6 @@ import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
 import StripeCheckout from './StripeCheckout';
 import { getLocalizedClosureReason } from '../utils/closureReason';
-import { getDoctorPrice } from '../lib/stripe-api';
 import { createRealStripeCheckout } from '../lib/stripe-checkout';
 
 const RESTRICTED_DOCTOR_NAMES = new Set(['Ιωάννα Πισσάρη', 'Σοφία Σπυριάδου']);
@@ -46,7 +45,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     childAge: '',
     email: '',
     phone: '',
-    urgency: '',
     message: '',
     appointmentDate: '',
     privacyAccepted: false,
@@ -147,11 +145,10 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     phone: '',
     doctorId: '',
     sessionsCount: 1,
-    schedules: [{ date: '', time: '' }],
-    notes: ''
+    dateTime: '',
+    notes: '',
+    customPrice: '' // Custom price input from user
   });
-  const [manualDepositPrice, setManualDepositPrice] = useState<number | null>(null);
-  const [manualDepositPriceLoading, setManualDepositPriceLoading] = useState(false);
   const [manualDepositError, setManualDepositError] = useState<string | null>(null);
   const [isSubmittingManualDeposit, setIsSubmittingManualDeposit] = useState(false);
   const [manualDepositAgreements, setManualDepositAgreements] = useState({
@@ -164,7 +161,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const hasThreeHourRestrictedSlots = isRestrictedDoctor && slots.some(slot => slot.reason === 'withinThreeHours');
   const userTimezone = useMemo(() => getUserTimezone(), []);
   const todayDateString = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date()), [userTimezone]);
-  const manualDepositTotalCents = manualDepositPrice !== null ? manualDepositPrice * manualDepositForm.sessionsCount : null;
+  
+  // Calculate total from custom price input (convert euros to cents)
+  const customPriceValue = manualDepositForm.customPrice ? parseFloat(manualDepositForm.customPrice.replace(',', '.')) : null;
+  const manualDepositTotalCents = customPriceValue !== null && !isNaN(customPriceValue) && customPriceValue > 0
+    ? Math.round(customPriceValue * 100 * manualDepositForm.sessionsCount)
+    : null;
   const manualDepositTotalFormatted = manualDepositTotalCents !== null
     ? (manualDepositTotalCents / 100).toLocaleString(
         language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
@@ -296,9 +298,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     }
     
     if (!selectedSpecialty || !selectedDoctorId || !formData.appointmentDate || !selectedTime) {
-      alert(language==='gr' ? 'Επιλέξτε ειδικότητα, γιατρό, ημερομηνία και ώρα.' : 
-            language==='en' ? 'Select specialty, doctor, date and time.' : 
-            'Sélectionnez spécialité, médecin, date et heure.');
+      alert(language==='gr' ? 'Επιλέξτε ειδικότητα, ειδικό, ημερομηνία και ώρα.' : 
+            language==='en' ? 'Select specialty, specialist, date and time.' : 
+            'Sélectionnez spécialité, spécialiste, date et heure.');
       return;
     }
     
@@ -311,9 +313,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     e.preventDefault();
     
     if (!waitlistFormData.name || !waitlistFormData.email || !waitlistFormData.doctorId) {
-      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε το όνομά σας, το email σας και επιλέξτε γιατρό.' : 
-        language === 'en' ? 'Please fill in your name, email and select a doctor.' :
-        'Veuillez remplir votre nom, email et sélectionner un médecin.');
+      alert(language === 'gr' ? 'Παρακαλώ συμπληρώστε το όνομά σας, το email σας και επιλέξτε ειδικό.' : 
+        language === 'en' ? 'Please fill in your name, email and select a specialist.' :
+        'Veuillez remplir votre nom, email et sélectionner un spécialiste.');
       return;
     }
 
@@ -380,7 +382,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
 
   const openManualDepositModal = () => {
     setManualDepositError(null);
-    setManualDepositPrice(null);
     setIsSubmittingManualDeposit(false);
     setManualDepositAgreements({ policy: false, recording: false, consent: false });
     setManualDepositForm({
@@ -389,8 +390,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       phone: formData.phone || '',
       doctorId: selectedDoctorId || '',
       sessionsCount: 1,
-      schedules: [{ date: '', time: '' }],
-      notes: ''
+      dateTime: '',
+      notes: '',
+      customPrice: ''
     });
     setShowManualDepositPopup(true);
   };
@@ -399,25 +401,23 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     setManualDepositForm(prev => {
       if (field === 'sessionsCount') {
         const count = Math.max(1, Number(value) || 1);
-        const updatedSchedules = Array.from({ length: count }, (_, idx) => prev.schedules[idx] || { date: '', time: '' });
         return {
           ...prev,
-          sessionsCount: count,
-          schedules: updatedSchedules
+          sessionsCount: count
+        };
+      }
+      if (field === 'customPrice') {
+        // Allow only numbers and decimal point/comma
+        const cleanedValue = String(value).replace(/[^\d.,]/g, '');
+        return {
+          ...prev,
+          customPrice: cleanedValue
         };
       }
       return {
         ...prev,
         [field]: value
       } as typeof manualDepositForm;
-    });
-  };
-
-  const handleManualDepositScheduleChange = (index: number, field: 'date' | 'time', value: string) => {
-    setManualDepositForm(prev => {
-      const schedules = [...prev.schedules];
-      schedules[index] = { ...schedules[index], [field]: value };
-      return { ...prev, schedules };
     });
   };
 
@@ -442,16 +442,18 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       setManualDepositError(manualStrings.validation.sessions);
       return;
     }
-    const hasEmptySchedule = manualDepositForm.schedules.some(s => !s.date.trim() || !s.time.trim());
-    if (hasEmptySchedule) {
-      const message = manualDepositForm.schedules.some(s => !s.date.trim())
-        ? manualStrings.validation.date
-        : manualStrings.validation.time;
-      setManualDepositError(message);
+    if (!manualDepositForm.dateTime || !manualDepositForm.dateTime.trim()) {
+      setManualDepositError(manualStrings.validation.dateTime || manualStrings.validation.date);
       return;
     }
-    if (manualDepositPrice === null) {
-      setManualDepositError(manualStrings.priceLoading);
+    // Validate custom price input
+    if (!manualDepositForm.customPrice || !manualDepositForm.customPrice.trim()) {
+      setManualDepositError(manualStrings.validation.price);
+      return;
+    }
+    const customPriceValue = parseFloat(manualDepositForm.customPrice.replace(',', '.'));
+    if (isNaN(customPriceValue) || customPriceValue <= 0) {
+      setManualDepositError(manualStrings.validation.price);
       return;
     }
     if (!manualDepositAgreements.policy || !manualDepositAgreements.recording || !manualDepositAgreements.consent) {
@@ -465,29 +467,18 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       return;
     }
 
-    const sanitizedSchedules = manualDepositForm.schedules.map((schedule, index) => ({
-      index: index + 1,
-      date: schedule.date.trim(),
-      time: schedule.time.trim()
-    }));
-
-    const scheduleDetailsString = sanitizedSchedules
-      .map((item) => `Session ${item.index}: ${item.date} ${item.time}`)
-      .join(' | ');
-    const scheduleDetailsPayload = sanitizedSchedules.map(({ date, time }) => ({ date, time }));
-
-    const totalCents = Math.round(Number(manualDepositPrice) * Number(manualDepositForm.sessionsCount));
+    // Calculate total from custom price (convert euros to cents)
+    const totalCents = Math.round(customPriceValue * 100 * Number(manualDepositForm.sessionsCount));
     if (!Number.isFinite(totalCents) || totalCents <= 0) {
       setManualDepositError(content[language].manualDeposit.error);
       return;
     }
 
-    const firstSchedule = sanitizedSchedules[0] || { date: '', time: '' };
     const trimmedUserNotes = manualDepositForm.notes?.trim() || '';
+    const trimmedDateTime = manualDepositForm.dateTime.trim();
     const notesPayload = {
       userNotes: trimmedUserNotes,
-      schedules: scheduleDetailsPayload,
-      summary: scheduleDetailsString
+      dateTime: trimmedDateTime
     };
     const combinedNotes = JSON.stringify(notesPayload);
 
@@ -513,8 +504,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
           doctor_id: manualDepositForm.doctorId,
           doctor_name: doctor.name,
           session_count: manualDepositForm.sessionsCount,
-          appointment_date: firstSchedule.date,
-          appointment_time: firstSchedule.time,
+          appointment_date: trimmedDateTime,
+          appointment_time: null,
           parent_name: manualDepositForm.parentName,
           parent_email: manualDepositForm.email,
           parent_phone: manualDepositForm.phone || null,
@@ -541,7 +532,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
           concerns: `MANUAL_DEPOSIT#${inserted.id}`,
           amountCents: totalCents,
           sessionsCount: manualDepositForm.sessionsCount,
-          scheduleDetails: scheduleDetailsPayload,
+          scheduleDetails: [{ date: trimmedDateTime, time: '' }],
           manualSessionsLabel: sessionsLabel
         });
 
@@ -583,17 +574,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         'Ευέλικτες επιλογές προγραμματισμού συμπεριλαμβανομένων διαδικτυακών συνεδριών',
         'Πλήρης εμπιστευτικότητα και προστασία ιδιωτικότητας'
       ],
-      formTitle: 'Στείλτε ένα Μήνυμα',
+      formTitle: 'Επικοινωνήστε Μαζί μας',
       parentName: 'Όνομα Γονέα/Κηδεμόνα *',
       childAge: 'Ηλικία Παιδιού',
       emailAddress: 'Διεύθυνση Email *',
       phoneNumber: 'Αριθμός Τηλεφώνου',
-      urgency: 'Επίπεδο Επείγοντος',
-      urgencyOptions: {
-        routine: 'Συνήθης συμβουλή',
-        urgent: 'Επείγον (εντός 1 εβδομάδας)',
-        emergency: 'Επείγουσα ανάγκη (άμεση προσοχή)'
-      },
       concerns: 'Σύντομη Περιγραφή Ανησυχιών',
       concernsPlaceholder: 'Παρακαλώ περιγράψτε συνοπτικά τις ανησυχίες σας ή τι θα θέλατε να συζητήσετε κατά τη διάρκεια της συμβουλής...',
       appointmentDate: 'Ημερομηνία Ραντεβού',
@@ -616,15 +601,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         firstSession: 'Πρώτη συνεδρία (Συζήτηση παραπομπής & ιστορικού ασθενούς)',
         parentCounseling: 'Συμβουλευτική γονέων',
         childExamPsychologist: 'Εξέταση παιδιού από ψυχολόγο',
-        childExamPsychiatrist: 'Εξέταση παιδιού από ψυχίατρο',
-        childTherapyPsychiatrist: 'Ψυχοθεραπεία παιδιού με ψυχίατρο',
+        childExamPsychiatrist: 'Εξέταση παιδιού από παιδοψυχίατρο',
+        childTherapyPsychiatrist: 'Ψυχοθεραπεία παιδιού με παιδοψυχίατρο',
         childTherapyPsychologist: 'Ψυχοθεραπεία παιδιού με ψυχολόγο',
         supervision: 'Εποπτεία ειδικών',
         medicationAdjustment: 'Φαρμακευτική ρύθμιση',
         scientificSupervision: 'Επιστημονική επιμέλεια βιβλίου/site/παιχνιδιού'
       },
-      doctor: 'Γιατρός',
-      selectDoctor: 'Επιλέξτε γιατρό',
+      doctor: 'Ειδικός',
+      selectDoctor: 'Επιλέξτε ειδικό',
       slotLegend: 'Διαθεσιμότητα: Πράσινο διαθέσιμο, Κόκκινο μη διαθέσιμο',
       threeHourRestrictionMessage: 'Για τις συνεδρίες με τις κλινικές παιδοψυχολόγους Ιωάννα Πισσάρη και Σοφία Σπυριάδου μπορείτε να κλείσετε ραντεβού μέχρι 3 ώρες πριν την ώρα της συνεδρίας.',
       threeHourRestrictionTooltip: 'Η κράτηση είναι διαθέσιμη μέχρι 3 ώρες πριν τη συνεδρία.',
@@ -638,7 +623,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistButton: 'Λίστα Αναμονής',
       waitlistTitle: 'Εγγραφή στη Λίστα Αναμονής',
       waitlistDateTimeLabel: 'Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού',
-      scheduleInfo: 'Οι πρωινές ώρες προορίζονται για γονείς (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών. Παρακαλώ σεβαστείτε τις αρχές του ιατρείου.',
+      scheduleInfo: 'Ιδανικά οι πρωινές ώρες προορίζονται για γονείς (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών.',
       waitlistDescription: 'Σε περίπτωση που δεν βρήκατε ώρα συνεδρίας με τη γιατρό ή τους κλινικούς παιδοψυχολόγους μας, παρακαλώ αφήστε μας σύντομο μήνυμα για να μπείτε στη λίστα αναμονής των περιστατικών τους.',
       waitlistName: 'Όνομα Γονέα/Κηδεμόνα',
       waitlistEmail: 'Email',
@@ -648,15 +633,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistCancel: 'Ακύρωση',
       manualDeposit: {
         button: 'Κατάθεση',
-        title: 'Κατάθεση Συνεδριών',
-        subtitle: 'Συμπληρώστε τα στοιχεία της κατάθεσης και προχωρήστε στην πληρωμή μέσω Stripe.',
-        parentName: 'Όνομα Γονέα',
+        title: 'Κατάθεση',
+        subtitle: 'Συμπληρώστε τα στοιχεία της κατάθεσης και προχωρήστε στην εξόφληση των συνεδριών μέσω Stripe.',
+        parentName: 'Ονοματεπώνυμο',
         email: 'Email',
         phone: 'Τηλέφωνο',
-        doctor: 'Γιατρός',
-        sessions: 'Πλήθος συνεδριών',
-        appointmentDate: 'Ημερομηνία συνεδρίας',
-        appointmentTime: 'Ώρα συνεδρίας',
+        doctor: 'Ειδικός',
+        sessions: 'Αριθμός συνεδριών',
+        dateTime: 'Ημερομηνία/Ώρα',
+        price: 'Τιμή ανά συνεδρία (€)',
         notes: 'Σημειώσεις (προαιρετικό)',
         warningTitle: 'Σημαντική ενημέρωση',
         warningLines: [
@@ -672,10 +657,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Συμπληρώστε το όνομά σας.',
           email: 'Συμπληρώστε έγκυρο email.',
-          doctor: 'Επιλέξτε γιατρό.',
+          doctor: 'Επιλέξτε ειδικό.',
           sessions: 'Ο αριθμός συνεδριών πρέπει να είναι τουλάχιστον 1.',
+          dateTime: 'Συμπληρώστε την ημερομηνία/ώρα.',
           date: 'Συμπληρώστε την ημερομηνία.',
           time: 'Συμπληρώστε την ώρα.',
+          price: 'Συμπληρώστε την τιμή ανά συνεδρία.',
           policy: 'Παρακαλώ αποδεχθείτε όλους τους όρους.'
         },
         error: 'Παρουσιάστηκε σφάλμα κατά τη διαδικασία. Παρακαλώ δοκιμάστε ξανά.'
@@ -700,17 +687,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         'Flexible scheduling options including online sessions',
         'Complete confidentiality and privacy protection'
       ],
-      formTitle: 'Send a Message',
+      formTitle: 'Contact Us',
       parentName: 'Parent/Guardian Name *',
       childAge: 'Child\'s Age',
       emailAddress: 'Email Address *',
       phoneNumber: 'Phone Number',
-      urgency: 'Urgency Level',
-      urgencyOptions: {
-        routine: 'Routine consultation',
-        urgent: 'Urgent (within 1 week)',
-        emergency: 'Emergency (immediate attention)'
-      },
       concerns: 'Brief Description of Concerns',
       concernsPlaceholder: 'Please briefly describe your concerns or what you\'d like to discuss during the consultation...',
       appointmentDate: 'Appointment Date',
@@ -733,15 +714,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         firstSession: 'First session',
         parentCounseling: 'Parent counseling',
         childExamPsychologist: 'Child examination by psychologist',
-        childExamPsychiatrist: 'Child examination by psychiatrist',
-        childTherapyPsychiatrist: 'Child therapy with psychiatrist',
+        childExamPsychiatrist: 'Child examination by child psychiatrist',
+        childTherapyPsychiatrist: 'Child therapy with child psychiatrist',
         childTherapyPsychologist: 'Child therapy with psychologist',
         supervision: 'Specialist supervision',
         medicationAdjustment: 'Medication adjustment',
         scientificSupervision: 'Scientific supervision of book/site/game'
       },
-      doctor: 'Doctor',
-      selectDoctor: 'Select doctor',
+      doctor: 'Specialist',
+      selectDoctor: 'Select specialist',
       slotLegend: 'Availability: Green available, Red unavailable',
       threeHourRestrictionMessage: 'For sessions with clinical child psychologists Ioanna Pissari and Sofia Spyriadou you can book up to 3 hours before the session start time.',
       threeHourRestrictionTooltip: 'Booking allowed up to 3 hours before the session.',
@@ -755,7 +736,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistButton: 'Waitlist',
       waitlistTitle: 'Join Waitlist',
       waitlistDateTimeLabel: 'Date and Time I would like to book an appointment',
-      scheduleInfo: 'Morning hours are reserved for parents (first appointments, counseling and supervision) while afternoon hours are for children\'s psychotherapy. Please respect the clinic\'s principles.',
+      scheduleInfo: 'Ideally, morning hours are reserved for parents (first appointments, counseling and supervision) while afternoon hours are for children\'s psychotherapy.',
       waitlistDescription: 'In case you did not find an appointment time with the doctor or our clinical child psychologists, please leave us a short message to be added to their patient waiting list.',
       waitlistName: 'Parent/Guardian Name',
       waitlistEmail: 'Email',
@@ -765,15 +746,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistCancel: 'Cancel',
       manualDeposit: {
         button: 'Deposit',
-        title: 'Manual Deposit Booking',
-        subtitle: 'Fill in the session details and proceed to payment through Stripe.',
-        parentName: 'Parent/Guardian Name',
+        title: 'Deposit',
+        subtitle: 'Fill in the deposit details and proceed to settle the sessions through Stripe.',
+        parentName: 'Full Name',
         email: 'Email',
         phone: 'Phone',
-        doctor: 'Doctor',
+        doctor: 'Specialist',
         sessions: 'Number of sessions',
-        appointmentDate: 'Session date',
-        appointmentTime: 'Session time',
+        dateTime: 'Date/Time',
+        price: 'Price per session (€)',
         notes: 'Notes (optional)',
         warningTitle: 'Important notice',
         warningLines: [
@@ -789,10 +770,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Please enter your name.',
           email: 'Please enter a valid email.',
-          doctor: 'Please select a doctor.',
+          doctor: 'Please select a specialist.',
           sessions: 'Sessions must be at least 1.',
+          dateTime: 'Please provide the date/time.',
           date: 'Please provide the date.',
           time: 'Please provide the time.',
+          price: 'Please enter the price per session.',
           policy: 'Please accept all policies to continue.'
         },
         error: 'Something went wrong. Please try again.'
@@ -816,17 +799,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         'Options de planification flexibles incluant les sessions en ligne',
         'Confidentialité complète et protection de la vie privée'
       ],
-      formTitle: 'Envoyer un Message',
+      formTitle: 'Contactez-nous',
       parentName: 'Nom du Parent/Tuteur *',
       childAge: 'Âge de l\'Enfant',
       emailAddress: 'Adresse Email *',
       phoneNumber: 'Numéro de Téléphone',
-      urgency: 'Niveau d\'Urgence',
-      urgencyOptions: {
-        routine: 'Conseil de routine',
-        urgent: 'Urgent (dans la semaine)',
-        emergency: 'Urgence (attention immédiate)'
-      },
       concerns: 'Brève Description des Préoccupations',
       concernsPlaceholder: 'Veuillez décrire brièvement vos préoccupations ou ce que vous aimeriez discuter pendant la consultation...',
       appointmentDate: 'Date de Rendez-vous',
@@ -849,15 +826,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         firstSession: 'Première session (Discussion de référence & historique du patient)',
         parentCounseling: 'Conseil parental',
         childExamPsychologist: 'Examen de l\'enfant par psychologue',
-        childExamPsychiatrist: 'Examen de l\'enfant par psychiatre',
-        childTherapyPsychiatrist: 'Psychothérapie de l\'enfant avec psychiatre',
+        childExamPsychiatrist: 'Examen de l\'enfant par pédopsychiatre',
+        childTherapyPsychiatrist: 'Psychothérapie de l\'enfant avec pédopsychiatre',
         childTherapyPsychologist: 'Psychothérapie de l\'enfant avec psychologue',
         supervision: 'Supervision de spécialistes',
         medicationAdjustment: 'Ajustement médicamenteux',
         scientificSupervision: 'Édition scientifique de livre/site/jeu'
       },
-      doctor: 'Médecin',
-      selectDoctor: 'Sélectionnez un médecin',
+      doctor: 'Spécialiste',
+      selectDoctor: 'Sélectionnez un spécialiste',
       slotLegend: 'Disponibilité: Vert disponible, Rouge non disponible',
       threeHourRestrictionMessage: 'Pour les séances avec les psychologues cliniciennes pour enfants Ioanna Pissari et Sofia Spyriadou, vous pouvez réserver jusqu\'à 3 heures avant l\'heure du rendez-vous.',
       threeHourRestrictionTooltip: 'Réservation possible jusqu\'à 3 heures avant la séance.',
@@ -871,7 +848,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistButton: 'Liste d\'Attente',
       waitlistTitle: 'Rejoindre la Liste d\'Attente',
       waitlistDateTimeLabel: 'Date et Heure où j\'aimerais prendre rendez-vous',
-      scheduleInfo: 'Les heures du matin sont réservées aux parents (premiers rendez-vous, conseil et supervision) tandis que les heures de l\'après-midi sont pour la psychothérapie des enfants. Veuillez respecter les principes de la clinique.',
+      scheduleInfo: 'Idéalement, les heures du matin sont réservées aux parents (premiers rendez-vous, conseil et supervision) tandis que les heures de l\'après-midi sont pour la psychothérapie des enfants.',
       waitlistDescription: 'Au cas où vous n\'auriez pas trouvé d\'heure de rendez-vous avec le médecin ou nos psychologues cliniques pour enfants, veuillez nous laisser un bref message pour être ajouté à leur liste d\'attente des patients.',
       waitlistName: 'Nom du Parent/Tuteur',
       waitlistEmail: 'Email',
@@ -881,15 +858,15 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistCancel: 'Annuler',
       manualDeposit: {
         button: 'Dépôt',
-        title: 'Dépôt manuel de séances',
-        subtitle: 'Renseignez les détails de la séance puis procédez au paiement via Stripe.',
-        parentName: 'Nom du parent / tuteur',
+        title: 'Dépôt',
+        subtitle: 'Renseignez les détails du dépôt puis procédez au règlement des séances via Stripe.',
+        parentName: 'Nom complet',
         email: 'Email',
         phone: 'Téléphone',
-        doctor: 'Médecin',
+        doctor: 'Spécialiste',
         sessions: 'Nombre de séances',
-        appointmentDate: 'Date de séance',
-        appointmentTime: 'Heure de séance',
+        dateTime: 'Date/Heure',
+        price: 'Prix par séance (€)',
         notes: 'Notes (optionnel)',
         warningTitle: 'Avis important',
         warningLines: [
@@ -905,10 +882,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Veuillez saisir votre nom.',
           email: 'Veuillez saisir un email valide.',
-          doctor: 'Veuillez choisir un médecin.',
+          doctor: 'Veuillez choisir un spécialiste.',
           sessions: 'Le nombre de séances doit être au moins égal à 1.',
+          dateTime: 'Veuillez indiquer la date/heure.',
           date: 'Veuillez indiquer la date.',
           time: 'Veuillez indiquer l\'heure.',
+          price: 'Veuillez saisir le prix par séance.',
           policy: 'Veuillez accepter toutes les conditions pour continuer.'
         },
         error: 'Une erreur est survenue. Veuillez réessayer.'
@@ -916,38 +895,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     }
   };
 
-  useEffect(() => {
-    if (!showManualDepositPopup) return;
-    if (!manualDepositForm.doctorId) {
-      setManualDepositPrice(null);
-      return;
-    }
-
-    let isActive = true;
-    setManualDepositPriceLoading(true);
-    setManualDepositError(null);
-
-    const doctorName = doctors.find(d => d.id === manualDepositForm.doctorId)?.name;
-
-    getDoctorPrice(manualDepositForm.doctorId, doctorName)
-      .then((price) => {
-        if (!isActive) return;
-        setManualDepositPrice(price);
-      })
-      .catch((error) => {
-        if (!isActive) return;
-        console.error('Failed to load doctor price for manual deposit:', error);
-        setManualDepositError(error?.message || content[language].manualDeposit.error);
-      })
-      .finally(() => {
-        if (!isActive) return;
-        setManualDepositPriceLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [showManualDepositPopup, manualDepositForm.doctorId, doctors, language]);
+  // Removed automatic price loading - user now enters custom price
 
   // Φόρτωση γιατρών και ρύθμισης
   useEffect(() => {
@@ -1423,26 +1371,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 />
               </div>
 
-              <div>
-                <label htmlFor="urgency" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
-                  {content[language].urgency}
-                </label>
-                <motion.select
-                  whileFocus={{ scale: 1.02 }}
-                  id="urgency"
-                  name="urgency"
-                  value={formData.urgency}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
-                >
-                  <option value="">{language === 'gr' ? 'Επιλέξτε επίπεδο επείγοντος' : 
-                    language === 'en' ? 'Select urgency level' : 
-                    'Sélectionnez le niveau d\'urgence'}</option>
-                  <option value="routine">{content[language].urgencyOptions.routine}</option>
-                  <option value="urgent">{content[language].urgencyOptions.urgent}</option>
-                  <option value="emergency">{content[language].urgencyOptions.emergency}</option>
-                </motion.select>
-              </div>
 
               <div>
                 <label htmlFor="isFirstSession" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
@@ -1738,6 +1666,20 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
               </motion.button>
             </form>
 
+            {/* Κουμπί Κατάθεση - μετακινημένο εδώ */}
+            <div className="mt-6 max-w-3xl mx-auto flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={openManualDepositModal}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-purple-800 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                <CreditCard className="h-5 w-5" />
+                <span>{content[language].manualDeposit.button}</span>
+              </motion.button>
+            </div>
+
             {/* Stripe Checkout Modal */}
             <AnimatePresence>
               {showStripeCheckout && (
@@ -1788,7 +1730,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                             childAge: '',
                             email: '',
                             phone: '',
-                            urgency: '',
                             message: '',
                             appointmentDate: '',
                             privacyAccepted: false,
@@ -1840,18 +1781,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
             </motion.div>
 
           </motion.div>
-        </div>
-        <div className="mt-6 max-w-3xl mx-auto flex justify-center">
-          <motion.button
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            type="button"
-            onClick={openManualDepositModal}
-            className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-purple-800 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <CreditCard className="h-5 w-5" />
-            <span>{content[language].manualDeposit.button}</span>
-          </motion.button>
         </div>
 
         {/* Manual Deposit Popup */}
@@ -1971,38 +1900,33 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           required
                         />
                       </div>
-                    <div className="space-y-4">
-                      {manualDepositForm.schedules.map((schedule, index) => (
-                        <div key={`schedule-${index}`} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
-                              {`${content[language].manualDeposit.appointmentDate} ${index + 1}`}
-                            </label>
-                            <input
-                              type="text"
-                              value={schedule.date}
-                              onChange={(e) => handleManualDepositScheduleChange(index, 'date', e.target.value)}
-                              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
-                              placeholder={language === 'gr' ? 'π.χ. 25/11/2025' : language === 'fr' ? 'ex. 25/11/2025' : 'e.g. 25/11/2025'}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
-                              {`${content[language].manualDeposit.appointmentTime} ${index + 1}`}
-                            </label>
-                            <input
-                              type="text"
-                              value={schedule.time}
-                              onChange={(e) => handleManualDepositScheduleChange(index, 'time', e.target.value)}
-                              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
-                              placeholder={language === 'gr' ? 'π.χ. 18:30' : language === 'fr' ? 'ex. 18:30' : 'e.g. 18:30'}
-                              required
-                            />
-                          </div>
-                        </div>
-                      ))}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                          {content[language].manualDeposit.dateTime}
+                        </label>
+                        <input
+                          type="text"
+                          value={manualDepositForm.dateTime}
+                          onChange={(e) => handleManualDepositInputChange('dateTime', e.target.value)}
+                          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          placeholder={language === 'gr' ? 'π.χ. 25/11/2025 18:30' : language === 'fr' ? 'ex. 25/11/2025 18:30' : 'e.g. 25/11/2025 18:30'}
+                          required
+                        />
+                      </div>
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 font-poppins mb-1">
+                        {content[language].manualDeposit.price}
+                      </label>
+                      <input
+                        type="text"
+                        value={manualDepositForm.customPrice}
+                        onChange={(e) => handleManualDepositInputChange('customPrice', e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                        placeholder={language === 'gr' ? 'π.χ. 50.00' : language === 'fr' ? 'ex. 50.00' : 'e.g. 50.00'}
+                        required
+                      />
                     </div>
 
                     <div className="space-y-3 text-sm text-red-600 font-nunito">
@@ -2077,10 +2001,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                       <div>
                         <p className="text-sm font-medium text-gray-700 font-poppins">{content[language].manualDeposit.total}</p>
                         <p className="text-xs text-gray-500 font-nunito">
-                          {manualDepositPriceLoading
-                            ? content[language].manualDeposit.priceLoading
-                            : manualDepositPrice !== null
-                            ? `€${(manualDepositPrice / 100).toFixed(2)} ${content[language].manualDeposit.perSession}`
+                          {customPriceValue !== null && !isNaN(customPriceValue) && customPriceValue > 0
+                            ? `€${customPriceValue.toFixed(2)} ${content[language].manualDeposit.perSession} × ${manualDepositForm.sessionsCount}`
                             : '—'}
                         </p>
                       </div>
@@ -2108,15 +2030,18 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                         type="submit"
                         disabled={
                           isSubmittingManualDeposit ||
-                          manualDepositPriceLoading ||
-                          manualDepositPrice === null
+                          !manualDepositForm.customPrice ||
+                          !manualDepositForm.customPrice.trim() ||
+                          customPriceValue === null ||
+                          isNaN(customPriceValue) ||
+                          customPriceValue <= 0
                         }
                         className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                       >
                         {isSubmittingManualDeposit ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>{content[language].manualDeposit.priceLoading}</span>
+                            <span>{content[language].manualDeposit.submit}</span>
                           </>
                         ) : (
                           <>
@@ -2270,7 +2195,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                       transition={{ delay: 0.65 }}
                     >
                       <label htmlFor="waitlistDoctor" className="block text-sm font-semibold text-gray-700 mb-3 font-quicksand">
-                        Γιατρός *
+                        Ειδικός *
                       </label>
                       <motion.select
                         whileFocus={{ scale: 1.02 }}
@@ -2281,7 +2206,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                         className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all duration-300 font-nunito text-gray-800"
                         required
                       >
-                        <option value="">Επιλέξτε γιατρό</option>
+                        <option value="">Επιλέξτε ειδικό</option>
                         {doctors.map(doctor => (
                           <option key={doctor.id} value={doctor.id}>
                             {getDoctorDisplayName(doctor)}

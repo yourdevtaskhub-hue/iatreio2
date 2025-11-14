@@ -361,9 +361,9 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rose-soft via-purple-soft to-blue-200 py-8 shadow-lg">
+      <div className="bg-gradient-to-r from-purple-soft via-blue-soft to-blue-200 py-8 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
@@ -497,7 +497,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                   ) : (
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className="h-24 w-24 flex items-center justify-center bg-gradient-to-r from-rose-soft to-purple-soft rounded-full shadow"
+                      className="h-24 w-24 flex items-center justify-center bg-gradient-to-r from-purple-soft to-blue-soft rounded-full shadow"
                     >
                       <User className="h-12 w-12 text-white" />
                     </motion.div>
@@ -567,7 +567,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                 <div className="pt-2 grid grid-cols-1 gap-2">
                   <button
                     onClick={() => setIsPwModalOpen(true)}
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-rose-soft to-purple-soft text-white px-4 py-2 rounded-xl shadow hover:opacity-95"
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-soft to-blue-soft text-white px-4 py-2 rounded-xl shadow hover:opacity-95"
                   >
                     <Key className="h-4 w-4" />
                     {translate('Αλλαγή κωδικού', 'Change password', 'Changer le mot de passe')}
@@ -584,9 +584,9 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
             </div>
 
             {/* Deposit Widget (κάθετα κάτω από τα στοιχεία χρήστη) */}
-            <div className="mt-4 bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-2xl shadow-xl p-5 border border-purple-100/50">
+            <div className="mt-4 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-2xl shadow-xl p-5 border border-purple-100/50">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600 via-pink-500 to-rose-500 text-white shadow-lg">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-soft to-blue-soft text-white shadow-lg">
                   <Gift className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold font-poppins text-gray-800">
@@ -644,7 +644,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
             className="md:col-span-2 space-y-6"
           >
             {/* Welcome Card */}
-            <div className="bg-gradient-to-r from-rose-soft to-purple-soft rounded-2xl shadow-xl p-8 text-white">
+            <div className="bg-gradient-to-r from-purple-soft to-blue-soft rounded-2xl shadow-xl p-8 text-white">
               <p className="text-white/90 leading-relaxed font-nunito">
                 {translate(
                   'Είμαστε εδώ για να σας υποστηρίξουμε σε κάθε βήμα του ταξιδιού προς την ψυχική ευημερία. Χρησιμοποιήστε το προφίλ σας για να διαχειριστείτε τα ραντεβού σας και να έχετε πρόσβαση στις υπηρεσίες μας.',
@@ -660,7 +660,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsBookingModalOpen(true)}
-                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-3xl shadow-lg p-7 text-left hover:shadow-xl transition-all group border-2 border-purple-200/50 hover:border-purple-400 min-h-[200px] sm:min-h-[220px]"
+                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-3xl shadow-lg p-7 text-left hover:shadow-xl transition-all group border-2 border-purple-200/50 hover:border-purple-400 min-h-[200px] sm:min-h-[220px]"
               >
                 {/* Subtle animated background */}
                 <motion.div 
@@ -672,14 +672,14 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
-                  className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-pink-400/20 to-rose-400/20 rounded-3xl"
+                  className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-indigo-400/20 rounded-3xl"
                 />
                 
                 <div className="flex items-start gap-4 relative z-10">
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ duration: 0.3 }}
-                    className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-purple-600 to-rose-500 text-white shadow-md"
+                    className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-purple-soft to-blue-soft text-white shadow-md"
                   >
                     <Calendar className="h-6 w-6" />
                   </motion.div>
@@ -711,9 +711,9 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     
                   <motion.div 
                     whileHover={{ x: 3 }}
-                    className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-md hover:shadow-lg transition-all"
+                    className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-soft to-blue-soft text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-md hover:shadow-lg transition-all"
                   >
-                      <span>{translate('Άνοιγμα Φόρμας Κράτησης', 'Open Booking Form', 'Ouvrir le formulaire de réservation')}</span>
+                    <span>{translate('Άνοιγμα Φόρμας Κράτησης', 'Open Booking Form', 'Ouvrir le formulaire de réservation')}</span>
                       <motion.svg 
                         animate={{ x: [0, 3, 0] }}
                         transition={{ 
@@ -749,7 +749,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                 whileHover={{ scale: 1.03, y: -4 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setIsPackagesModalOpen(true)}
-                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 rounded-3xl shadow-xl p-6 text-left hover:shadow-2xl transition-all group border-2 border-purple-200/50 hover:border-purple-400"
+                className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-3xl shadow-xl p-6 text-left hover:shadow-2xl transition-all group border-2 border-purple-200/50 hover:border-purple-400"
               >
                 {/* Animated gradient background */}
                 <motion.div 
@@ -762,7 +762,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
-                  className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-pink-400/20 to-rose-400/20 rounded-3xl"
+                  className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-indigo-400/20 rounded-3xl"
                 />
                 
                 {/* Sparkle effects */}
@@ -785,7 +785,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                   <motion.div 
                     whileHover={{ rotate: [0, -10, 10, -10, 0] }}
                     transition={{ duration: 0.5 }}
-                    className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-rose-500 text-white shadow-xl relative overflow-hidden"
+                    className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-purple-soft to-blue-soft text-white shadow-xl relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-white/20 blur-xl" />
                     <Gift className="h-7 w-7 relative z-10" />
@@ -815,7 +815,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                           duration: 2,
                           repeat: Infinity,
                         }}
-                        className="text-[11px] px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-poppins tracking-wide font-bold shadow-md"
+                        className="text-[11px] px-3 py-1 rounded-full bg-gradient-to-r from-purple-soft to-blue-soft text-white font-poppins tracking-wide font-bold shadow-md"
                       >
                         ⭐ {translate('ΜΟΝΑΔΙΚΟ', 'EXCLUSIVE', 'EXCLUSIF')}
                       </motion.span>
@@ -844,7 +844,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     
                     <motion.div 
                       whileHover={{ x: 4 }}
-                      className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
+                      className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-purple-soft to-blue-soft text-white px-5 py-2.5 rounded-xl font-poppins font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
                     >
                       <span>{translate('Αγορά Προπληρωμένων Συνεδριών', 'Purchase Prepaid Sessions', 'Acheter des séances prépayées')}</span>
                       <motion.svg 
@@ -956,11 +956,11 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto border-2 border-purple-200/50 mx-auto" 
+            className="bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto border-2 border-purple-200/50 mx-auto" 
             onClick={(e)=> e.stopPropagation()}
           >
             {/* Header with gradient */}
-            <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 rounded-t-3xl p-6 overflow-hidden">
+            <div className="relative bg-gradient-to-r from-purple-soft to-blue-soft rounded-t-3xl p-6 overflow-hidden">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -1006,12 +1006,12 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
 
             <div className="p-6 space-y-6">
               {/* Benefits Highlight */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-200/50">
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 border border-purple-200/50">
                 <div className="flex items-start gap-3">
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-xl text-white shrink-0"
+                    className="bg-gradient-to-br from-purple-soft to-blue-soft p-2 rounded-xl text-white shrink-0"
                   >
                     <Star className="h-5 w-5" />
                   </motion.div>
@@ -1071,7 +1071,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     <Coins className="h-4 w-4 text-pink-600" />
                     {translate('Τιμή ανά συνεδρία', 'Price per session', 'Prix par séance')}
                   </label>
-                  <div className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 font-semibold text-gray-800 font-nunito">
+                  <div className="w-full border-2 border-purple-200 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 font-semibold text-gray-800 font-nunito">
                     {pricePerSessionCents? `€${(pricePerSessionCents/100).toFixed(2)}`: '-'}
                   </div>
                 </div>
@@ -1096,7 +1096,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                     <Wallet className="h-4 w-4 text-purple-600" />
                     {translate('Συνολικό Deposit', 'Total deposit', 'Dépôt total')}
                   </label>
-                  <div className="w-full border-2 border-purple-400 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg font-poppins shadow-lg">
+                  <div className="w-full border-2 border-purple-400 rounded-xl px-4 py-3 bg-gradient-to-r from-purple-soft to-blue-soft text-white font-bold text-lg font-poppins shadow-lg">
                     €{(totalAmountCents/100).toFixed(2)}
                   </div>
                 </div>
@@ -1129,7 +1129,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
                 onClick={handlePurchaseDeposits}
                 whileHover={{ scale: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 1 : 1.02, y: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 0 : -2 }}
                 whileTap={{ scale: payLoading || !selectedDoctorIdPkg || !pricePerSessionCents ? 1 : 0.98 }}
-                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white py-4 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all font-poppins font-bold text-lg relative overflow-hidden group"
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-soft to-blue-soft text-white py-4 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all font-poppins font-bold text-lg relative overflow-hidden group"
               >
                 {/* Shine effect */}
                 <motion.div

@@ -260,7 +260,7 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
       className="mt-6 bg-white rounded-2xl shadow-xl border border-purple-100 p-6"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg">
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-soft to-blue-soft text-white shadow-lg">
           <Calendar className="h-6 w-6" />
         </div>
         <div>
@@ -425,7 +425,7 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
             !hasAvailableDeposits ||
             (depositInfo?.remaining_sessions || 0) <= 0
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:shadow-lg'
+              : 'bg-gradient-to-r from-purple-soft to-blue-soft text-white hover:shadow-lg'
           }`}
         >
           {isBooking ? (

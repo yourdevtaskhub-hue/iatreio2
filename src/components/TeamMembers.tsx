@@ -3,8 +3,14 @@ import doctorsImg from '../assets/doctors.JPG';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import ioannaCertificate from '../assets/ioanna_certificate.png';
+import wolverhampton from '../assets/WOLVERHAMPTON.png';
 import sofiaCertificate from '../assets/sofia_certificate.png';
 import sofiaMaster from '../assets/sofia_master.png';
+import certificatSystemique from '../assets/Certificat Systemique.png';
+import analytikiVeveosiStergiou from '../assets/Αναλυτική Βεβαίωση Στεργίου ΣΥΣΤΗΜΙΚΗ.png';
+import metaptychiakoEkseliktikisSxolikis from '../assets/ΜΕΤΑΠΤΥΧΙΑΚΟ ΕΞΕΛΙΚΤΙΚΗΣ ΣΧΟΛΙΚΗΣ ΨΥΧΟΛΟΓΙΑΣ.png';
+import metaptychiakoEfarmoges from '../assets/ΜΕΤΑΠΤΥΧΙΑΚΟ ΕΦΑΡΜΟΓΕΣ ΤΗΣ ΨΥΧΟΛΟΓΙΑΣ ΣΤΗΝ ΥΓΕΙΑ.png';
+import ptychioPsychologias from '../assets/ΠΤΥΧΙΟ ΨΥΧΟΛΟΓΙΑΣ.png';
 
 interface TeamMembersProps {
   language: string;
@@ -41,10 +47,19 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
     setSelectedMember(memberId);
     if (memberId === 1) {
       // Ioanna Pissari
-      setSelectedPDFs([ioannaCertificate]);
+      setSelectedPDFs([ioannaCertificate, wolverhampton]);
     } else if (memberId === 2) {
       // Sofia Spyriadou
       setSelectedPDFs([sofiaCertificate, sofiaMaster]);
+    } else if (memberId === 3) {
+      // Eirini Stergiou
+      setSelectedPDFs([
+        ptychioPsychologias,
+        metaptychiakoEkseliktikisSxolikis,
+        metaptychiakoEfarmoges,
+        certificatSystemique,
+        analytikiVeveosiStergiou
+      ]);
     }
   };
 
@@ -95,7 +110,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
 
 Είναι η ιδανική ειδικός για **Εξέταση και Ψυχοθεραπεία παιδιών και εφήβων και για Συμβουλευτική γονέων**.
 
-Η **κλινική παιδοψυχολόγος μιλάει άψογα ελληνικά και γαλλικά**.`
+Η **αναπτυξιακή παιδοψυχολόγος μιλάει άψογα ελληνικά και γαλλικά**.`
       }
     ],
     en: [
@@ -139,7 +154,7 @@ She has intense scientific activity, currently at the **"Hôpital Du Jura"** Hos
 
 She is the ideal specialist for **Examination and Psychotherapy of children and adolescents and for Parent Counseling**.
 
-The **clinical child psychologist speaks fluent Greek and French**.`
+The **developmental child psychologist speaks fluent Greek and French**.`
       }
     ],
     fr: [
@@ -183,7 +198,7 @@ Elle a une activité scientifique intense, actuellement à l'Hôpital **"Hôpita
 
 Elle est la spécialiste idéale pour l'**Examen et Psychothérapie des enfants et adolescents et pour le Conseil Parental**.
 
-La **psychologue clinique pour enfants parle couramment le grec et le français**.`
+La **psychologue du développement pour enfants parle couramment le grec et le français**.`
       }
     ]
   };
@@ -222,7 +237,7 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
-            className="relative w-full h-[40rem] lg:h-[48rem] overflow-hidden bg-gray-50 flex items-center justify-center"
+            className="relative w-full h-[20rem] sm:h-[25rem] md:h-[30rem] lg:h-[35rem] overflow-hidden bg-gray-50 flex items-center justify-center"
           >
             {/* Ενιαία εικόνα */}
             <div className="w-full h-full relative overflow-hidden">
@@ -393,6 +408,24 @@ La **psychologue clinique pour enfants parle couramment le grec et le français*
                 className="mt-6 flex justify-center lg:justify-start"
               >
                 <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full"></div>
+              </motion.div>
+
+              {/* Κουμπί Προβολή Πτυχίου/Εκπαιδεύσεων για Ειρήνη Στεργίου (id: 3) */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.0 }}
+                viewport={{ once: true }}
+                className="mt-6 flex justify-center lg:justify-start"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleViewCertificates(3)}
+                  className="bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 font-quicksand border border-white/50"
+                >
+                  {content[lang].viewButton}
+                </motion.button>
               </motion.div>
             </div>
           </div>

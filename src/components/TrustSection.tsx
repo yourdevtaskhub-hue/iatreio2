@@ -38,7 +38,7 @@ const TrustSection: React.FC<TrustSectionProps> = ({ language }) => {
             viewport={{ once: true }}
             className="flex justify-start"
           >
-            <div className="relative max-w-md">
+            <div className="relative max-w-2xl">
               {/* Main Image */}
               <motion.div 
                 whileHover={{ scale: 1.02 }}

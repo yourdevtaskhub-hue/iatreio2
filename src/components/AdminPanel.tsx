@@ -695,24 +695,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     }
   };
 
-  const manualDepositStatusLabel = (status: string) => {
-    const statusMap = content[language].manualDepositStatus as Record<string, string>;
-    return statusMap[status] || status;
-  };
-
-  const manualDepositStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'checkout_failed':
-        return 'bg-red-100 text-red-800';
-      case 'pending_checkout':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
-  };
-
   const parseManualDepositNotes = (notes: string | null | undefined) => {
     if (!notes) {
       return { userNotes: '', sessions: [] as string[] };
@@ -721,6 +703,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     // Try JSON payload first
     try {
       const parsed = JSON.parse(notes);
+      // New format with dateTime
+      if (parsed && typeof parsed.dateTime === 'string') {
+        const dateTime = parsed.dateTime.trim();
+        const userNotes = typeof parsed.userNotes === 'string' ? parsed.userNotes.trim() : '';
+        return { userNotes, sessions: dateTime ? [dateTime] : [] };
+      }
+      // Old format with schedules array (backward compatibility)
       if (parsed && Array.isArray(parsed.schedules)) {
         const sessions = parsed.schedules
           .map((item: any, idx: number) => {
@@ -745,30 +734,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
     });
     userNotes = userNotes.replace(/\|\s*/g, ' ').replace(/\s+/g, ' ').trim();
     return { userNotes, sessions };
-  };
-
-  const updateManualDepositStatus = async (id: string, nextStatus: string) => {
-    try {
-      const { error } = await supabaseAdmin
-        .from('manual_deposit_requests')
-        .update({ status: nextStatus })
-        .eq('id', id);
-      if (error) throw error;
-
-      setManualDeposits(prev =>
-        prev.map(entry =>
-          entry.id === id ? { ...entry, status: nextStatus } : entry
-        )
-      );
-      setFytrouManualDeposits(prev =>
-        prev.map(entry =>
-          entry.id === id ? { ...entry, status: nextStatus } : entry
-        )
-      );
-    } catch (error) {
-      console.error('Failed to update manual deposit status:', error);
-      alert(content[language].error);
-    }
   };
 
   const deleteManualDeposit = async (id: string) => {
@@ -1137,9 +1102,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           {content[language].manualDepositColumns.time}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
-                          {content[language].manualDepositColumns.status}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
                           {content[language].manualDepositColumns.paymentId}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
@@ -1178,11 +1140,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
                             {entry.appointment_time || '—'}
                           </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${manualDepositStatusBadge(entry.status)}`}>
-                              {manualDepositStatusLabel(entry.status)}
-                            </span>
-                          </td>
                           <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
                             {entry.payment_id || '—'}
                           </td>
@@ -1203,14 +1160,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              {entry.status !== 'completed' && (
-                                <button
-                                  onClick={() => updateManualDepositStatus(entry.id, 'completed')}
-                                  className="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold"
-                                >
-                                  {content[language].manualDepositActions.markCompleted}
-                                </button>
-                              )}
                               <button
                                 onClick={() => {
                                   if (confirm(language === 'gr' ? 'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώρηση;' : 'Are you sure you want to delete this entry?')) {
@@ -1301,9 +1250,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           {content[language].manualDepositColumns.time}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
-                          {content[language].manualDepositColumns.status}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
                           {content[language].manualDepositColumns.paymentId}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 font-poppins uppercase tracking-wide">
@@ -1336,11 +1282,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
                             {entry.appointment_time || '—'}
                           </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${manualDepositStatusBadge(entry.status)}`}>
-                              {manualDepositStatusLabel(entry.status)}
-                            </span>
-                          </td>
                           <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
                             {entry.payment_id || '—'}
                           </td>
@@ -1361,14 +1302,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              {entry.status !== 'completed' && (
-                                <button
-                                  onClick={() => updateManualDepositStatus(entry.id, 'completed')}
-                                  className="px-3 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold"
-                                >
-                                  {content[language].manualDepositActions.markCompleted}
-                                </button>
-                              )}
                               <button
                                 onClick={() => {
                                   if (confirm(language === 'gr' ? 'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώρηση;' : 'Are you sure you want to delete this entry?')) {

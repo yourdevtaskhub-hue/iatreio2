@@ -633,12 +633,12 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
           whileHover={{ scale: 1.02 }}
-          className="mb-12 overflow-hidden rounded-4xl shadow-2xl border border-gray-100"
+          className="mb-12 overflow-hidden rounded-4xl shadow-2xl border border-gray-100 max-w-5xl mx-auto"
         >
           <img
             src={happyImg}
             alt="Χαρούμενα παιδιά χαμογελούν και διασκεδάζουν μαζί"
-            className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover"
+            className="w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] object-cover"
           />
         </motion.div>
 
@@ -660,9 +660,9 @@ const Services: React.FC<ServicesProps> = ({ language }) => {
                     <motion.div 
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-r from-rose-soft to-purple-soft p-4 rounded-2xl w-fit mb-6 shadow-lg"
+                  className="bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 p-4 rounded-2xl w-fit mb-6 shadow-lg"
                 >
-                  <IconComponent className="h-8 w-8 text-white" />
+                  <IconComponent className="h-8 w-8 text-gray-700" />
                   </motion.div>
                   
                 <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 font-poppins">

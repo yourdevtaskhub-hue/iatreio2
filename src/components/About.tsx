@@ -38,7 +38,7 @@ const About: React.FC<AboutProps> = ({ language }) => {
                     },
                     {
                       title: 'Πιστοποιήσεις',
-                      description: 'Η ειδικός έχει αναγνωρισμένο Πτυχίο Ιατρικής και έχει Άδεια Ασκήσεως Επαγγέλματος ως Ειδικός Ψυχίατρος Παιδιού και Εφήβου και Ψυχοθεραπευτής στην Ελλάδα και την Ελβετία.'
+                      description: 'Η ειδικός έχει αναγνωρισμένο Πτυχίο Ιατρικής και έχει Άδεια Ασκήσεως Επαγγέλματος ως Ειδικός Ψυχίατρος Παιδιού και Εφήβου και Ψυχοθεραπεύτρια στην Ελλάδα και την Ελβετία.'
                     },
                     {
                       title: 'Ψυχοθεραπευτική Εκπαίδευση',
@@ -199,26 +199,32 @@ const About: React.FC<AboutProps> = ({ language }) => {
             className="order-2 lg:order-1"
           >
             <div className="mb-8">
-              <motion.span 
+              <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
                 viewport={{ once: true }}
-                className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 font-semibold text-lg font-quicksand"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300"
+                style={{ 
+                  backgroundSize: '100% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
               >
-{content[language].title}
-              </motion.span>
-              <motion.h2 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-3xl sm:text-4xl font-bold mt-2 mb-6 font-poppins"
-              >
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">
-                  {content[language].subtitle}
+                <span className="font-semibold text-lg font-quicksand block">
+                  {content[language].title}
                 </span>
-              </motion.h2>
+                <motion.h2 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  viewport={{ once: true }}
+                  className="text-3xl sm:text-4xl font-bold mt-2 mb-6 font-poppins"
+                >
+                  {content[language].subtitle}
+                </motion.h2>
+              </motion.div>
               <motion.p 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
