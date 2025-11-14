@@ -7,9 +7,10 @@ import { ReviewSubmission } from '../types/reviews';
 interface ReviewFormProps {
   language: 'gr' | 'en' | 'fr';
   defaultName?: string;
+  isUserPanel?: boolean;
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName, isUserPanel = false }) => {
   const [formData, setFormData] = useState<ReviewSubmission>({
     name: defaultName || '',
     rating: 0,
@@ -178,7 +179,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
       viewport={{ once: true }}
-      className="bg-gradient-to-br from-pastel-pink to-baby-blue p-8 rounded-4xl shadow-xl border border-gray-100"
+      className={isUserPanel 
+        ? "bg-white p-8 rounded-4xl shadow-xl border border-gray-100"
+        : "bg-gradient-to-br from-pastel-pink to-baby-blue p-8 rounded-4xl shadow-xl border border-gray-100"
+      }
     >
       <div className="text-center mb-8">
         <h3 className="text-3xl font-bold text-gray-800 mb-4 font-poppins">
@@ -200,7 +204,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
             value={formData.name}
             onChange={handleInputChange}
             placeholder={content[language].namePlaceholder}
-            className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
+            className={`w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:border-transparent transition-all duration-300 font-nunito ${
+              isUserPanel ? 'focus:ring-purple-500' : 'focus:ring-rose-soft'
+            }`}
             required
           />
         </div>
@@ -215,7 +221,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
             value={formData.session_topic}
             onChange={handleInputChange}
             placeholder={content[language].sessionTopicPlaceholder}
-            className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
+            className={`w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:border-transparent transition-all duration-300 font-nunito ${
+              isUserPanel ? 'focus:ring-purple-500' : 'focus:ring-rose-soft'
+            }`}
             required
           />
         </div>
@@ -258,7 +266,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
             onChange={handleInputChange}
             placeholder={content[language].textPlaceholder}
             rows={4}
-            className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito resize-none"
+            className={`w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:border-transparent transition-all duration-300 font-nunito resize-none ${
+              isUserPanel ? 'focus:ring-purple-500' : 'focus:ring-rose-soft'
+            }`}
             required
           />
         </div>
@@ -278,7 +288,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ language, defaultName }) => {
           disabled={isSubmitting}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full bg-gradient-to-r from-rose-soft to-purple-soft text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          className={`w-full text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
+            isUserPanel 
+              ? 'bg-gradient-to-r from-purple-soft to-blue-soft' 
+              : 'bg-gradient-to-r from-rose-soft to-purple-soft'
+          }`}
         >
           {isSubmitting ? (
             <>

@@ -916,7 +916,7 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
 
             {/* Review Form (μόνο η φόρμα) */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
-              <ReviewForm language={language} defaultName={fullName || (email ? email.split('@')[0] : '')} />
+              <ReviewForm language={language} defaultName={fullName || (email ? email.split('@')[0] : '')} isUserPanel={true} />
             </div>
           </motion.div>
         </div>

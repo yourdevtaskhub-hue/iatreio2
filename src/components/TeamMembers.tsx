@@ -237,7 +237,7 @@ La **psychologue du développement pour enfants parle couramment le grec et le f
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
-            className="relative w-full h-[20rem] sm:h-[25rem] md:h-[30rem] lg:h-[35rem] overflow-hidden bg-gray-50 flex items-center justify-center"
+            className="relative w-full max-w-4xl mx-auto h-[20rem] sm:h-[25rem] md:h-[30rem] lg:h-[38rem] xl:h-[40rem] 2xl:h-[42rem] lg:max-w-3xl overflow-hidden bg-gray-50 flex items-center justify-center"
           >
             {/* Ενιαία εικόνα */}
             <div className="w-full h-full relative overflow-hidden">
