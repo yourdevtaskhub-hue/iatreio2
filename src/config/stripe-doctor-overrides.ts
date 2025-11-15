@@ -13,12 +13,7 @@ export const normalizeDoctorOverrideKey = (value?: string) =>
     .trim();
 
 export const doctorStripeOverrides: DoctorStripeOverride[] = [
-  {
-    doctorId: '48b3e29c-496c-421e-8d14-f7a89ded452a',
-    doctorName: 'dr. 1eyro',
-    priceId: 'price_1SMwQpBYDGzP3ZGszzt7Esmp',
-    amountCents: 100
-  }
+  // Removed Dr. 1EYRO - test entry no longer needed
 ];
 
 export const findDoctorStripeOverride = (

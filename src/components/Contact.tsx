@@ -105,10 +105,14 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
 
   // Φιλτραρισμένοι γιατροί βάσει επιλεγμένης ειδικότητας
   const filteredDoctors = doctors.filter(doctor => {
+    // Αποκλεισμός Dr. 1EYRO (test entry)
+    const normalizeName = (name: string) => 
+      name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const is1eyro = normalizeName(doctor.name || '').includes('1eyro') || 
+                   doctor.id === '48b3e29c-496c-421e-8d14-f7a89ded452a';
+    if (is1eyro) return false;
+    
     if (!selectedSpecialty) return true;
-    if (findDoctorStripeOverride(doctor.id, doctor.name)) {
-      return true;
-    }
     const specialtyMap: { [key: string]: string } = {
       'psychiatrist': 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
       'psychologist': 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
@@ -575,8 +579,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Ψυχίατρος Παιδιού και Εφήβου & Ψυχοθεραπεύτρια',
         psychologist: 'Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
-        clinicalPsychologist: 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια',
-        liveTest: 'Live δοκιμή (1€)'
+        clinicalPsychologist: 'Κλινική Παιδοψυχολόγος & Ψυχοθεραπεύτρια'
       },
       thematologies: 'Θεματολογίες',
       selectThematology: 'Επιλέξτε θεματολογία',
@@ -688,8 +691,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Child and Adolescent Psychiatrist & Psychotherapist',
         psychologist: 'Child Psychologist & Psychotherapist',
-        clinicalPsychologist: 'Clinical Child Psychologist & Psychotherapist',
-        liveTest: 'Live Test (1€ doctor)'
+        clinicalPsychologist: 'Clinical Child Psychologist & Psychotherapist'
       },
       thematologies: 'Thematologies',
       selectThematology: 'Select thematology',
@@ -800,8 +802,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       specialtyOptions: {
         psychiatrist: 'Psychiatre pour Enfants et Adolescents & Psychothérapeute',
         psychologist: 'Psychologue pour Enfants & Psychothérapeute',
-        clinicalPsychologist: 'Psychologue Clinique pour Enfants & Psychothérapeute',
-        liveTest: 'Test en direct (médecin 1€)'
+        clinicalPsychologist: 'Psychologue Clinique pour Enfants & Psychothérapeute'
       },
       thematologies: 'Thématiques',
       selectThematology: 'Sélectionnez une thématique',
@@ -890,9 +891,21 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       ]);
       console.log('[Contact] doctors:', doctorsData);
       console.log('[Contact] settings:', settingsData);
-      const allowedDoctors = (doctorsData || []).filter(
-        (doctor: Doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
-      );
+      
+      // Helper function για normalization
+      const normalizeDoctorName = (name: string) => 
+        name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      
+      // Φιλτράρουμε doctors - αποκλείουμε τον Dr. 1EYRO
+      const allowedDoctors = (doctorsData || []).filter((doctor: Doctor) => {
+        // Αποκλεισμός Dr. 1EYRO (test entry)
+        const is1eyro = normalizeDoctorName(doctor.name || '').includes('1eyro') || 
+                       doctor.id === '48b3e29c-496c-421e-8d14-f7a89ded452a';
+        if (is1eyro) return false;
+        
+        // Μόνο active doctors
+        return doctor.active === true;
+      });
 
       setDoctors(allowedDoctors);
       if (allowedDoctors.length > 0) setSelectedDoctorId(allowedDoctors[0].id);
@@ -1389,7 +1402,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   <option value="psychiatrist">{content[language].specialtyOptions.psychiatrist}</option>
                   <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
                   <option value="clinicalPsychologist">{content[language].specialtyOptions.clinicalPsychologist}</option>
-                  <option value="liveTest">{content[language].specialtyOptions.liveTest}</option>
                 </motion.select>
               </div>
 

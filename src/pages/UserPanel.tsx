@@ -165,9 +165,21 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
     const loadDoctors = async () => {
       const { data } = await supabase.from('doctors').select('*').order('name');
       const doctorsData = (data || []) as Doctor[];
-      const allowedDoctors = doctorsData.filter(
-        (doctor) => doctor.active || !!findDoctorStripeOverride(doctor.id, doctor.name)
-      );
+      
+      // Helper function για normalization
+      const normalizeDoctorName = (name: string) => 
+        name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      
+      // Φιλτράρουμε doctors - αποκλείουμε τον Dr. 1EYRO
+      const allowedDoctors = doctorsData.filter((doctor) => {
+        // Αποκλεισμός Dr. 1EYRO (test entry)
+        const is1eyro = normalizeDoctorName(doctor.name || '').includes('1eyro') || 
+                       doctor.id === '48b3e29c-496c-421e-8d14-f7a89ded452a';
+        if (is1eyro) return false;
+        
+        // Μόνο active doctors
+        return doctor.active === true;
+      });
 
       setDoctors(allowedDoctors);
       if (allowedDoctors.length > 0) {

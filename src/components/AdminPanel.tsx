@@ -312,7 +312,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   const fetchAppointmentsMeta = async () => {
     try {
       const [{ data: doctorsData }, { data: availData }, { data: settingsData }] = await Promise.all([
-        supabaseAdmin.from('doctors').select('*').order('name'),
+        supabaseAdmin.from('doctors').select('*').eq('active', true).neq('id', '48b3e29c-496c-421e-8d14-f7a89ded452a').order('name'),
         supabaseAdmin.from('availability').select('*').order('date'),
         supabaseAdmin.from('admin_settings').select('*').eq('id', 1).single()
       ]);
@@ -336,6 +336,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         supabaseAdmin
           .from('doctors')
           .select('id, name')
+          .eq('active', true)
       ]);
 
       if (paymentsError) {
@@ -349,13 +350,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       const regularPayments: any[] = [];
       
       paymentsList.forEach((payment: any) => {
-        const concerns = payment.concerns || '';
-        const isManualDeposit = typeof concerns === 'string' && concerns.startsWith('MANUAL_DEPOSIT');
+        // Έλεγχος αν είναι manual deposit: το notes field περιέχει "Manual deposit"
+        const notes = payment.notes || '';
+        const isManualDeposit = typeof notes === 'string' && notes.startsWith('Manual deposit');
         
         if (isManualDeposit) {
           // Για manual deposits, χρησιμοποιούμε το payment_id ως unique key
           // αφού κάθε payment αντιπροσωπεύει ένα manual deposit
-          const uniqueKey = payment.id || payment.payment_id || concerns;
+          const uniqueKey = payment.id || payment.payment_id || notes;
           if (!manualDepositMap.has(uniqueKey)) {
             manualDepositMap.set(uniqueKey, payment);
           }
