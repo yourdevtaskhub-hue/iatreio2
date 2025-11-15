@@ -5,7 +5,7 @@ import profile2 from '../assets/profile2.JPG';
 import { supabase } from '../lib/supabase';
 import { findDoctorStripeOverride } from '../config/stripe-doctor-overrides';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
-import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
+import { getUserTimezone, toDateString, getCurrentDateInTimezone, convertTimeToTimezone, getDoctorTimezone } from '../lib/timezone';
 import StripeCheckout from './StripeCheckout';
 import { getLocalizedClosureReason } from '../utils/closureReason';
 import { createRealStripeCheckout } from '../lib/stripe-checkout';
@@ -1027,11 +1027,41 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       const nowRestrictionTz = getCurrentDateInTimezone(userTimezone);
       const doctorForRestriction = doctors.find(d => d.id === selectedDoctorId);
       const applyThreeHourRule = !!doctorForRestriction && RESTRICTED_DOCTOR_NAMES.has(doctorForRestriction.name);
+      
+      // Προσδιορίζουμε την timezone του γιατρού
+      // Προσωρινά: υποθέτουμε ότι όλοι οι γιατροί είναι από Ελβετία (για testing)
+      // Στο μέλλον, μπορείς να προσθέσεις doctor.timezone field στη βάση
+      const doctorTimezone = getDoctorTimezone(doctorForRestriction?.name);
+      const patientTimezone = getUserTimezone();
+      
+      // Debug log
+      console.log('[Contact] Timezone conversion:', {
+        doctorName: doctorForRestriction?.name,
+        doctorTimezone,
+        patientTimezone,
+        appointmentDate: formData.appointmentDate
+      });
+      
       (av||[]).forEach((a: any) => {
         // Αν μια availability δεν έχει valid εύρος, αγνόησέ την
         if (!a || !a.start_time || !a.end_time || !a.increment_minutes) return;
-        const [sh, sm] = a.start_time.split(':').map(Number);
-        const [eh, em] = a.end_time.split(':').map(Number);
+        
+        // Μετατρέπουμε τις ώρες από τη timezone του γιατρού στη timezone του ασθενούς
+        const convertedStartTime = convertTimeToTimezone(
+          formData.appointmentDate,
+          a.start_time,
+          doctorTimezone,
+          patientTimezone
+        );
+        const convertedEndTime = convertTimeToTimezone(
+          formData.appointmentDate,
+          a.end_time,
+          doctorTimezone,
+          patientTimezone
+        );
+        
+        const [sh, sm] = convertedStartTime.split(':').map(Number);
+        const [eh, em] = convertedEndTime.split(':').map(Number);
         let cur = sh * 60 + sm;
         let end = eh * 60 + em;
         if (Number.isNaN(cur) || Number.isNaN(end)) return;

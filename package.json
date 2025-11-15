@@ -11,6 +11,13 @@
     "check:deployment": "node scripts/check-deployment.mjs",
     "test:cross-platform": "node scripts/test-cross-platform.mjs",
     "test:comprehensive": "node scripts/comprehensive-test.mjs",
+    "test:timezone": "playwright test tests/timezone-integration.test.ts",
+    "test:timezone-api": "playwright test tests/timezone-api.test.ts",
+    "test:timezone-all": "playwright test tests/",
+    "test:timezone-ui": "playwright test tests/timezone-integration.test.ts --headed",
+    "test:timezone-production": "node scripts/test-timezone-production.js",
+    "test:timezone-sync": "node scripts/test-timezone-sync.js",
+    "test:timezone-simple": "node scripts/test-timezone-simple.js",
     "deploy:github": "node scripts/deploy-to-github.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -27,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@playwright/test": "^1.40.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

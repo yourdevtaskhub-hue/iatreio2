@@ -160,3 +160,158 @@ export function getUserTimezone(): string {
       return TIMEZONES.GREECE;
   }
 }
+
+/**
+ * Υπολογίζει το offset μιας timezone σε milliseconds για συγκεκριμένη ημερομηνία
+ * Χρησιμοποιείται για να λάβουμε υπόψη DST (Daylight Saving Time)
+ */
+function getTimezoneOffsetForDate(date: Date, timezone: string): number {
+  // Get the offset in milliseconds for a timezone at a specific date
+  // This accounts for DST
+  
+  // Get what this UTC time would be in the timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  // Format the UTC date in the timezone
+  const tzParts = formatter.formatToParts(date);
+  const tzHour = parseInt(tzParts.find(p => p.type === 'hour')?.value || '0');
+  const tzMinute = parseInt(tzParts.find(p => p.type === 'minute')?.value || '0');
+  const tzSecond = parseInt(tzParts.find(p => p.type === 'second')?.value || '0');
+  
+  // Get UTC components
+  const utcHour = date.getUTCHours();
+  const utcMinute = date.getUTCMinutes();
+  const utcSecond = date.getUTCSeconds();
+  
+  // Calculate offset in hours
+  const hourDiff = tzHour - utcHour;
+  const minuteDiff = tzMinute - utcMinute;
+  const secondDiff = tzSecond - utcSecond;
+  
+  // Convert to milliseconds
+  const offsetMs = (hourDiff * 60 + minuteDiff) * 60 * 1000 + secondDiff * 1000;
+  
+  return offsetMs;
+}
+
+/**
+ * Μετατρέπει μια ώρα (time string) από μια timezone σε άλλη
+ * Χρησιμοποιείται για να μετατρέψουμε availability times στη timezone του ασθενούς
+ * @param dateStr - Η ημερομηνία (YYYY-MM-DD)
+ * @param timeStr - Η ώρα (HH:MM:SS ή HH:MM)
+ * @param fromTimezone - Η source timezone (π.χ. timezone του γιατρού)
+ * @param toTimezone - Η target timezone (π.χ. timezone του ασθενούς)
+ * @returns Μετατραπμένη ώρα στη μορφή HH:MM:SS
+ */
+export function convertTimeToTimezone(
+  dateStr: string,
+  timeStr: string,
+  fromTimezone: string,
+  toTimezone: string = getUserTimezone()
+): string {
+  if (fromTimezone === toTimezone) {
+    return timeStr;
+  }
+  
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  
+  // Greece (Europe/Athens) is 1 hour AHEAD of Switzerland (Europe/Zurich)
+  // So: Switzerland 16:00 → Greece 17:00 (ADD 1 hour)
+  //     Greece 17:00 → Switzerland 16:00 (SUBTRACT 1 hour)
+  
+  // Simple and correct approach: Direct hour calculation
+  // For Europe/Zurich to Europe/Athens: +1 hour
+  // For Europe/Athens to Europe/Zurich: -1 hour
+  
+  let newHour = hours;
+  let newDay = day;
+  let newMonth = month;
+  let newYear = year;
+  
+  if (fromTimezone === TIMEZONES.SWITZERLAND && toTimezone === TIMEZONES.GREECE) {
+    // Switzerland to Greece: ADD 1 hour
+    newHour = hours + 1;
+  } else if (fromTimezone === TIMEZONES.GREECE && toTimezone === TIMEZONES.SWITZERLAND) {
+    // Greece to Switzerland: SUBTRACT 1 hour
+    newHour = hours - 1;
+  } else {
+    // For other timezones, use Intl API
+    const isoString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+    const tempDate = new Date(isoString);
+    const sourceOffset = getTimezoneOffsetForDate(tempDate, fromTimezone);
+    const targetOffset = getTimezoneOffsetForDate(tempDate, toTimezone);
+    const offsetDiff = (targetOffset - sourceOffset) / (1000 * 60 * 60); // Convert to hours
+    newHour = hours + offsetDiff;
+  }
+  
+  // Handle hour overflow/underflow
+  if (newHour >= 24) {
+    newHour = newHour - 24;
+    newDay++;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (newDay > daysInMonth) {
+      newDay = 1;
+      newMonth++;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear++;
+      }
+    }
+  } else if (newHour < 0) {
+    newHour = 24 + newHour;
+    newDay--;
+    if (newDay < 1) {
+      newMonth--;
+      if (newMonth < 1) {
+        newMonth = 12;
+        newYear--;
+      }
+      newDay = new Date(newYear, newMonth, 0).getDate();
+    }
+  }
+  
+  return `${String(Math.floor(newHour)).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+}
+
+/**
+ * Προσδιορίζει την timezone ενός γιατρού
+ * Αν ο γιατρός είναι από Ελβετία, επιστρέφει Europe/Zurich
+ * Αλλιώς Europe/Athens (default)
+ * @param doctorName - Το όνομα του γιατρού
+ * @returns Η timezone του γιατρού
+ */
+export function getDoctorTimezone(doctorName?: string | null): string {
+  if (!doctorName) {
+    // Προσωρινά: αν δεν υπάρχει όνομα, υποθέτουμε Ελβετία (για testing)
+    // Στο μέλλον, μπορείς να προσθέσεις doctor.timezone field στη βάση
+    return TIMEZONES.SWITZERLAND;
+  }
+  
+  // Ελέγχουμε αν ο γιατρός είναι στη λίστα γιατρών από Ελβετία
+  try {
+    // Dynamic import για να αποφύγουμε circular dependencies
+    const { isDoctorInSwitzerland } = require('../config/doctor-timezones');
+    if (isDoctorInSwitzerland(doctorName)) {
+      return TIMEZONES.SWITZERLAND;
+    }
+  } catch (e) {
+    // Αν αποτύχει το import, χρησιμοποιούμε fallback
+  }
+  
+  // Fallback: αν το όνομα περιέχει "Switzerland" ή "Zurich"
+  if (doctorName.toLowerCase().includes('switzerland') || doctorName.toLowerCase().includes('zurich')) {
+    return TIMEZONES.SWITZERLAND;
+  }
+  
+  // Προσωρινά: υποθέτουμε ότι όλοι οι γιατροί είναι από Ελβετία (για testing)
+  // Στο μέλλον, μπορείς να προσθέσεις doctor.timezone field στη βάση ή να χρησιμοποιήσεις το config
+  // return TIMEZONES.GREECE; // Default: Ελλάδα
+  return TIMEZONES.SWITZERLAND; // Προσωρινά: Ελβετία για testing
+}
