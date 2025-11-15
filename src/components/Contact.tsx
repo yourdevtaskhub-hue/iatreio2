@@ -907,8 +907,32 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         return doctor.active === true;
       });
 
-      setDoctors(allowedDoctors);
-      if (allowedDoctors.length > 0) setSelectedDoctorId(allowedDoctors[0].id);
+      // Ταξινόμηση: Σοφία πρώτη, μετά Ιωάννα, μετά οι υπόλοιποι
+      const sortedDoctors = allowedDoctors.sort((a, b) => {
+        const nameA = normalizeDoctorName(a.name || '');
+        const nameB = normalizeDoctorName(b.name || '');
+        
+        const isSofiaA = nameA.includes('σοφια') || nameA.includes('spyriadou');
+        const isSofiaB = nameB.includes('σοφια') || nameB.includes('spyriadou');
+        const isIoannaA = nameA.includes('ιωαννα') || nameA.includes('pissari');
+        const isIoannaB = nameB.includes('ιωαννα') || nameB.includes('pissari');
+        
+        // Σοφία πρώτη
+        if (isSofiaA && !isSofiaB) return -1;
+        if (!isSofiaA && isSofiaB) return 1;
+        
+        // Ιωάννα δεύτερη (μόνο αν δεν είναι Σοφία)
+        if (!isSofiaA && !isSofiaB) {
+          if (isIoannaA && !isIoannaB) return -1;
+          if (!isIoannaA && isIoannaB) return 1;
+        }
+        
+        // Υπόλοιποι αλφαβητικά
+        return nameA.localeCompare(nameB);
+      });
+
+      setDoctors(sortedDoctors);
+      if (sortedDoctors.length > 0) setSelectedDoctorId(sortedDoctors[0].id);
       setSettings(settingsData as any);
     };
     load();
