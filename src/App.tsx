@@ -106,7 +106,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-nunito">
+    <div className="min-h-screen bg-white font-nunito overflow-x-hidden w-full max-w-full">
       {renderPage()}
       
       {/* Payment Success Popup */}
