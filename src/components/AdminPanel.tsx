@@ -345,19 +345,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
 
       const paymentsList = paymentsData || [];
       
+      // Φέρνουμε manual deposits για να τα συνδέσουμε με payments
+      const { data: manualDepositsData } = await supabaseAdmin
+        .from('manual_deposit_requests')
+        .select('payment_id, id')
+        .eq('status', 'completed');
+      
+      const manualDepositPaymentIds = new Set(
+        (manualDepositsData || []).map((md: any) => md.payment_id).filter(Boolean)
+      );
+      
       // Ομαδοποίηση manual deposits - ένα payment record ανά manual deposit request
       const manualDepositMap = new Map<string, any>();
       const regularPayments: any[] = [];
       
       paymentsList.forEach((payment: any) => {
-        // Έλεγχος αν είναι manual deposit: το notes field περιέχει "Manual deposit"
-        const notes = payment.notes || '';
-        const isManualDeposit = typeof notes === 'string' && notes.startsWith('Manual deposit');
+        // Έλεγχος αν είναι manual deposit: αν υπάρχει manual_deposit_request με αυτό το payment_id
+        const isManualDeposit = manualDepositPaymentIds.has(payment.id);
         
         if (isManualDeposit) {
           // Για manual deposits, χρησιμοποιούμε το payment_id ως unique key
           // αφού κάθε payment αντιπροσωπεύει ένα manual deposit
-          const uniqueKey = payment.id || payment.payment_id || notes;
+          const uniqueKey = payment.id || payment.payment_id;
           if (!manualDepositMap.has(uniqueKey)) {
             manualDepositMap.set(uniqueKey, payment);
           }
@@ -835,44 +844,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
   };
 
   const filteredPayments = useMemo(() => {
-    // Ομαδοποίηση manual deposits - ένα payment record ανά manual deposit request
-    const manualDepositMap = new Map<string, any>();
-    const regularPayments: any[] = [];
-    
-    payments.forEach((payment: any) => {
-      const concerns = payment.concerns || '';
-      const isManualDeposit = typeof concerns === 'string' && concerns.startsWith('MANUAL_DEPOSIT#');
-      
-      if (isManualDeposit) {
-        // Εξαγωγή manual deposit ID από το concerns (UUID format)
-        const match = concerns.match(/MANUAL_DEPOSIT#([a-f0-9-]{36})/i);
-        if (match) {
-          const manualDepositId = match[1];
-          // Αν δεν υπάρχει ήδη, προσθέτει το payment
-          if (!manualDepositMap.has(manualDepositId)) {
-            manualDepositMap.set(manualDepositId, payment);
-          }
-        } else {
-          // Αν δεν μπορεί να εξαχθεί το ID, χρησιμοποιεί το concerns ως key
-          const fallbackKey = concerns;
-          if (!manualDepositMap.has(fallbackKey)) {
-            manualDepositMap.set(fallbackKey, payment);
-          }
-        }
-      } else {
-        // Κανονικό payment (όχι manual deposit)
-        regularPayments.push(payment);
-      }
-    });
-    
-    // Συνδυασμός manual deposits και κανονικών payments
-    const uniquePayments = [...Array.from(manualDepositMap.values()), ...regularPayments];
-    
-    // Φιλτράρισμα ανά search term
+    // Τα payments είναι ήδη deduplicated στο fetchWalletData
+    // Εδώ απλά κάνουμε φιλτράρισμα ανά search term
     const term = walletSearch.trim().toLowerCase();
-    if (!term) return uniquePayments;
+    if (!term) return payments;
     
-    return uniquePayments.filter((payment: any) => {
+    return payments.filter((payment: any) => {
       const amountEuros = (payment.amount_cents ?? 0) / 100;
       const searchableFields = [
         payment.parent_name,

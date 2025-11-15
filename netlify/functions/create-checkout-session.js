@@ -282,8 +282,7 @@ exports.handler = async (event, context) => {
         parent_name: parentName,
         appointment_date: finalIsDeposit ? null : (appointmentDate || null),
         appointment_time: finalIsDeposit ? null : (appointmentTime || null),
-        doctor_name: doctorName,
-        notes: isManualDeposit ? `Manual deposit: ${sessionsCount || 0} sessions` : null
+        doctor_name: doctorName
       })
       .select()
       .single();
