@@ -296,10 +296,12 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
 
     try {
       setManualDepositsLoading(true);
+      // Φέρνει μόνο τα completed manual deposits
       const { data, error } = await supabaseAdmin
         .from('manual_deposit_requests')
         .select('*')
         .eq('doctor_id', resolvedDoctorId)
+        .eq('status', 'completed')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

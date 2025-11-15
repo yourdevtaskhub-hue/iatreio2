@@ -20,6 +20,17 @@ export interface CreateCheckoutSessionData {
   sessionsCount?: number; // Optional: for deposit purchases
   scheduleDetails?: Array<{ date: string; time: string }>;
   manualSessionsLabel?: string;
+  manualDepositData?: {
+    doctorId: string;
+    doctorName: string;
+    sessionCount: number;
+    appointmentDate: string;
+    parentName: string;
+    parentEmail: string;
+    parentPhone: string | null;
+    amountCents: number;
+    notes: string | null;
+  };
 }
 
 export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) => {
@@ -126,6 +137,7 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
             amountCents: effectiveAmountCents,
             priceId: override ? override.priceId : stripePriceId || null, // null for deposits
             sessionsCount: data.sessionsCount || null, // for deposit purchases
+            manualDepositData: data.manualDepositData || null,
             scheduleDetails: Array.isArray(data.scheduleDetails) ? data.scheduleDetails : null,
             manualSessionsLabel: data.manualSessionsLabel || null
           };

@@ -153,7 +153,7 @@ async function handleCheckoutSessionCompleted(session) {
 
   const concernsString = typeof concerns === 'string' ? concerns : '';
   const isDepositPurchase = concernsString.startsWith('DEPOSIT_PURCHASE');
-  const isManualDeposit = concernsString.startsWith('MANUAL_DEPOSIT#');
+  const isManualDeposit = concernsString.startsWith('MANUAL_DEPOSIT') || !!session.metadata?.manual_deposit_data;
   const metadataSessionsCount = session.metadata?.sessions_count
     ? parseInt(session.metadata.sessions_count, 10)
     : null;
@@ -285,6 +285,55 @@ async function handleCheckoutSessionCompleted(session) {
           scheduleDetailsFromMetadataCount: scheduleDetailsFromMetadata.length,
           concerns: concernsString
         });
+      }
+
+      // Αν είναι manual deposit, δημιουργία του manual_deposit_requests μετά την επιτυχή πληρωμή
+      if (isManualDeposit) {
+        console.log('🔍 [DEBUG] Manual deposit detected, creating manual_deposit_request...');
+        
+        // Διάβασμα manual deposit data από metadata
+        const manualDepositDataStr = session.metadata?.manual_deposit_data;
+        if (!manualDepositDataStr) {
+          console.warn('⚠️ [WARNING] Manual deposit detected but no manual_deposit_data in metadata');
+          return;
+        }
+
+        let manualDepositData;
+        try {
+          manualDepositData = JSON.parse(manualDepositDataStr);
+        } catch (parseError) {
+          console.error('❌ [ERROR] Failed to parse manual_deposit_data:', parseError);
+          return;
+        }
+
+        console.log('🔍 [DEBUG] Manual deposit data:', JSON.stringify(manualDepositData, null, 2));
+
+        // Δημιουργία manual_deposit_request με status 'completed' απευθείας
+        const { data: insertedManualDeposit, error: manualDepositInsertError } = await supabase
+          .from('manual_deposit_requests')
+          .insert({
+            doctor_id: manualDepositData.doctorId,
+            doctor_name: manualDepositData.doctorName,
+            session_count: manualDepositData.sessionCount,
+            appointment_date: manualDepositData.appointmentDate,
+            appointment_time: null,
+            parent_name: manualDepositData.parentName,
+            parent_email: manualDepositData.parentEmail,
+            parent_phone: manualDepositData.parentPhone,
+            amount_cents: manualDepositData.amountCents,
+            notes: manualDepositData.notes,
+            status: 'completed',
+            payment_id: payment_id,
+            error_message: null
+          })
+          .select()
+          .single();
+
+        if (manualDepositInsertError) {
+          console.error('❌ [ERROR] Failed to create manual_deposit_request:', manualDepositInsertError);
+        } else {
+          console.log('✅ [SUCCESS] Manual deposit request created with status completed:', insertedManualDeposit.id);
+        }
       }
 
       console.log('✅ [SUCCESS] Deposit purchase credited');

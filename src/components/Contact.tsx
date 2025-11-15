@@ -498,57 +498,40 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     setManualDepositError(null);
 
     try {
-      const { data: inserted, error: insertError } = await supabase
-        .from('manual_deposit_requests')
-        .insert({
-          doctor_id: manualDepositForm.doctorId,
-          doctor_name: doctor.name,
-          session_count: manualDepositForm.sessionsCount,
-          appointment_date: trimmedDateTime,
-          appointment_time: null,
-          parent_name: manualDepositForm.parentName,
-          parent_email: manualDepositForm.email,
-          parent_phone: manualDepositForm.phone || null,
-          amount_cents: totalCents,
-          notes: combinedNotes || null,
-          status: 'pending',
-          error_message: null
-        })
-        .select()
-        .single();
-
-      if (insertError || !inserted) {
-        throw insertError || new Error('Failed to create deposit request.');
-      }
-
-      try {
-        const checkoutResult = await createRealStripeCheckout({
+      // Δημιουργία checkout απευθείας - το manual_deposit_request θα δημιουργηθεί στο webhook μετά την επιτυχή πληρωμή
+      const checkoutResult = await createRealStripeCheckout({
+        doctorId: manualDepositForm.doctorId,
+        doctorName: doctor.name,
+        parentName: manualDepositForm.parentName,
+        parentEmail: manualDepositForm.email,
+        appointmentDate: '',
+        appointmentTime: '',
+        concerns: 'MANUAL_DEPOSIT',
+        amountCents: totalCents,
+        sessionsCount: manualDepositForm.sessionsCount,
+        scheduleDetails: [{ date: trimmedDateTime, time: '' }],
+        manualSessionsLabel: sessionsLabel,
+        // Μεταβίβαση στοιχείων manual deposit στο metadata
+        manualDepositData: {
           doctorId: manualDepositForm.doctorId,
           doctorName: doctor.name,
+          sessionCount: manualDepositForm.sessionsCount,
+          appointmentDate: trimmedDateTime,
           parentName: manualDepositForm.parentName,
           parentEmail: manualDepositForm.email,
-          appointmentDate: '',
-          appointmentTime: '',
-          concerns: `MANUAL_DEPOSIT#${inserted.id}`,
+          parentPhone: manualDepositForm.phone || null,
           amountCents: totalCents,
-          sessionsCount: manualDepositForm.sessionsCount,
-          scheduleDetails: [{ date: trimmedDateTime, time: '' }],
-          manualSessionsLabel: sessionsLabel
-        });
-
-        if (checkoutResult?.paymentId) {
-          await supabase
-            .from('manual_deposit_requests')
-            .update({ payment_id: checkoutResult.paymentId, status: 'pending_checkout' })
-            .eq('id', inserted.id);
+          notes: combinedNotes || null
         }
-      } catch (checkoutError: any) {
-        await supabase
-          .from('manual_deposit_requests')
-          .update({ status: 'checkout_failed', error_message: checkoutError?.message || null })
-          .eq('id', inserted.id);
-        throw checkoutError;
+      });
+
+      if (!checkoutResult?.paymentId) {
+        throw new Error('Failed to create checkout session');
       }
+      
+      // Κλείσιμο modal και ανακατεύθυνση στο Stripe
+      setShowManualDepositPopup(false);
+      setIsSubmittingManualDeposit(false);
     } catch (error: any) {
       console.error('Manual deposit error:', error);
       setManualDepositError(error?.message || content[language].manualDeposit.error);

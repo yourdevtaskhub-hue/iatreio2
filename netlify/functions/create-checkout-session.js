@@ -88,7 +88,8 @@ exports.handler = async (event, context) => {
       priceId,
       sessionsCount: sessionsCountFromBody, // Optional: passed explicitly for deposit purchases
       scheduleDetails: scheduleDetailsFromBody,
-      manualSessionsLabel
+      manualSessionsLabel,
+      manualDepositData
     } = body;
 
     console.log('🔍 [CHECKOUT] Raw request body:', JSON.stringify(body, null, 2));
@@ -127,7 +128,7 @@ exports.handler = async (event, context) => {
     const isDeposit = (typeof concerns === 'string') && concerns.startsWith('DEPOSIT_PURCHASE');
     // Also check if appointment date/time are empty (deposit indicator)
     const isDepositByEmptyFields = (!appointmentDate || appointmentDate === '') && (!appointmentTime || appointmentTime === '');
-    const isManualDeposit = (typeof concerns === 'string') && concerns.startsWith('MANUAL_DEPOSIT#');
+    const isManualDeposit = (typeof concerns === 'string') && concerns.startsWith('MANUAL_DEPOSIT') || !!manualDepositData;
     const finalIsDeposit = isDeposit || isDepositByEmptyFields || isManualDeposit;
     
     // Extract sessions count for deposit purchases
@@ -281,8 +282,9 @@ exports.handler = async (event, context) => {
         parent_name: parentName,
         appointment_date: finalIsDeposit ? null : (appointmentDate || null),
         appointment_time: finalIsDeposit ? null : (appointmentTime || null),
-        doctor_name: doctorName
-        // Note: 'concerns' field is stored in Stripe metadata, not in payments table
+        doctor_name: doctorName,
+        concerns: concerns || null,
+        notes: isManualDeposit ? `Manual deposit: ${sessionsCount || 0} sessions` : null
       })
       .select()
       .single();
@@ -441,7 +443,8 @@ exports.handler = async (event, context) => {
           sessions_count: sessionsCount ? sessionsCount.toString() : '',
           schedule_details: scheduleSummaryText,
           schedule_details_json: normalizedScheduleDetails.length ? JSON.stringify(normalizedScheduleDetails) : '',
-          manual_sessions_label: manualSessionsLabel || ''
+          manual_sessions_label: manualSessionsLabel || '',
+          manual_deposit_data: manualDepositData ? JSON.stringify(manualDepositData) : ''
         },
       };
       console.log('🔍 [CHECKOUT] Session data about to send to Stripe:', JSON.stringify(sessionData, null, 2));
