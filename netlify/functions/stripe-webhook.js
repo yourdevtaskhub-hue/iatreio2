@@ -229,64 +229,6 @@ async function handleCheckoutSessionCompleted(session) {
 
     // Αν είναι αγορά deposit: πίστωση υπολοίπου και όχι δημιουργία ραντεβού
     if (isDeposit) {
-      let sessions = Number.isFinite(metadataSessionsCount) && metadataSessionsCount > 0 ? metadataSessionsCount : 0;
-
-      if (!sessions) {
-        const sessionsMatch = concernsString.match(/sessions=(\d+)/);
-        if (sessionsMatch) {
-          const parsed = parseInt(sessionsMatch[1], 10);
-          if (!Number.isNaN(parsed) && parsed > 0) {
-            sessions = parsed;
-          }
-        }
-      }
-
-      if (!sessions && scheduleDetailsFromMetadata.length > 0) {
-        sessions = scheduleDetailsFromMetadata.length;
-      }
-
-      console.log('🔍 [DEBUG] Deposit purchase detected. Extracted sessions:', sessions);
-      console.log('🔍 [DEBUG] Deposit payment metadata snapshot:', {
-        payment_id,
-        parent_email,
-        doctor_id,
-        concerns
-      });
-
-      // Update payment status
-      const { error: updErr } = await supabase
-        .from('payments')
-        .update({ status: 'completed', stripe_checkout_session_id: session.id })
-        .eq('id', payment_id);
-      if (updErr) throw updErr;
-
-      if (sessions > 0) {
-        // Καταγραφή κίνησης (trigger ενημερώνει υπόλοιπο)
-        const { error: txErr } = await supabase
-          .from('session_deposit_transactions')
-          .insert({
-            customer_email: parent_email,
-            doctor_id: doctor_id,
-            delta_sessions: sessions,
-            reason: 'purchase',
-            payment_id: payment_id,
-            metadata: { stripe_session_id: session.id }
-          });
-        if (txErr) throw txErr;
-        console.log('✅ [SUCCESS] Deposit transaction recorded:', {
-          customer_email: parent_email,
-          doctor_id,
-          delta_sessions: sessions,
-          payment_id
-        });
-      } else {
-        console.warn('⚠️ [WARNING] Deposit purchase without sessions credit (sessions <= 0). Check metadata/concerns format.', {
-          metadataSessionsCount,
-          scheduleDetailsFromMetadataCount: scheduleDetailsFromMetadata.length,
-          concerns: concernsString
-        });
-      }
-
       // Αν είναι manual deposit, δημιουργία του manual_deposit_requests μετά την επιτυχή πληρωμή
       if (isManualDeposit) {
         console.log('🔍 [DEBUG] Manual deposit detected, creating manual_deposit_request...');
@@ -295,6 +237,7 @@ async function handleCheckoutSessionCompleted(session) {
         const manualDepositDataStr = session.metadata?.manual_deposit_data;
         if (!manualDepositDataStr) {
           console.warn('⚠️ [WARNING] Manual deposit detected but no manual_deposit_data in metadata');
+          console.log('✅ [SUCCESS] Manual deposit processed (no data to insert)');
           return;
         }
 
@@ -303,7 +246,7 @@ async function handleCheckoutSessionCompleted(session) {
           manualDepositData = JSON.parse(manualDepositDataStr);
         } catch (parseError) {
           console.error('❌ [ERROR] Failed to parse manual_deposit_data:', parseError);
-          return;
+          throw parseError;
         }
 
         console.log('🔍 [DEBUG] Manual deposit data:', JSON.stringify(manualDepositData, null, 2));
@@ -331,9 +274,89 @@ async function handleCheckoutSessionCompleted(session) {
 
         if (manualDepositInsertError) {
           console.error('❌ [ERROR] Failed to create manual_deposit_request:', manualDepositInsertError);
+          throw manualDepositInsertError;
         } else {
           console.log('✅ [SUCCESS] Manual deposit request created with status completed:', insertedManualDeposit.id);
+          
+          // Για manual deposits, δημιουργούμε session_deposit_transactions για να ενημερωθεί το wallet
+          if (manualDepositData.sessionCount > 0) {
+            const { error: txErr } = await supabase
+              .from('session_deposit_transactions')
+              .insert({
+                customer_email: manualDepositData.parentEmail,
+                doctor_id: manualDepositData.doctorId,
+                delta_sessions: manualDepositData.sessionCount,
+                reason: 'purchase',
+                payment_id: payment_id,
+                metadata: { stripe_session_id: session.id, is_manual_deposit: true }
+              });
+            if (txErr) {
+              console.error('❌ [ERROR] Failed to create session_deposit_transaction:', txErr);
+              throw txErr;
+            }
+            console.log('✅ [SUCCESS] Manual deposit transaction recorded:', {
+              customer_email: manualDepositData.parentEmail,
+              doctor_id: manualDepositData.doctorId,
+              delta_sessions: manualDepositData.sessionCount,
+              payment_id
+            });
+          }
         }
+
+        console.log('✅ [SUCCESS] Manual deposit purchase credited');
+        return;
+      }
+
+      // Κανονικό deposit (όχι manual)
+      let sessions = Number.isFinite(metadataSessionsCount) && metadataSessionsCount > 0 ? metadataSessionsCount : 0;
+
+      if (!sessions) {
+        const sessionsMatch = concernsString.match(/sessions=(\d+)/);
+        if (sessionsMatch) {
+          const parsed = parseInt(sessionsMatch[1], 10);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            sessions = parsed;
+          }
+        }
+      }
+
+      if (!sessions && scheduleDetailsFromMetadata.length > 0) {
+        sessions = scheduleDetailsFromMetadata.length;
+      }
+
+      console.log('🔍 [DEBUG] Deposit purchase detected. Extracted sessions:', sessions);
+      console.log('🔍 [DEBUG] Deposit payment metadata snapshot:', {
+        payment_id,
+        parent_email,
+        doctor_id,
+        concerns
+      });
+
+      if (sessions > 0) {
+        // Καταγραφή κίνησης (trigger ενημερώνει υπόλοιπο)
+        const { error: txErr } = await supabase
+          .from('session_deposit_transactions')
+          .insert({
+            customer_email: parent_email,
+            doctor_id: doctor_id,
+            delta_sessions: sessions,
+            reason: 'purchase',
+            payment_id: payment_id,
+            metadata: { stripe_session_id: session.id }
+          });
+        if (txErr) throw txErr;
+        console.log('✅ [SUCCESS] Deposit transaction recorded:', {
+          customer_email: parent_email,
+          doctor_id,
+          delta_sessions: sessions,
+          payment_id
+        });
+      } else {
+        console.warn('⚠️ [WARNING] Deposit purchase without sessions credit (sessions <= 0). Check metadata/concerns format.', {
+          metadataSessionsCount,
+          scheduleDetailsFromMetadataCount: scheduleDetailsFromMetadata.length,
+          concerns: concernsString
+        });
       }
 
       console.log('✅ [SUCCESS] Deposit purchase credited');
