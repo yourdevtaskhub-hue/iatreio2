@@ -1715,20 +1715,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
               </motion.button>
             </form>
 
-            {/* Κουμπί Κατάθεση - μετακινημένο εδώ */}
-            <div className="mt-6 max-w-3xl mx-auto flex justify-center">
-              <motion.button
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.96 }}
-                type="button"
-                onClick={openManualDepositModal}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-purple-800 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <CreditCard className="h-5 w-5" />
-                <span>{content[language].manualDeposit.button}</span>
-              </motion.button>
-            </div>
-
             {/* Stripe Checkout Modal */}
             <AnimatePresence>
               {showStripeCheckout && (
@@ -1828,6 +1814,27 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 {content[language].privacyDesc}
               </p>
             </motion.div>
+
+            {/* Label για το κουμπί Κατάθεση */}
+            <div className="mt-6 max-w-3xl mx-auto">
+              <p className="text-sm text-gray-700 text-center font-nunito">
+                Παρακαλώ επιλέγετε το κουμπί &lt;&lt;Κατάθεση&gt;&gt; <span className="font-bold text-black">μόνο</span> μετά από συνεννόηση με το ιατρείο.
+              </p>
+            </div>
+
+            {/* Κουμπί Κατάθεση */}
+            <div className="mt-4 max-w-3xl mx-auto flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={openManualDepositModal}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 text-purple-800 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                <CreditCard className="h-5 w-5" />
+                <span>{content[language].manualDeposit.button}</span>
+              </motion.button>
+            </div>
 
           </motion.div>
         </div>
