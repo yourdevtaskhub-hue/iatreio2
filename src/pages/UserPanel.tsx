@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../lib/supabase';
-import { User, Mail, Phone, Calendar, LogOut, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star } from 'lucide-react';
+import { User, Mail, Phone, Calendar, LogOut, Shield, Camera, Key, Trash2, X, CreditCard, Sparkles, Gift, Clock, CheckCircle2, Wallet, Coins, ArrowRight, Star, Home } from 'lucide-react';
 import Contact from '../components/Contact';
 import ReviewForm from '../components/ReviewForm';
 import { getDoctorPrice } from '../lib/stripe-api';
@@ -403,15 +403,27 @@ const UserPanel: React.FC<UserPanelProps> = ({ language }) => {
               </div>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogout}
-              className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl transition-colors font-nunito w-full sm:w-auto"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>{translate('Αποσύνδεση', 'Logout', 'Se déconnecter')}</span>
-            </motion.button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/'}
+                className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl transition-colors font-nunito w-full sm:w-auto"
+              >
+                <Home className="h-5 w-5" />
+                <span>{translate('Αρχική Σελίδα', 'Home', 'Accueil')}</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-xl transition-colors font-nunito w-full sm:w-auto"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>{translate('Αποσύνδεση', 'Logout', 'Se déconnecter')}</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </div>

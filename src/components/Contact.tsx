@@ -620,6 +620,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       sendMessage: 'Πληρωμή',
       privacyGuaranteed: 'Εγγυημένη Ιδιωτικότητα',
       privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.',
+      depositButtonLabel: 'Παρακαλώ επιλέγετε το κουμπί «Κατάθεση» <strong>μόνο</strong> μετά από συνεννόηση με το ιατρείο.',
       waitlistButton: 'Λίστα Αναμονής',
       waitlistTitle: 'Εγγραφή στη Λίστα Αναμονής',
       waitlistDateTimeLabel: 'Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού',
@@ -733,6 +734,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       sendMessage: 'Send Message',
       privacyGuaranteed: 'Privacy Guaranteed',
       privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.',
+      depositButtonLabel: 'Please select the "Deposit" button <strong>only</strong> after consultation with the clinic.',
       waitlistButton: 'Waitlist',
       waitlistTitle: 'Join Waitlist',
       waitlistDateTimeLabel: 'Date and Time I would like to book an appointment',
@@ -845,6 +847,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       sendMessage: 'Envoyer le Message',
       privacyGuaranteed: 'Confidentialité Garantie',
       privacyDesc: 'Toutes les communications sont confidentielles et protégées par le secret médical.',
+      depositButtonLabel: 'Veuillez sélectionner le bouton « Dépôt » <strong>uniquement</strong> après consultation avec la clinique.',
       waitlistButton: 'Liste d\'Attente',
       waitlistTitle: 'Rejoindre la Liste d\'Attente',
       waitlistDateTimeLabel: 'Date et Heure où j\'aimerais prendre rendez-vous',
@@ -1852,9 +1855,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
 
             {/* Label για το κουμπί Κατάθεση */}
             <div className="mt-6 max-w-3xl mx-auto">
-              <p className="text-sm text-gray-700 text-center font-nunito">
-                Παρακαλώ επιλέγετε το κουμπί &lt;&lt;Κατάθεση&gt;&gt; <span className="font-bold text-black">μόνο</span> μετά από συνεννόηση με το ιατρείο.
-              </p>
+              <p className="text-sm text-gray-700 text-center font-nunito" dangerouslySetInnerHTML={{ __html: content[language].depositButtonLabel }} />
             </div>
 
             {/* Κουμπί Κατάθεση */}
