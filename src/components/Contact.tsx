@@ -1683,8 +1683,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
                   required
                 />
-                <label htmlFor="privacy" className="text-sm text-red-600 font-nunito">
-                  <strong>{content[language].privacy}</strong>
+                <label htmlFor="privacy" className="text-sm text-gray-900 font-nunito leading-relaxed">
+                  {content[language].privacy}
                 </label>
               </div>
 
@@ -1698,8 +1698,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
                   required
                 />
-                <label htmlFor="recordingPolicy" className="text-sm text-red-600 font-nunito">
-                  <strong>{content[language].recordingPolicy}</strong>
+                <label htmlFor="recordingPolicy" className="text-sm text-gray-900 font-nunito leading-relaxed">
+                  {content[language].recordingPolicy}
                 </label>
               </div>
 
@@ -1713,8 +1713,27 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
                   required
                 />
-                <label htmlFor="parentalConsent" className="text-sm text-red-600 font-nunito">
-                  <strong>{content[language].parentalConsent}</strong>
+                <label htmlFor="parentalConsent" className="text-sm text-gray-900 font-nunito leading-relaxed">
+                  {content[language].parentalConsent}
+                </label>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="cancellationPolicyMain"
+                  name="cancellationPolicyAccepted"
+                  checked={formData.cancellationPolicyAccepted}
+                  onChange={handleInputChange}
+                  className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
+                  required
+                />
+                <label
+                  htmlFor="cancellationPolicyMain"
+                  className="text-sm text-gray-900 font-nunito leading-relaxed"
+                  style={{ whiteSpace: 'pre-line' }}
+                >
+                  {content[language].cancellationPolicy}
                 </label>
               </div>
 
@@ -1834,24 +1853,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 {content[language].privacyDesc}
               </p>
             </motion.div>
-
-            {/* Checkbox Πολιτική Ακύρωσης */}
-            <div className="mt-6 max-w-3xl mx-auto">
-              <div className="flex items-start space-x-3">
-                <input
-                  type="checkbox"
-                  id="cancellationPolicy"
-                  name="cancellationPolicyAccepted"
-                  checked={formData.cancellationPolicyAccepted}
-                  onChange={handleInputChange}
-                  className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
-                  required
-                />
-                <label htmlFor="cancellationPolicy" className="text-sm text-red-600 font-nunito">
-                  <strong style={{ whiteSpace: 'pre-line' }}>{content[language].cancellationPolicy}</strong>
-                </label>
-              </div>
-            </div>
 
             {/* Label για το κουμπί Κατάθεση */}
             <div className="mt-6 max-w-3xl mx-auto">
@@ -2021,7 +2022,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                       />
                     </div>
 
-                    <div className="space-y-3 text-sm text-red-600 font-nunito">
+                    <div className="space-y-3 text-sm text-gray-900 font-nunito">
                       <label className="flex items-start gap-3">
                         <input
                           type="checkbox"
@@ -2029,9 +2030,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           onChange={(e) =>
                             setManualDepositAgreements(prev => ({ ...prev, policy: e.target.checked }))
                           }
-                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                          className="mt-1 h-4 w-4 text-rose-soft border-gray-300 focus:ring-rose-soft rounded"
                         />
-                        <span className="leading-relaxed">
+                        <span className="leading-relaxed text-gray-900">
                           {content[language].privacy}
                         </span>
                       </label>
@@ -2042,9 +2043,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           onChange={(e) =>
                             setManualDepositAgreements(prev => ({ ...prev, recording: e.target.checked }))
                           }
-                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                          className="mt-1 h-4 w-4 text-rose-soft border-gray-300 focus:ring-rose-soft rounded"
                         />
-                        <span className="leading-relaxed">
+                        <span className="leading-relaxed text-gray-900">
                           {content[language].recordingPolicy}
                         </span>
                       </label>
@@ -2055,9 +2056,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           onChange={(e) =>
                             setManualDepositAgreements(prev => ({ ...prev, consent: e.target.checked }))
                           }
-                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                          className="mt-1 h-4 w-4 text-rose-soft border-gray-300 focus:ring-rose-soft rounded"
                         />
-                        <span className="leading-relaxed">
+                        <span className="leading-relaxed text-gray-900">
                           {content[language].parentalConsent}
                         </span>
                       </label>
@@ -2068,10 +2069,10 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           onChange={(e) =>
                             setManualDepositAgreements(prev => ({ ...prev, cancellationPolicy: e.target.checked }))
                           }
-                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                          className="mt-1 h-4 w-4 text-rose-soft border-gray-300 focus:ring-rose-soft rounded"
                         />
-                        <span className="leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
-                          <strong>{content[language].cancellationPolicy}</strong>
+                        <span className="leading-relaxed text-gray-900" style={{ whiteSpace: 'pre-line' }}>
+                          {content[language].cancellationPolicy}
                         </span>
                       </label>
                     </div>
