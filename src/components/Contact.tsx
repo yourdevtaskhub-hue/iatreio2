@@ -50,6 +50,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     privacyAccepted: false,
     recordingPolicyAccepted: false,
     parentalConsentAccepted: false,
+    cancellationPolicyAccepted: false,
     isFirstSession: ''
   });
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
@@ -158,7 +159,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const [manualDepositAgreements, setManualDepositAgreements] = useState({
     policy: false,
     recording: false,
-    consent: false
+    consent: false,
+    cancellationPolicy: false
   });
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId) || null;
   const isRestrictedDoctor = !!selectedDoctor && RESTRICTED_DOCTOR_NAMES.has(selectedDoctor.name);
@@ -286,6 +288,17 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         : language === 'en' 
         ? 'Please accept the parental consent to continue.'
         : 'Veuillez accepter le consentement parental pour continuer.'
+      );
+      return;
+    }
+    
+    // Check if cancellation policy is accepted
+    if (!formData.cancellationPolicyAccepted) {
+      alert(language === 'gr' 
+        ? 'Παρακαλώ αποδεχτείτε την πολιτική ακύρωσης για να συνεχίσετε.'
+        : language === 'en' 
+        ? 'Please accept the cancellation policy to continue.'
+        : 'Veuillez accepter la politique d\'annulation pour continuer.'
       );
       return;
     }
@@ -460,7 +473,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       setManualDepositError(manualStrings.validation.price);
       return;
     }
-    if (!manualDepositAgreements.policy || !manualDepositAgreements.recording || !manualDepositAgreements.consent) {
+    if (!manualDepositAgreements.policy || !manualDepositAgreements.recording || !manualDepositAgreements.consent || !manualDepositAgreements.cancellationPolicy) {
       setManualDepositError(manualStrings.validation.policy);
       return;
     }
@@ -603,6 +616,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       privacy: 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.',
       recordingPolicy: 'Πολιτική ηχογράφησης & καταγραφής: Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.',
       parentalConsent: 'Ως γονεϊκό ζευγάρι αποδεχόμαστε η γιατρός και η ομάδα της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.',
+      cancellationPolicy: 'Πολιτική Ακύρωσης\n\nΟι ακυρώσεις συνεδριών μπορούν να πραγματοποιηθούν έως και 12 ώρες πριν από την προγραμματισμένη ώρα. Σε ακυρώσεις που γίνονται μετά το όριο αυτό, δυστυχώς δεν είναι δυνατή η επιστροφή χρημάτων, καθώς ο χρόνος έχει δεσμευτεί αποκλειστικά για εσάς. Σας ευχαριστούμε για την κατανόηση και τον σεβασμό στον κοινό μας χρόνο.',
       sendMessage: 'Πληρωμή',
       privacyGuaranteed: 'Εγγυημένη Ιδιωτικότητα',
       privacyDesc: 'Όλες οι επικοινωνίες είναι εμπιστευτικές και προστατεύονται από το ιατρικό απόρρητο.',
@@ -715,6 +729,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       privacy: 'I understand that this form is not for emergency situations. For immediate help, please contact emergency services or go to your nearest emergency room.',
       recordingPolicy: 'Recording & Archiving Policy: For reasons of privacy and ethics, recording and/or videotaping of sessions is strictly prohibited. In case of violation of this policy, penalties will be imposed.',
       parentalConsent: 'As a parental couple, we accept that the doctor and their team examine and conduct sessions with our child.',
+      cancellationPolicy: 'Cancellation Policy\n\nSession cancellations can be made up to 12 hours before the scheduled time. For cancellations made after this deadline, unfortunately, refunds are not possible as the time has been exclusively reserved for you. Thank you for your understanding and respect for our shared time.',
       sendMessage: 'Send Message',
       privacyGuaranteed: 'Privacy Guaranteed',
       privacyDesc: 'All communications are confidential and protected by patient-doctor privilege.',
@@ -826,6 +841,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       privacy: 'Je comprends que ce formulaire n\'est pas pour les situations d\'urgence. Pour une aide immédiate, veuillez contacter les services d\'urgence ou aller au service d\'urgence le plus proche.',
       recordingPolicy: 'Politique d\'enregistrement & d\'archivage: Pour des raisons de confidentialité et d\'éthique, l\'enregistrement et/ou la vidéosurveillance des sessions est strictement interdite. En cas de violation de cette politique, des sanctions seront imposées.',
       parentalConsent: 'En tant que couple parental, nous acceptons que le médecin et son équipe examinent et mènent des sessions avec notre enfant.',
+      cancellationPolicy: 'Politique d\'Annulation\n\nLes annulations de session peuvent être effectuées jusqu\'à 12 heures avant l\'heure prévue. Pour les annulations effectuées après ce délai, malheureusement, les remboursements ne sont pas possibles car le temps a été exclusivement réservé pour vous. Merci de votre compréhension et du respect de notre temps partagé.',
       sendMessage: 'Envoyer le Message',
       privacyGuaranteed: 'Confidentialité Garantie',
       privacyDesc: 'Toutes les communications sont confidentielles et protégées par le secret médical.',
@@ -1703,9 +1719,9 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={!selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200}
+                disabled={!selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || !formData.cancellationPolicyAccepted || messageLength > 200}
                 className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
-                  !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || messageLength > 200
+                  !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || !formData.cancellationPolicyAccepted || messageLength > 200
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
                 }`}
@@ -1770,6 +1786,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                             privacyAccepted: false,
                             recordingPolicyAccepted: false,
                             parentalConsentAccepted: false,
+                            cancellationPolicyAccepted: false,
                             isFirstSession: ''
                           });
                           setSelectedSpecialty('');
@@ -1814,6 +1831,24 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 {content[language].privacyDesc}
               </p>
             </motion.div>
+
+            {/* Checkbox Πολιτική Ακύρωσης */}
+            <div className="mt-6 max-w-3xl mx-auto">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="cancellationPolicy"
+                  name="cancellationPolicyAccepted"
+                  checked={formData.cancellationPolicyAccepted}
+                  onChange={handleInputChange}
+                  className="mt-1 h-4 w-4 text-rose-soft focus:ring-rose-soft border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="cancellationPolicy" className="text-sm text-red-600 font-nunito">
+                  <strong style={{ whiteSpace: 'pre-line' }}>{content[language].cancellationPolicy}</strong>
+                </label>
+              </div>
+            </div>
 
             {/* Label για το κουμπί Κατάθεση */}
             <div className="mt-6 max-w-3xl mx-auto">
@@ -2025,6 +2060,19 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           {content[language].parentalConsent}
                         </span>
                       </label>
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={manualDepositAgreements.cancellationPolicy}
+                          onChange={(e) =>
+                            setManualDepositAgreements(prev => ({ ...prev, cancellationPolicy: e.target.checked }))
+                          }
+                          className="mt-1 h-4 w-4 text-red-500 border-red-400 focus:ring-red-500 rounded"
+                        />
+                        <span className="leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
+                          <strong>{content[language].cancellationPolicy}</strong>
+                        </span>
+                      </label>
                     </div>
 
                     <div>
@@ -2090,7 +2138,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           !manualDepositForm.customPrice.trim() ||
                           customPriceValue === null ||
                           isNaN(customPriceValue) ||
-                          customPriceValue <= 0
+                          customPriceValue <= 0 ||
+                          !manualDepositAgreements.policy ||
+                          !manualDepositAgreements.recording ||
+                          !manualDepositAgreements.consent ||
+                          !manualDepositAgreements.cancellationPolicy
                         }
                         className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                       >
