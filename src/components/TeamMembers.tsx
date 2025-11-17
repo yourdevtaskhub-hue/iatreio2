@@ -6,6 +6,7 @@ import ioannaCertificate from '../assets/ioanna_certificate.png';
 import wolverhampton from '../assets/WOLVERHAMPTON.png';
 import sofiaCertificate from '../assets/sofia_certificate.png';
 import sofiaMaster from '../assets/sofia_master.png';
+import sofia2 from '../assets/sofia_2.png';
 import certificatSystemique from '../assets/Certificat Systemique.png';
 import analytikiVeveosiStergiou from '../assets/Αναλυτική Βεβαίωση Στεργίου ΣΥΣΤΗΜΙΚΗ.png';
 import metaptychiakoEkseliktikisSxolikis from '../assets/ΜΕΤΑΠΤΥΧΙΑΚΟ ΕΞΕΛΙΚΤΙΚΗΣ ΣΧΟΛΙΚΗΣ ΨΥΧΟΛΟΓΙΑΣ.png';
@@ -50,7 +51,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ language }) => {
       setSelectedPDFs([ioannaCertificate, wolverhampton]);
     } else if (memberId === 2) {
       // Sofia Spyriadou
-      setSelectedPDFs([sofiaCertificate, sofiaMaster]);
+      setSelectedPDFs([sofiaCertificate, sofiaMaster, sofia2]);
     } else if (memberId === 3) {
       // Eirini Stergiou
       setSelectedPDFs([
