@@ -301,6 +301,88 @@ async function handleCheckoutSessionCompleted(session) {
               payment_id
             });
           }
+
+          // Αποστολή email επιβεβαιώσεως για manual deposit
+          // Χρησιμοποιούμε την ημερομηνία από το manualDepositData.appointmentDate
+          if (manualDepositData.appointmentDate) {
+            console.log('📧 [EMAIL] Sending confirmation email for manual deposit...');
+            try {
+              // Parse την ημερομηνία/ώρα από το appointmentDate
+              // Format: "DD/MM/YYYY HH:MM", "DD.MM.YY HH:MM", "DD/MM/YYYY", "YYYY-MM-DD HH:MM", etc.
+              let emailDate = '';
+              let emailTime = '';
+              
+              const dateTimeStr = manualDepositData.appointmentDate.trim();
+              if (dateTimeStr) {
+                // Αν περιέχει space, έχει και ώρα
+                if (dateTimeStr.includes(' ')) {
+                  const parts = dateTimeStr.split(' ');
+                  const datePart = parts[0];
+                  emailTime = parts[1] || '';
+                  
+                  // Αν η ημερομηνία είναι DD/MM/YYYY ή DD.MM.YY, μετατρέπουμε σε YYYY-MM-DD
+                  if (datePart.includes('/')) {
+                    const [day, month, year] = datePart.split('/');
+                    // Αν το year είναι 2 ψηφία, προσθέτουμε 20
+                    const fullYear = year.length === 2 ? `20${year}` : year;
+                    emailDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                  } else if (datePart.includes('.')) {
+                    const [day, month, year] = datePart.split('.');
+                    // Αν το year είναι 2 ψηφία, προσθέτουμε 20
+                    const fullYear = year.length === 2 ? `20${year}` : year;
+                    emailDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                  } else {
+                    emailDate = datePart;
+                  }
+                } else {
+                  // Μόνο ημερομηνία, χωρίς ώρα
+                  if (dateTimeStr.includes('/')) {
+                    const [day, month, year] = dateTimeStr.split('/');
+                    const fullYear = year.length === 2 ? `20${year}` : year;
+                    emailDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                  } else if (dateTimeStr.includes('.')) {
+                    const [day, month, year] = dateTimeStr.split('.');
+                    const fullYear = year.length === 2 ? `20${year}` : year;
+                    emailDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                  } else {
+                    emailDate = dateTimeStr;
+                  }
+                  emailTime = '';
+                }
+              }
+
+              console.log('📧 [EMAIL] Parsed date/time for manual deposit:', { emailDate, emailTime, original: dateTimeStr });
+
+              // Fetch doctor name from database to ensure correct encoding
+              let finalDoctorName = manualDepositData.doctorName;
+              if (manualDepositData.doctorId) {
+                const { data: doctorData, error: doctorError } = await supabase
+                  .from('doctors')
+                  .select('name')
+                  .eq('id', manualDepositData.doctorId)
+                  .single();
+                
+                if (!doctorError && doctorData && doctorData.name) {
+                  finalDoctorName = doctorData.name;
+                  console.log('📧 [EMAIL] Using doctor name from database:', finalDoctorName);
+                }
+              }
+
+              await sendAppointmentConfirmationEmail({
+                parentEmail: manualDepositData.parentEmail,
+                parentName: manualDepositData.parentName,
+                appointmentDate: emailDate,
+                appointmentTime: emailTime,
+                doctorName: finalDoctorName
+              });
+              console.log('✅ [EMAIL] Confirmation email sent successfully for manual deposit');
+            } catch (emailError) {
+              // Μη blocking error - απλά log
+              console.warn('⚠️ [WARNING] Failed to send confirmation email for manual deposit (non-blocking):', emailError);
+            }
+          } else {
+            console.log('ℹ️ [INFO] No appointment date in manual deposit, skipping email');
+          }
         }
 
         console.log('✅ [SUCCESS] Manual deposit purchase credited');
@@ -419,6 +501,39 @@ async function handleCheckoutSessionCompleted(session) {
     console.log('🔍 [DEBUG] Created appointment:', JSON.stringify(appointmentData, null, 2));
     console.log('🎉 [SUCCESS] ===== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY =====');
 
+    // Αποστολή email επιβεβαιώσεως
+    console.log('📧 [EMAIL] Sending appointment confirmation email...');
+    try {
+      // Fetch doctor name from database to ensure correct encoding
+      let finalDoctorName = doctor_name;
+      if (doctor_id) {
+        const { data: doctorData, error: doctorError } = await supabase
+          .from('doctors')
+          .select('name')
+          .eq('id', doctor_id)
+          .single();
+        
+        if (!doctorError && doctorData && doctorData.name) {
+          finalDoctorName = doctorData.name;
+          console.log('📧 [EMAIL] Using doctor name from database:', finalDoctorName);
+        } else {
+          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database, using metadata:', doctor_name);
+        }
+      }
+
+      await sendAppointmentConfirmationEmail({
+        parentEmail: parent_email,
+        parentName: parent_name,
+        appointmentDate: appointment_date,
+        appointmentTime: appointment_time,
+        doctorName: finalDoctorName
+      });
+      console.log('✅ [EMAIL] Confirmation email sent successfully');
+    } catch (emailError) {
+      // Μη blocking error - απλά log
+      console.warn('⚠️ [WARNING] Failed to send confirmation email (non-blocking):', emailError);
+    }
+
     console.log('🔍 [DEBUG] Triggering post-processing audit log entry...');
     try {
       const { error: auditError } = await supabase
@@ -447,5 +562,45 @@ async function handleCheckoutSessionCompleted(session) {
     console.error('❌ [ERROR] Stack trace:', dbError?.stack);
     console.error('❌ [ERROR] Error details object:', JSON.stringify(dbError, null, 2));
     throw dbError;
+  }
+}
+
+// Helper function για αποστολή email επιβεβαιώσεως
+async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appointmentDate, appointmentTime, doctorName }) {
+  try {
+    // Προσδιορισμός base URL για Netlify Functions
+    const functionsBase = process.env.NETLIFY_FUNCTIONS_BASE || 
+                         process.env.URL ? `${process.env.URL}/.netlify/functions` : 
+                         'https://onlineparentteenclinic.com/.netlify/functions';
+    
+    const emailUrl = `${functionsBase}/send-appointment-confirmation`;
+    
+    console.log('📧 [EMAIL] Calling email function:', emailUrl);
+    
+    const response = await fetch(emailUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parentEmail,
+        parentName: parentName || '',
+        appointmentDate,
+        appointmentTime,
+        doctorName
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Email function returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('📧 [EMAIL] Email function response:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ [EMAIL] Error calling email function:', error);
+    throw error;
   }
 }

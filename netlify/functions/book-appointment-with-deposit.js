@@ -190,6 +190,39 @@ exports.handler = async (event) => {
 
     console.log('✅ [BOOK_DEPOSIT] Appointment created successfully:', appointmentData);
 
+    // Αποστολή email επιβεβαιώσεως
+    console.log('📧 [EMAIL] Sending appointment confirmation email...');
+    try {
+      // Fetch doctor name from database to ensure correct encoding
+      let finalDoctorName = doctorName;
+      if (doctorId) {
+        const { data: doctorData, error: doctorError } = await supabaseClient
+          .from('doctors')
+          .select('name')
+          .eq('id', doctorId)
+          .single();
+        
+        if (!doctorError && doctorData && doctorData.name) {
+          finalDoctorName = doctorData.name;
+          console.log('📧 [EMAIL] Using doctor name from database:', finalDoctorName);
+        } else {
+          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database, using provided name:', doctorName);
+        }
+      }
+
+      await sendAppointmentConfirmationEmail({
+        parentEmail: parentEmail,
+        parentName: parentName,
+        appointmentDate: appointmentDate,
+        appointmentTime: appointmentTime,
+        doctorName: finalDoctorName
+      });
+      console.log('✅ [EMAIL] Confirmation email sent successfully');
+    } catch (emailError) {
+      // Μη blocking error - απλά log
+      console.warn('⚠️ [WARNING] Failed to send confirmation email (non-blocking):', emailError);
+    }
+
     const { error: txError } = await supabaseClient
       .from('session_deposit_transactions')
       .insert({
@@ -271,4 +304,44 @@ exports.handler = async (event) => {
     };
   }
 };
+
+// Helper function για αποστολή email επιβεβαιώσεως
+async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appointmentDate, appointmentTime, doctorName }) {
+  try {
+    // Προσδιορισμός base URL για Netlify Functions
+    const functionsBase = process.env.NETLIFY_FUNCTIONS_BASE || 
+                         process.env.URL ? `${process.env.URL}/.netlify/functions` : 
+                         'https://onlineparentteenclinic.com/.netlify/functions';
+    
+    const emailUrl = `${functionsBase}/send-appointment-confirmation`;
+    
+    console.log('📧 [EMAIL] Calling email function:', emailUrl);
+    
+    const response = await fetch(emailUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parentEmail,
+        parentName: parentName || '',
+        appointmentDate,
+        appointmentTime,
+        doctorName
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Email function returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('📧 [EMAIL] Email function response:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ [EMAIL] Error calling email function:', error);
+    throw error;
+  }
+}
 
