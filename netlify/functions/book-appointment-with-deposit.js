@@ -223,6 +223,57 @@ exports.handler = async (event) => {
       console.warn('⚠️ [WARNING] Failed to send confirmation email (non-blocking):', emailError);
     }
 
+    // Αποστολή email ειδοποίησης στον γιατρό
+    console.log('📧 [DOCTOR_EMAIL] Sending doctor notification email...');
+    try {
+      // Fetch appointment data με όλα τα στοιχεία
+      const { data: fullAppointmentData, error: fetchError } = await supabaseClient
+        .from('appointments')
+        .select('*')
+        .eq('id', appointmentData.id)
+        .single();
+      
+      if (!fetchError && fullAppointmentData) {
+        await sendDoctorNotificationEmail({
+          doctorName: finalDoctorName,
+          doctorId: doctorId,
+          appointmentDate: appointmentDate,
+          appointmentTime: appointmentTime,
+          parentName: parentName,
+          parentEmail: parentEmail,
+          parentPhone: fullAppointmentData.phone || phone || null,
+          childAge: fullAppointmentData.child_age || null,
+          concerns: fullAppointmentData.concerns || concerns || '',
+          specialty: fullAppointmentData.specialty || null,
+          thematology: fullAppointmentData.thematology || null,
+          urgency: fullAppointmentData.urgency || null,
+          isFirstSession: fullAppointmentData.is_first_session || null
+        });
+        console.log('✅ [DOCTOR_EMAIL] Doctor notification email sent successfully');
+      } else {
+        // Fallback αν δεν μπορούμε να πάρουμε full data
+        await sendDoctorNotificationEmail({
+          doctorName: finalDoctorName,
+          doctorId: doctorId,
+          appointmentDate: appointmentDate,
+          appointmentTime: appointmentTime,
+          parentName: parentName,
+          parentEmail: parentEmail,
+          parentPhone: phone || null,
+          childAge: null,
+          concerns: concerns || '',
+          specialty: null,
+          thematology: null,
+          urgency: null,
+          isFirstSession: null
+        });
+        console.log('✅ [DOCTOR_EMAIL] Doctor notification email sent successfully (with limited data)');
+      }
+    } catch (doctorEmailError) {
+      // Μη blocking error - απλά log
+      console.warn('⚠️ [WARNING] Failed to send doctor notification email (non-blocking):', doctorEmailError);
+    }
+
     const { error: txError } = await supabaseClient
       .from('session_deposit_transactions')
       .insert({
@@ -341,6 +392,54 @@ async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appoi
     return result;
   } catch (error) {
     console.error('❌ [EMAIL] Error calling email function:', error);
+    throw error;
+  }
+}
+
+// Helper function για αποστολή email ειδοποίησης στον γιατρό
+async function sendDoctorNotificationEmail({ doctorName, doctorId, appointmentDate, appointmentTime, parentName, parentEmail, parentPhone, childAge, concerns, specialty, thematology, urgency, isFirstSession }) {
+  try {
+    // Προσδιορισμός base URL για Netlify Functions
+    const functionsBase = process.env.NETLIFY_FUNCTIONS_BASE || 
+                         process.env.URL ? `${process.env.URL}/.netlify/functions` : 
+                         'https://onlineparentteenclinic.com/.netlify/functions';
+    
+    const emailUrl = `${functionsBase}/send-doctor-notification`;
+    
+    console.log('📧 [DOCTOR_EMAIL] Calling doctor notification function:', emailUrl);
+    
+    const response = await fetch(emailUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        doctorName,
+        doctorId,
+        appointmentDate,
+        appointmentTime,
+        parentName: parentName || '',
+        parentEmail,
+        parentPhone: parentPhone || null,
+        childAge: childAge || null,
+        concerns: concerns || '',
+        specialty: specialty || null,
+        thematology: thematology || null,
+        urgency: urgency || null,
+        isFirstSession: isFirstSession !== undefined ? isFirstSession : null
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Doctor notification function returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('📧 [DOCTOR_EMAIL] Doctor notification function response:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ [DOCTOR_EMAIL] Error calling doctor notification function:', error);
     throw error;
   }
 }
