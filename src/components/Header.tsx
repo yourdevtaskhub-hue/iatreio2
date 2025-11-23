@@ -116,10 +116,10 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
               }}
             />
             <div className="flex flex-col justify-center min-h-[64px] sm:min-h-[80px]">
-              <h1 className="font-bold text-base sm:text-lg lg:text-xl text-white font-dancing-script leading-tight">
+              <h1 className="font-bold text-base sm:text-lg lg:text-xl text-blue-600 font-dancing-script leading-tight">
                 Dr. Anna-Maria Fytrou
               </h1>
-              <div className="text-xs sm:text-sm lg:text-sm text-white/90 font-quicksand leading-tight">
+              <div className="text-xs sm:text-sm lg:text-sm text-blue-600 font-quicksand leading-tight">
                 <div>
                   {language === 'gr' ? 'Ψυχίατρος Παιδιού και Εφήβου' : 
                    language === 'en' ? 'Child and Adolescent Psychiatrist' : 
