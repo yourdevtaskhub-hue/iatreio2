@@ -1793,7 +1793,23 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                         parentName={formData.parentName}
                         parentEmail={formData.email}
                         appointmentDate={formData.appointmentDate}
-                        appointmentTime={selectedTime}
+                        appointmentTime={(() => {
+                          // Μετατρέπουμε το selectedTime από timezone πελάτη σε timezone γιατρού
+                          const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+                          const doctorTimezone = getDoctorTimezone(selectedDoctor?.name);
+                          const patientTimezone = getUserTimezone();
+                          // Αν είναι ήδη στην ίδια timezone, δεν χρειάζεται μετατροπή
+                          if (doctorTimezone === patientTimezone) {
+                            return selectedTime;
+                          }
+                          // Μετατροπή στη timezone του γιατρού
+                          return convertTimeToTimezone(
+                            formData.appointmentDate,
+                            selectedTime,
+                            patientTimezone,
+                            doctorTimezone
+                          ).slice(0, 5); // HH:MM format
+                        })()}
                         concerns={formData.message}
                         onSuccess={() => {
                           setShowStripeCheckout(false);

@@ -5,7 +5,7 @@ import { supabaseAdmin } from '../lib/supabase';
 import { Review } from '../types/reviews';
 import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } from '../types/appointments';
 import { parseClosureReason } from '../utils/closureReason';
-import { getUserTimezone, toDateString, getCurrentDateInTimezone } from '../lib/timezone';
+import { getUserTimezone, toDateString, getCurrentDateInTimezone, convertTimeToTimezone, getDoctorTimezone, TIMEZONES } from '../lib/timezone';
 import { normalizeDoctorOverrideKey } from '../config/stripe-doctor-overrides';
 
 interface AdminPanelProps {
@@ -2952,13 +2952,29 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
   };
 
   const getAppointmentForSlot = (date: string, startTime: string, endTime?: string) => {
+    // Βρίσκουμε τον γιατρό για να πάρουμε την timezone του
+    const selectedDoctor = doctors.find(d => d.id === doctorId);
+    const doctorTimezone = getDoctorTimezone(selectedDoctor?.name);
+    // Υποθέτουμε ότι τα appointments αποθηκεύονται στην ώρα Ελλάδας (default)
+    // ή στην ώρα που έκλεισε ο πελάτης, οπότε τα μετατρέπουμε στη timezone του γιατρού
+    const patientTimezone = TIMEZONES.GREECE; // Default: Ελλάδα
+    
     return appointments.find(apt => {
       if (doctorId && apt.doctor_id !== doctorId) return false;
-      const aptTime = apt.time.slice(0, 5);
+      
+      // Μετατρέπουμε το appointment time στη timezone του γιατρού
+      const aptTimeInPatientTz = apt.time.slice(0, 5);
+      const aptTimeInDoctorTz = convertTimeToTimezone(
+        apt.date,
+        aptTimeInPatientTz,
+        patientTimezone,
+        doctorTimezone
+      ).slice(0, 5);
+      
       if (endTime) {
-        return apt.date === date && aptTime >= startTime && aptTime < endTime;
+        return apt.date === date && aptTimeInDoctorTz >= startTime && aptTimeInDoctorTz < endTime;
       }
-      return apt.date === date && aptTime === startTime;
+      return apt.date === date && aptTimeInDoctorTz === startTime;
     }) || null;
   };
 
