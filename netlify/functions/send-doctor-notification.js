@@ -16,7 +16,17 @@ const DOCTOR_EMAILS = {
   'Σοφία Σπυριάδου': 'sofiasprd@icloud.com',
   'Sofia Spyriadou': 'sofiasprd@icloud.com',
   'Ειρήνη Στεργίου': 'eirini.ster88@gmail.com',
-  'Eirini Stergiou': 'eirini.ster88@gmail.com'
+  'Eirini Stergiou': 'eirini.ster88@gmail.com',
+  // Dr. Φύτρου - όλες οι παραλλαγές
+  'Dr. Άννα Μαρία Φύτρου': 'iatreiodrfytrou@gmail.com',
+  'Dr. Anna-Maria Fytrou': 'iatreiodrfytrou@gmail.com',
+  'Dr. Anna Maria Fytrou': 'iatreiodrfytrou@gmail.com',
+  'Δρ. Άννα Μαρία Φύτρου': 'iatreiodrfytrou@gmail.com',
+  'Δρ. Άννα-Μαρία Φύτρου': 'iatreiodrfytrou@gmail.com',
+  'Anna-Maria Fytrou': 'iatreiodrfytrou@gmail.com',
+  'Anna Maria Fytrou': 'iatreiodrfytrou@gmail.com',
+  'Άννα Μαρία Φύτρου': 'iatreiodrfytrou@gmail.com',
+  'Άννα-Μαρία Φύτρου': 'iatreiodrfytrou@gmail.com'
 };
 
 // Helper function για format ημερομηνίας
@@ -104,9 +114,35 @@ exports.handler = async (event) => {
     } = payload;
 
     // Ελέγχουμε αν υπάρχει email για τον γιατρό
-    const doctorEmail = DOCTOR_EMAILS[doctorName];
+    // Κάνουμε trim και normalize το όνομα για να ταιριάξει
+    const normalizedDoctorName = doctorName ? doctorName.trim() : '';
+    let doctorEmail = DOCTOR_EMAILS[normalizedDoctorName];
+    
+    // Αν δεν βρέθηκε, δοκιμάζουμε case-insensitive search
+    if (!doctorEmail && normalizedDoctorName) {
+      const lowerName = normalizedDoctorName.toLowerCase();
+      for (const [key, email] of Object.entries(DOCTOR_EMAILS)) {
+        if (key.toLowerCase() === lowerName) {
+          doctorEmail = email;
+          break;
+        }
+      }
+    }
+    
+    // Αν ακόμα δεν βρέθηκε, δοκιμάζουμε partial match για Dr. Φύτρου
+    if (!doctorEmail && normalizedDoctorName) {
+      const nameLower = normalizedDoctorName.toLowerCase();
+      if (nameLower.includes('fytrou') || nameLower.includes('φύτρου') || 
+          nameLower.includes('anna') || nameLower.includes('άννα')) {
+        doctorEmail = DOCTOR_EMAILS['Dr. Άννα Μαρία Φύτρου'] || 
+                      DOCTOR_EMAILS['Dr. Anna-Maria Fytrou'] ||
+                      DOCTOR_EMAILS['Δρ. Άννα Μαρία Φύτρου'];
+      }
+    }
+    
     if (!doctorEmail) {
-      console.log(`ℹ️ [DOCTOR_EMAIL] No email configured for doctor: ${doctorName}, skipping notification`);
+      console.log(`ℹ️ [DOCTOR_EMAIL] No email configured for doctor: ${normalizedDoctorName}, skipping notification`);
+      console.log(`ℹ️ [DOCTOR_EMAIL] Available doctor names: ${Object.keys(DOCTOR_EMAILS).join(', ')}`);
       return {
         statusCode: 200,
         headers,
@@ -172,6 +208,14 @@ exports.handler = async (event) => {
         panelUrl = 'https://onlineparentteenclinic.com/sofia';
       } else if (doctorName === 'Ειρήνη Στεργίου' || doctorName === 'Eirini Stergiou') {
         panelUrl = 'https://onlineparentteenclinic.com/eirini';
+      } else {
+        // Check for Dr. Fytrou variations
+        const nameLower = (doctorName || '').toLowerCase();
+        if (nameLower.includes('fytrou') || nameLower.includes('φύτρου') || 
+            (nameLower.includes('anna') && nameLower.includes('maria')) ||
+            (nameLower.includes('άννα') && nameLower.includes('μαρία'))) {
+          panelUrl = 'https://onlineparentteenclinic.com/anna';
+        }
       }
       return panelUrl ? `<p style="margin-top: 30px; color: #6B7280; font-size: 14px;">Μπορείτε να δείτε όλες τις κρατήσεις σας στο <a href="${panelUrl}" style="color: #6B46C1;">Doctor Panel</a>.</p>` : '';
     })()}
