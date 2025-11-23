@@ -1,9 +1,0 @@
-{
-  "doctorName": "Άλλος Γιατρός",
-  "doctorId": "test-doctor-id-3",
-  "appointmentDate": "2029-12-25",
-  "appointmentTime": "10:00",
-  "parentName": "Test",
-  "parentEmail": "test@example.com"
-}
-

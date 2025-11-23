@@ -14,7 +14,9 @@ const DOCTOR_EMAILS = {
   'Ιωάννα Πισσάρη': 'ioannapissari@outlook.com',
   'Ioanna Pissari': 'ioannapissari@outlook.com',
   'Σοφία Σπυριάδου': 'sofiasprd@icloud.com',
-  'Sofia Spyriadou': 'sofiasprd@icloud.com'
+  'Sofia Spyriadou': 'sofiasprd@icloud.com',
+  'Ειρήνη Στεργίου': 'eirini.ster88@gmail.com',
+  'Eirini Stergiou': 'eirini.ster88@gmail.com'
 };
 
 // Helper function για format ημερομηνίας
@@ -168,6 +170,8 @@ exports.handler = async (event) => {
         panelUrl = 'https://onlineparentteenclinic.com/ioanna';
       } else if (doctorName === 'Σοφία Σπυριάδου' || doctorName === 'Sofia Spyriadou') {
         panelUrl = 'https://onlineparentteenclinic.com/sofia';
+      } else if (doctorName === 'Ειρήνη Στεργίου' || doctorName === 'Eirini Stergiou') {
+        panelUrl = 'https://onlineparentteenclinic.com/eirini';
       }
       return panelUrl ? `<p style="margin-top: 30px; color: #6B7280; font-size: 14px;">Μπορείτε να δείτε όλες τις κρατήσεις σας στο <a href="${panelUrl}" style="color: #6B46C1;">Doctor Panel</a>.</p>` : '';
     })()}
