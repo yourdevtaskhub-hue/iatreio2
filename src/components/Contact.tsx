@@ -1034,14 +1034,12 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       console.log('[Contact] day availability rows:', av);
       const { data: booked } = await supabase
         .from('appointments')
-        .select('time')
+        .select('time, user_timezone')
         .eq('doctor_id', selectedDoctorId)
         .eq('date', formData.appointmentDate);
 
       console.log('[Contact] booked rows:', booked);
-      const toHHMM = (t: string) => (t || '').slice(0,5);
-      const bookedSet = new Set<string>((booked||[]).map((b: { time: string })=> toHHMM(b.time)));
-
+      
       const slotMap = new Map<string, SlotInfo>();
       const nowRestrictionTz = getCurrentDateInTimezone(userTimezone);
       const doctorForRestriction = doctors.find(d => d.id === selectedDoctorId);
@@ -1059,6 +1057,59 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         doctorTimezone,
         patientTimezone,
         appointmentDate: formData.appointmentDate
+      });
+      
+      // Μετατρέπουμε τα appointment times στη timezone χρήστη
+      const toHHMM = (t: string) => (t || '').slice(0,5);
+      const bookedSet = new Set<string>(
+        (booked||[]).map((b: any) => {
+          const appointmentTimeInDb = toHHMM(b.time);
+          
+          // Το appointment time στη βάση είναι στη timezone που δείχνει το user_timezone
+          // Αν δεν υπάρχει user_timezone, υποθέτουμε ότι είναι στη timezone του γιατρού (legacy)
+          let appointmentSourceTimezone: string;
+          if (b.user_timezone) {
+            // Το appointment αποθηκεύτηκε με αυτή τη timezone
+            appointmentSourceTimezone = b.user_timezone;
+          } else {
+            // Για legacy appointments: υποθέτουμε ότι το time είναι στη timezone του γιατρού
+            appointmentSourceTimezone = doctorTimezone;
+          }
+          
+          // Αν το appointment είναι ήδη στη timezone του χρήστη, δεν χρειάζεται μετατροπή
+          if (appointmentSourceTimezone === patientTimezone) {
+            console.log('[Contact] Appointment already in patient timezone:', {
+              time: appointmentTimeInDb,
+              timezone: appointmentSourceTimezone
+            });
+            return appointmentTimeInDb;
+          }
+          
+          // Μετατρέπουμε από source timezone σε timezone χρήστη
+          const appointmentTimeInPatientTz = convertTimeToTimezone(
+            formData.appointmentDate,
+            appointmentTimeInDb,
+            appointmentSourceTimezone,
+            patientTimezone
+          );
+          const converted = toHHMM(appointmentTimeInPatientTz);
+          console.log('[Contact] Converting appointment time:', {
+            original: appointmentTimeInDb,
+            fromTz: appointmentSourceTimezone,
+            toTz: patientTimezone,
+            converted: converted,
+            date: formData.appointmentDate,
+            storedUserTimezone: b.user_timezone
+          });
+          return converted;
+        })
+      );
+      
+      console.log('[Contact] Booked times converted:', {
+        original: (booked||[]).map((b: { time: string }) => toHHMM(b.time)),
+        converted: Array.from(bookedSet),
+        doctorTimezone,
+        patientTimezone
       });
       
       (av||[]).forEach((a: any) => {
@@ -1094,12 +1145,30 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
           const hh = Math.floor(dayMinutes/60).toString().padStart(2,'0');
           const mm = (dayMinutes%60).toString().padStart(2,'0');
           const t = `${hh}:${mm}`;
-          let available = !bookedSet.has(t);
-          let reason: SlotInfo['reason'] | undefined = bookedSet.has(t)? 'booked': undefined;
-          if (settings?.lock_half_hour) {
+          const isBooked = bookedSet.has(t);
+          let available = !isBooked;
+          let reason: SlotInfo['reason'] | undefined = isBooked ? 'booked': undefined;
+          
+          // Debug log για slots κοντά στις ώρες που έχουν appointments
+          if (bookedSet.size > 0 && (t === '10:00' || t === '11:00' || t === '10:30' || t === '11:30')) {
+            console.log('[Contact] Slot check:', {
+              slotTime: t,
+              isBooked: isBooked,
+              bookedSetContents: Array.from(bookedSet),
+              bookedSetSize: bookedSet.size,
+              date: formData.appointmentDate
+            });
+          }
+          
+          // Lock half hour rule: αν το slot είναι ήδη booked, κρατάμε το 'booked' reason
+          // Αν δεν είναι booked αλλά το άλλο μισάωρο είναι booked, τότε είναι 'locked'
+          if (settings?.lock_half_hour && !isBooked) {
             const hourStart = `${hh}:00`;
             const half = `${hh}:30`;
-            if (bookedSet.has(hourStart) || bookedSet.has(half)) { available = false; reason = 'locked'; }
+            if (bookedSet.has(hourStart) || bookedSet.has(half)) { 
+              available = false; 
+              reason = 'locked'; 
+            }
           }
           if (available && applyThreeHourRule) {
             if (isSlotWithinThreeHours(formData.appointmentDate, t, userTimezone, nowRestrictionTz)) {
@@ -1798,17 +1867,32 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
                           const doctorTimezone = getDoctorTimezone(selectedDoctor?.name);
                           const patientTimezone = getUserTimezone();
+                          
+                          console.log('[Contact] Converting appointment time before save:', {
+                            selectedTime,
+                            patientTimezone,
+                            doctorTimezone,
+                            doctorName: selectedDoctor?.name,
+                            date: formData.appointmentDate
+                          });
+                          
                           // Αν είναι ήδη στην ίδια timezone, δεν χρειάζεται μετατροπή
                           if (doctorTimezone === patientTimezone) {
+                            console.log('[Contact] Same timezone, no conversion needed');
                             return selectedTime;
                           }
                           // Μετατροπή στη timezone του γιατρού
-                          return convertTimeToTimezone(
+                          const converted = convertTimeToTimezone(
                             formData.appointmentDate,
                             selectedTime,
                             patientTimezone,
                             doctorTimezone
                           ).slice(0, 5); // HH:MM format
+                          console.log('[Contact] Converted appointment time:', {
+                            from: selectedTime,
+                            to: converted
+                          });
+                          return converted;
                         })()}
                         concerns={formData.message}
                         onSuccess={() => {

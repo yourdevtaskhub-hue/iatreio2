@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2, Clock, Loader2, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { AdminSettings, Doctor, SlotInfo } from '../types/appointments';
-import { getCurrentDateInTimezone, getUserTimezone, toDateString } from '../lib/timezone';
+import { getCurrentDateInTimezone, getUserTimezone, toDateString, convertTimeToTimezone, getDoctorTimezone } from '../lib/timezone';
 import { bookAppointmentUsingDeposit, DepositBookingPayload } from '../lib/deposit-booking';
 import { getLocalizedClosureReason } from '../utils/closureReason';
 
@@ -147,15 +147,62 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
 
         setClosureNotice(null);
 
+        // Προσδιορίζουμε τις timezones
+        const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+        const doctorTimezone = getDoctorTimezone(selectedDoctor?.name);
+        const patientTimezone = getUserTimezone();
+
+        // Μετατρέπουμε τα appointment times στη timezone χρήστη
+        const toHHMM = (t: string) => (t || '').slice(0, 5);
         const bookedSet = new Set<string>(
-          (booked || []).map((row: { time: string }) => (row.time || '').slice(0, 5))
+          (booked || []).map((row: any) => {
+            const appointmentTimeInDb = toHHMM(row.time);
+            
+            // Το appointment time στη βάση είναι στη timezone που δείχνει το user_timezone
+            // Αν δεν υπάρχει user_timezone, υποθέτουμε ότι είναι στη timezone του γιατρού (legacy)
+            let appointmentSourceTimezone: string;
+            if (row.user_timezone) {
+              appointmentSourceTimezone = row.user_timezone;
+            } else {
+              appointmentSourceTimezone = doctorTimezone;
+            }
+            
+            // Αν το appointment είναι ήδη στη timezone του χρήστη, δεν χρειάζεται μετατροπή
+            if (appointmentSourceTimezone === patientTimezone) {
+              return appointmentTimeInDb;
+            }
+            
+            // Μετατρέπουμε από source timezone σε timezone χρήστη
+            const appointmentTimeInPatientTz = convertTimeToTimezone(
+              selectedDate,
+              appointmentTimeInDb,
+              appointmentSourceTimezone,
+              patientTimezone
+            );
+            return toHHMM(appointmentTimeInPatientTz);
+          })
         );
 
         const slotMap = new Map<string, SlotInfo>();
         (availability || []).forEach((row: any) => {
           if (!row?.start_time || !row?.end_time || !row?.increment_minutes) return;
-          const [startHour, startMinute] = row.start_time.split(':').map(Number);
-          const [endHour, endMinute] = row.end_time.split(':').map(Number);
+          
+          // Μετατρέπουμε τις ώρες από τη timezone του γιατρού στη timezone του ασθενούς
+          const convertedStartTime = convertTimeToTimezone(
+            selectedDate,
+            row.start_time,
+            doctorTimezone,
+            patientTimezone
+          );
+          const convertedEndTime = convertTimeToTimezone(
+            selectedDate,
+            row.end_time,
+            doctorTimezone,
+            patientTimezone
+          );
+          
+          const [startHour, startMinute] = convertedStartTime.split(':').map(Number);
+          const [endHour, endMinute] = convertedEndTime.split(':').map(Number);
           let current = startHour * 60 + startMinute;
           const end = endHour * 60 + endMinute;
           const step = row.increment_minutes as 30 | 60;
@@ -165,12 +212,13 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
             const hh = Math.floor(current / 60).toString().padStart(2, '0');
             const mm = (current % 60).toString().padStart(2, '0');
             const time = `${hh}:${mm}`;
-            let available = !bookedSet.has(time);
-            let reason: SlotInfo['reason'] | undefined = bookedSet.has(time)
-              ? 'booked'
-              : undefined;
+            const isBooked = bookedSet.has(time);
+            let available = !isBooked;
+            let reason: SlotInfo['reason'] | undefined = isBooked ? 'booked' : undefined;
 
-            if (settings?.lock_half_hour) {
+            // Lock half hour rule: αν το slot είναι ήδη booked, κρατάμε το 'booked' reason
+            // Αν δεν είναι booked αλλά το άλλο μισάωρο είναι booked, τότε είναι 'locked'
+            if (settings?.lock_half_hour && !isBooked) {
               const hourStart = `${hh}:00`;
               const half = `${hh}:30`;
               if (bookedSet.has(hourStart) || bookedSet.has(half)) {
