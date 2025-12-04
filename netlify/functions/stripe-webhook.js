@@ -501,12 +501,13 @@ async function handleCheckoutSessionCompleted(session) {
     console.log('🔍 [DEBUG] Created appointment:', JSON.stringify(appointmentData, null, 2));
     console.log('🎉 [SUCCESS] ===== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY =====');
 
-    // Αποστολή email επιβεβαιώσεως
-    console.log('📧 [EMAIL] Sending appointment confirmation email...');
-    try {
-      // Fetch doctor name from database to ensure correct encoding
-      let finalDoctorName = doctor_name;
-      if (doctor_id) {
+    // Fetch doctor name from database to ensure correct encoding (για χρήση και στα δύο emails)
+    let finalDoctorName = doctor_name || '';
+    console.log('📧 [EMAIL] Initial doctor name from metadata:', finalDoctorName);
+    
+    // Πάντα προσπαθούμε να πάρουμε το όνομα από τη βάση αν έχουμε doctor_id
+    if (doctor_id) {
+      try {
         const { data: doctorData, error: doctorError } = await supabase
           .from('doctors')
           .select('name')
@@ -515,12 +516,34 @@ async function handleCheckoutSessionCompleted(session) {
         
         if (!doctorError && doctorData && doctorData.name) {
           finalDoctorName = doctorData.name;
-          console.log('📧 [EMAIL] Using doctor name from database:', finalDoctorName);
+          console.log('✅ [EMAIL] Using doctor name from database:', finalDoctorName);
         } else {
-          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database, using metadata:', doctor_name);
+          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database:', doctorError);
+          if (!finalDoctorName) {
+            finalDoctorName = doctor_name || 'Unknown Doctor';
+            console.warn('⚠️ [EMAIL] Using metadata doctor name as fallback:', finalDoctorName);
+          }
+        }
+      } catch (fetchError) {
+        console.error('❌ [EMAIL] Error fetching doctor name:', fetchError);
+        if (!finalDoctorName) {
+          finalDoctorName = doctor_name || 'Unknown Doctor';
+          console.warn('⚠️ [EMAIL] Using metadata doctor name as fallback after error:', finalDoctorName);
         }
       }
+    } else {
+      console.warn('⚠️ [EMAIL] No doctor_id provided, using metadata doctor_name:', finalDoctorName);
+      if (!finalDoctorName) {
+        finalDoctorName = 'Unknown Doctor';
+        console.error('❌ [EMAIL] No doctor name available from metadata or database!');
+      }
+    }
+    
+    console.log('📧 [EMAIL] Final doctor name to use:', finalDoctorName);
 
+    // Αποστολή email επιβεβαιώσεως
+    console.log('📧 [EMAIL] Sending appointment confirmation email...');
+    try {
       await sendAppointmentConfirmationEmail({
         parentEmail: parent_email,
         parentName: parent_name,

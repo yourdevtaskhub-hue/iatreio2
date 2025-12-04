@@ -190,12 +190,13 @@ exports.handler = async (event) => {
 
     console.log('✅ [BOOK_DEPOSIT] Appointment created successfully:', appointmentData);
 
-    // Αποστολή email επιβεβαιώσεως
-    console.log('📧 [EMAIL] Sending appointment confirmation email...');
-    try {
-      // Fetch doctor name from database to ensure correct encoding
-      let finalDoctorName = doctorName;
-      if (doctorId) {
+    // Fetch doctor name from database to ensure correct encoding (για χρήση και στα δύο emails)
+    let finalDoctorName = doctorName || '';
+    console.log('📧 [EMAIL] Initial doctor name from payload:', finalDoctorName);
+    
+    // Πάντα προσπαθούμε να πάρουμε το όνομα από τη βάση αν έχουμε doctorId
+    if (doctorId) {
+      try {
         const { data: doctorData, error: doctorError } = await supabaseClient
           .from('doctors')
           .select('name')
@@ -204,12 +205,34 @@ exports.handler = async (event) => {
         
         if (!doctorError && doctorData && doctorData.name) {
           finalDoctorName = doctorData.name;
-          console.log('📧 [EMAIL] Using doctor name from database:', finalDoctorName);
+          console.log('✅ [EMAIL] Using doctor name from database:', finalDoctorName);
         } else {
-          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database, using provided name:', doctorName);
+          console.warn('⚠️ [EMAIL] Could not fetch doctor name from database:', doctorError);
+          if (!finalDoctorName) {
+            finalDoctorName = doctorName || 'Unknown Doctor';
+            console.warn('⚠️ [EMAIL] Using provided doctor name as fallback:', finalDoctorName);
+          }
+        }
+      } catch (fetchError) {
+        console.error('❌ [EMAIL] Error fetching doctor name:', fetchError);
+        if (!finalDoctorName) {
+          finalDoctorName = doctorName || 'Unknown Doctor';
+          console.warn('⚠️ [EMAIL] Using provided doctor name as fallback after error:', finalDoctorName);
         }
       }
+    } else {
+      console.warn('⚠️ [EMAIL] No doctorId provided, using provided doctorName:', finalDoctorName);
+      if (!finalDoctorName) {
+        finalDoctorName = 'Unknown Doctor';
+        console.error('❌ [EMAIL] No doctor name available from payload or database!');
+      }
+    }
+    
+    console.log('📧 [EMAIL] Final doctor name to use:', finalDoctorName);
 
+    // Αποστολή email επιβεβαιώσεως
+    console.log('📧 [EMAIL] Sending appointment confirmation email...');
+    try {
       await sendAppointmentConfirmationEmail({
         parentEmail: parentEmail,
         parentName: parentName,
@@ -271,7 +294,8 @@ exports.handler = async (event) => {
       }
     } catch (doctorEmailError) {
       // Μη blocking error - απλά log
-      console.warn('⚠️ [WARNING] Failed to send doctor notification email (non-blocking):', doctorEmailError);
+      console.error('❌ [ERROR] Failed to send doctor notification email (non-blocking):', doctorEmailError);
+      console.error('❌ [ERROR] Error details:', JSON.stringify(doctorEmailError, null, 2));
     }
 
     const { error: txError } = await supabaseClient

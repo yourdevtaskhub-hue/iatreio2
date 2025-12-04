@@ -116,6 +116,7 @@ exports.handler = async (event) => {
     // Ελέγχουμε αν υπάρχει email για τον γιατρό
     // Κάνουμε trim και normalize το όνομα για να ταιριάξει
     const normalizedDoctorName = doctorName ? doctorName.trim() : '';
+    console.log(`🔍 [DOCTOR_EMAIL] Looking up email for doctor: "${normalizedDoctorName}"`);
     let doctorEmail = DOCTOR_EMAILS[normalizedDoctorName];
     
     // Αν δεν βρέθηκε, δοκιμάζουμε case-insensitive search
@@ -124,35 +125,66 @@ exports.handler = async (event) => {
       for (const [key, email] of Object.entries(DOCTOR_EMAILS)) {
         if (key.toLowerCase() === lowerName) {
           doctorEmail = email;
+          console.log(`✅ [DOCTOR_EMAIL] Found email via case-insensitive match: ${key} -> ${email}`);
           break;
         }
       }
     }
     
-    // Αν ακόμα δεν βρέθηκε, δοκιμάζουμε partial match για Dr. Φύτρου
+    // Αν ακόμα δεν βρέθηκε, δοκιμάζουμε partial match για όλους τους γιατρούς
     if (!doctorEmail && normalizedDoctorName) {
       const nameLower = normalizedDoctorName.toLowerCase();
+      
+      // Partial match για Dr. Φύτρου
       if (nameLower.includes('fytrou') || nameLower.includes('φύτρου') || 
-          nameLower.includes('anna') || nameLower.includes('άννα')) {
+          (nameLower.includes('anna') && nameLower.includes('maria')) ||
+          (nameLower.includes('άννα') && nameLower.includes('μαρία'))) {
         doctorEmail = DOCTOR_EMAILS['Dr. Άννα Μαρία Φύτρου'] || 
                       DOCTOR_EMAILS['Dr. Anna-Maria Fytrou'] ||
-                      DOCTOR_EMAILS['Δρ. Άννα Μαρία Φύτρου'];
+                      DOCTOR_EMAILS['Δρ. Άννα Μαρία Φύτρου'] ||
+                      'iatreiodrfytrou@gmail.com';
+        console.log(`✅ [DOCTOR_EMAIL] Found email via partial match for Dr. Fytrou: ${doctorEmail}`);
+      }
+      // Partial match για Ιωάννα Πισσάρη
+      else if (nameLower.includes('pissari') || nameLower.includes('πισσάρη') || 
+               nameLower.includes('ioanna') || nameLower.includes('ιωάννα')) {
+        doctorEmail = 'ioannapissari@outlook.com';
+        console.log(`✅ [DOCTOR_EMAIL] Found email via partial match for Ioanna Pissari: ${doctorEmail}`);
+      }
+      // Partial match για Σοφία Σπυριάδου
+      else if (nameLower.includes('spyriadou') || nameLower.includes('σπυριάδου') || 
+               nameLower.includes('sofia') || nameLower.includes('σοφία')) {
+        doctorEmail = 'sofiasprd@icloud.com';
+        console.log(`✅ [DOCTOR_EMAIL] Found email via partial match for Sofia Spyriadou: ${doctorEmail}`);
+      }
+      // Partial match για Ειρήνη Στεργίου
+      else if (nameLower.includes('stergiou') || nameLower.includes('στεργίου') || 
+               nameLower.includes('eirini') || nameLower.includes('ειρήνη')) {
+        doctorEmail = 'eirini.ster88@gmail.com';
+        console.log(`✅ [DOCTOR_EMAIL] Found email via partial match for Eirini Stergiou: ${doctorEmail}`);
       }
     }
     
     if (!doctorEmail) {
-      console.log(`ℹ️ [DOCTOR_EMAIL] No email configured for doctor: ${normalizedDoctorName}, skipping notification`);
-      console.log(`ℹ️ [DOCTOR_EMAIL] Available doctor names: ${Object.keys(DOCTOR_EMAILS).join(', ')}`);
+      console.error(`❌ [DOCTOR_EMAIL] No email configured for doctor: "${normalizedDoctorName}"`);
+      console.error(`❌ [DOCTOR_EMAIL] Available doctor names: ${Object.keys(DOCTOR_EMAILS).join(', ')}`);
+      console.error(`❌ [DOCTOR_EMAIL] Doctor ID: ${doctorId}`);
+      // Αντί να skip, θα στέλνουμε σε ένα default email για debugging
+      // Αλλά πρώτα ας δοκιμάσουμε να πάρουμε το email από το doctorId αν είναι διαθέσιμο
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({ 
-          success: true,
-          message: 'No email configured for this doctor',
+          success: false,
+          error: 'No email configured for this doctor',
+          doctorName: normalizedDoctorName,
+          doctorId: doctorId,
           skipped: true
         })
       };
     }
+    
+    console.log(`✅ [DOCTOR_EMAIL] Sending email to: ${doctorEmail} for doctor: ${normalizedDoctorName}`);
 
     const formattedDate = formatDate(appointmentDate);
     const formattedTime = formatTime(appointmentTime);

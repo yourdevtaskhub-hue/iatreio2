@@ -303,6 +303,17 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       return;
     }
     
+    // Check if phone number is provided
+    if (!formData.phone || !formData.phone.trim()) {
+      alert(language === 'gr' 
+        ? 'Παρακαλώ συμπληρώστε τον τηλεφωνικό σας αριθμό για να συνεχίσετε.'
+        : language === 'en' 
+        ? 'Please provide your phone number to continue.'
+        : 'Veuillez fournir votre numéro de téléphone pour continuer.'
+      );
+      return;
+    }
+    
     // Check if message is within character limit
     if (formData.message.length > 200) {
       alert(language === 'gr' 
@@ -400,7 +411,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const openManualDepositModal = () => {
     setManualDepositError(null);
     setIsSubmittingManualDeposit(false);
-    setManualDepositAgreements({ policy: false, recording: false, consent: false });
+    setManualDepositAgreements({ policy: false, recording: false, consent: false, cancellationPolicy: false });
     setManualDepositForm({
       parentName: formData.parentName || '',
       email: formData.email || '',
@@ -449,6 +460,14 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     }
     if (!manualDepositForm.email.trim() || !manualDepositForm.email.includes('@')) {
       setManualDepositError(manualStrings.validation.email);
+      return;
+    }
+    if (!manualDepositForm.phone || !manualDepositForm.phone.trim()) {
+      setManualDepositError(language === 'gr' 
+        ? 'Παρακαλώ συμπληρώστε τον τηλεφωνικό σας αριθμό.'
+        : language === 'en' 
+        ? 'Please provide your phone number.'
+        : 'Veuillez fournir votre numéro de téléphone.');
       return;
     }
     if (!manualDepositForm.doctorId) {
@@ -927,7 +946,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       });
 
       // Ταξινόμηση: Σοφία πρώτη, μετά Ιωάννα, μετά οι υπόλοιποι
-      const sortedDoctors = allowedDoctors.sort((a, b) => {
+      const sortedDoctors = allowedDoctors.sort((a: Doctor, b: Doctor) => {
         const nameA = normalizeDoctorName(a.name || '');
         const nameB = normalizeDoctorName(b.name || '');
         
@@ -1506,6 +1525,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-rose-soft focus:border-transparent transition-all duration-300 font-nunito"
                   placeholder="+41 XX XXX XX XX"
+                  required
                 />
               </div>
 
@@ -2057,6 +2077,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                           value={manualDepositForm.phone}
                           onChange={(e) => handleManualDepositInputChange('phone', e.target.value)}
                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:border-transparent font-nunito"
+                          required
                         />
                       </div>
                       <div>
