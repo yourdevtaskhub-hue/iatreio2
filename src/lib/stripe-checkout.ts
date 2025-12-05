@@ -30,6 +30,7 @@ export interface CreateCheckoutSessionData {
     parentPhone: string | null;
     amountCents: number;
     notes: string | null;
+    userTimezone?: string | null; // Προσθήκη user_timezone
   };
 }
 

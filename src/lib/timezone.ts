@@ -6,6 +6,7 @@
 // Timezone constants
 export const TIMEZONES = {
   GREECE: 'Europe/Athens',
+  CYPRUS: 'Asia/Nicosia', // Κύπρος - ίδια ώρα με Ελλάδα
   SWITZERLAND: 'Europe/Zurich',
   UTC: 'UTC'
 } as const;
@@ -128,14 +129,16 @@ export function getBrowserTimezone(): string {
 }
 
 /**
- * Ελέγχει αν ο χρήστης είναι στην Ελλάδα ή Ελβετία
- * @returns 'Greece' ή 'Switzerland' ή 'Other'
+ * Ελέγχει αν ο χρήστης είναι στην Ελλάδα, Κύπρο ή Ελβετία
+ * @returns 'Greece' ή 'Cyprus' ή 'Switzerland' ή 'Other'
  */
-export function getUserLocation(): 'Greece' | 'Switzerland' | 'Other' {
+export function getUserLocation(): 'Greece' | 'Cyprus' | 'Switzerland' | 'Other' {
   const browserTz = getBrowserTimezone();
   
   if (browserTz === TIMEZONES.GREECE) {
     return 'Greece';
+  } else if (browserTz === TIMEZONES.CYPRUS) {
+    return 'Cyprus';
   } else if (browserTz === TIMEZONES.SWITZERLAND) {
     return 'Switzerland';
   } else {
@@ -153,6 +156,9 @@ export function getUserTimezone(): string {
   switch (location) {
     case 'Greece':
       return TIMEZONES.GREECE;
+    case 'Cyprus':
+      // Κύπρος έχει την ίδια ώρα με Ελλάδα, αλλά χρησιμοποιούμε την timezone της Κύπρου
+      return TIMEZONES.CYPRUS;
     case 'Switzerland':
       return TIMEZONES.SWITZERLAND;
     default:
@@ -215,38 +221,51 @@ export function convertTimeToTimezone(
   fromTimezone: string,
   toTimezone: string = getUserTimezone()
 ): string {
-  if (fromTimezone === toTimezone) {
+  // Normalize timezones: Cyprus and Greece have the same time (GMT+2)
+  // So we treat them as equivalent for conversion purposes
+  const normalizeTimezone = (tz: string): string => {
+    if (tz === TIMEZONES.CYPRUS || tz === TIMEZONES.GREECE) {
+      return TIMEZONES.GREECE; // Use Greece as the canonical timezone for GMT+2
+    }
+    return tz;
+  };
+  
+  const normalizedFrom = normalizeTimezone(fromTimezone);
+  const normalizedTo = normalizeTimezone(toTimezone);
+  
+  // If normalized timezones are the same, no conversion needed
+  if (normalizedFrom === normalizedTo) {
     return timeStr;
   }
   
   const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes] = timeStr.split(':').map(Number);
   
-  // Greece (Europe/Athens) is 1 hour AHEAD of Switzerland (Europe/Zurich)
-  // So: Switzerland 16:00 → Greece 17:00 (ADD 1 hour)
-  //     Greece 17:00 → Switzerland 16:00 (SUBTRACT 1 hour)
+  // Greece/Cyprus (Europe/Athens/Asia/Nicosia) is 1 hour AHEAD of Switzerland (Europe/Zurich)
+  // So: Switzerland 16:00 → Greece/Cyprus 17:00 (ADD 1 hour)
+  //     Greece/Cyprus 17:00 → Switzerland 16:00 (SUBTRACT 1 hour)
   
   // Simple and correct approach: Direct hour calculation
-  // For Europe/Zurich to Europe/Athens: +1 hour
-  // For Europe/Athens to Europe/Zurich: -1 hour
+  // For Europe/Zurich to Europe/Athens/Asia/Nicosia: +1 hour
+  // For Europe/Athens/Asia/Nicosia to Europe/Zurich: -1 hour
   
   let newHour = hours;
   let newDay = day;
   let newMonth = month;
   let newYear = year;
   
-  if (fromTimezone === TIMEZONES.SWITZERLAND && toTimezone === TIMEZONES.GREECE) {
-    // Switzerland to Greece: ADD 1 hour
+  if (normalizedFrom === TIMEZONES.SWITZERLAND && normalizedTo === TIMEZONES.GREECE) {
+    // Switzerland to Greece/Cyprus: ADD 1 hour
     newHour = hours + 1;
-  } else if (fromTimezone === TIMEZONES.GREECE && toTimezone === TIMEZONES.SWITZERLAND) {
-    // Greece to Switzerland: SUBTRACT 1 hour
+  } else if (normalizedFrom === TIMEZONES.GREECE && normalizedTo === TIMEZONES.SWITZERLAND) {
+    // Greece/Cyprus to Switzerland: SUBTRACT 1 hour
     newHour = hours - 1;
   } else {
     // For other timezones, use Intl API
     const isoString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
     const tempDate = new Date(isoString);
-    const sourceOffset = getTimezoneOffsetForDate(tempDate, fromTimezone);
-    const targetOffset = getTimezoneOffsetForDate(tempDate, toTimezone);
+    const sourceOffset = getTimezoneOffsetForDate(tempDate, normalizedFrom);
+    const targetOffset = getTimezoneOffsetForDate(tempDate, normalizedTo);
     const offsetDiff = (targetOffset - sourceOffset) / (1000 * 60 * 60); // Convert to hours
     newHour = hours + offsetDiff;
   }

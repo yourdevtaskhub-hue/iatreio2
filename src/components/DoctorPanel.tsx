@@ -5,6 +5,7 @@ import { supabaseAdmin } from '../lib/supabase';
 import { Appointment } from '../types/appointments';
 // no timezone utilities needed here
 import { usePayments } from '../hooks/usePayments';
+import { getCountryFlagFromTimezone, getCountryFlagTooltip } from '../lib/country-flags';
 
 interface DoctorPanelProps {
   doctorName: string;
@@ -177,7 +178,7 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
         .select(`
           id, date, time, email, phone, parent_name, child_age, 
           concerns, specialty, thematology, urgency, is_first_session,
-          doctors(name, specialty)
+          user_timezone, doctors(name, specialty)
         `)
         .eq('doctor_id', doctorData.id)
         .order('date', { ascending: false })
@@ -561,8 +562,11 @@ const DoctorPanel: React.FC<DoctorPanelProps> = ({ doctorName, doctorId, languag
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito">
-                              {appointment.time}
+                            <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg text-sm font-semibold font-nunito flex items-center gap-2">
+                              <span>{appointment.time}</span>
+                              <span className="text-lg" title={getCountryFlagTooltip(appointment.user_timezone)}>
+                                {getCountryFlagFromTimezone(appointment.user_timezone)}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-4">

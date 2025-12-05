@@ -557,7 +557,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
           parentEmail: manualDepositForm.email,
           parentPhone: manualDepositForm.phone || null,
           amountCents: totalCents,
-          notes: combinedNotes || null
+          notes: combinedNotes || null,
+          userTimezone: userTimezone // Προσθήκη user_timezone
         }
       });
 

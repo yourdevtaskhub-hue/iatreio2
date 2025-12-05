@@ -267,7 +267,8 @@ async function handleCheckoutSessionCompleted(session) {
             notes: manualDepositData.notes,
             status: 'completed',
             payment_id: payment_id,
-            error_message: null
+            error_message: null,
+            user_timezone: manualDepositData.userTimezone || null // Προσθήκη user_timezone
           })
           .select()
           .single();

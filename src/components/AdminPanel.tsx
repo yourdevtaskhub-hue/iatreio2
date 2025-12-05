@@ -7,6 +7,7 @@ import { Doctor, Availability, Appointment, AdminSettings, WaitingListEntry } fr
 import { parseClosureReason } from '../utils/closureReason';
 import { getUserTimezone, toDateString, getCurrentDateInTimezone, convertTimeToTimezone, getDoctorTimezone, TIMEZONES } from '../lib/timezone';
 import { normalizeDoctorOverrideKey } from '../config/stripe-doctor-overrides';
+import { getCountryFlagFromTimezone, getCountryFlagTooltip } from '../lib/country-flags';
 
 interface AdminPanelProps {
   language: 'gr' | 'en';
@@ -348,12 +349,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       // Φέρνουμε manual deposits για να τα συνδέσουμε με payments
       const { data: manualDepositsData } = await supabaseAdmin
         .from('manual_deposit_requests')
-        .select('payment_id, id')
+        .select('payment_id, id, doctor_id, doctor_name')
         .eq('status', 'completed');
       
       const manualDepositPaymentIds = new Set(
         (manualDepositsData || []).map((md: any) => md.payment_id).filter(Boolean)
       );
+      
+      // Δημιουργία map για manual deposits με doctor info
+      const manualDepositInfoMap = new Map<string, any>();
+      (manualDepositsData || []).forEach((md: any) => {
+        if (md.payment_id) {
+          manualDepositInfoMap.set(md.payment_id, {
+            doctor_id: md.doctor_id,
+            doctor_name: md.doctor_name
+          });
+        }
+      });
       
       // Ομαδοποίηση manual deposits - ένα payment record ανά manual deposit request
       const manualDepositMap = new Map<string, any>();
@@ -364,6 +376,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         const isManualDeposit = manualDepositPaymentIds.has(payment.id);
         
         if (isManualDeposit) {
+          // Για manual deposits, προσθέτουμε doctor info από manual_deposit_requests
+          const mdInfo = manualDepositInfoMap.get(payment.id);
+          if (mdInfo) {
+            // Προσθέτουμε/επαναφέρουμε doctor info από manual deposit
+            payment.doctor_id = mdInfo.doctor_id || payment.doctor_id;
+            payment.doctor_name = mdInfo.doctor_name || payment.doctor_name;
+            // Προσθέτουμε concerns marker για manual deposits
+            payment.concerns = payment.concerns || 'MANUAL_DEPOSIT';
+          }
           // Για manual deposits, χρησιμοποιούμε το payment_id ως unique key
           // αφού κάθε payment αντιπροσωπεύει ένα manual deposit
           const uniqueKey = payment.id || payment.payment_id;
@@ -382,32 +403,85 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       setPayments(deduplicatedPayments);
 
       // Helpers to identify Dr. Fytrou
-      const normalizeName = (value: string | null | undefined) =>
-        (value || '')
+      const normalizeName = (value: string | null | undefined) => {
+        if (!value) return '';
+        // Μετατροπή ελληνικών χαρακτήρων σε λατινικούς
+        const greekToLatin: { [key: string]: string } = {
+          'α': 'a', 'β': 'b', 'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z',
+          'η': 'i', 'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm',
+          'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's',
+          'τ': 't', 'υ': 'y', 'φ': 'f', 'χ': 'ch', 'ψ': 'ps', 'ω': 'o',
+          'Α': 'A', 'Β': 'B', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E', 'Ζ': 'Z',
+          'Η': 'I', 'Θ': 'Th', 'Ι': 'I', 'Κ': 'K', 'Λ': 'L', 'Μ': 'M',
+          'Ν': 'N', 'Ξ': 'X', 'Ο': 'O', 'Π': 'P', 'Ρ': 'R', 'Σ': 'S',
+          'Τ': 'T', 'Υ': 'Y', 'Φ': 'F', 'Χ': 'Ch', 'Ψ': 'Ps', 'Ω': 'O'
+        };
+        
+        let normalized = value
           .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase()
+          .replace(/[\u0300-\u036f]/g, '') // Remove accents
+          .toLowerCase();
+        
+        // Μετατροπή ελληνικών σε λατινικούς
+        normalized = normalized.split('').map(char => greekToLatin[char] || char).join('');
+        
+        // Ειδική μετατροπή για "φυτρου" → "fytrou"
+        normalized = normalized.replace(/\bfytroy\b/g, 'fytrou');
+        
+        return normalized
           .replace(/δρ\./g, 'dr')
           .replace(/[^a-z0-9\s]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
+      };
 
       const annaKeywords = [
         'dr anna maria fytrou',
         'anna maria fytrou',
         'fytrou anna maria',
         'dr anna maria fytroy',
-        'anna maria fytroy'
+        'anna maria fytroy',
+        'anna maria fytrou', // Ελληνικό όνομα
+        'αννα μαρια φυτρου', // Ελληνικό όνομα (normalized)
+        'fytrou' // Μόνο επώνυμο
       ];
 
       const isAnnaName = (name: string | null | undefined) => {
+        if (!name) return false;
         const normalized = normalizeName(name);
-        if (!normalized) return false;
-        return annaKeywords.some(keyword => normalized.includes(keyword));
+        if (!normalized) {
+          // Αν το normalize δώσει κενό, ελέγχουμε το original name
+          const lowerName = name.toLowerCase();
+          return lowerName.includes('φύτρου') || lowerName.includes('φυτρου') || lowerName.includes('fytrou');
+        }
+        // Ελέγχος αν το normalized όνομα περιέχει κάποιο από τα keywords
+        const matches = annaKeywords.some(keyword => normalized.includes(keyword));
+        // Επίσης ελέγχος αν το όνομα περιέχει "fytrou" (μετά το normalize)
+        const hasFytrou = normalized.includes('fytrou');
+        return matches || hasFytrou;
       };
 
+      // Debug: Log all doctors
+      console.log('🔍 [WALLET DEBUG] All doctors:', doctorsData);
+      (doctorsData || []).forEach((doc: any) => {
+        const normalized = normalizeName(doc.name);
+        const isAnna = isAnnaName(doc.name);
+        console.log('🔍 [WALLET DEBUG] Doctor:', doc.name, '→ normalized:', normalized, '→ isAnna:', isAnna);
+      });
+      
       const annaDoctorId =
         (doctorsData || []).find((doc: any) => isAnnaName(doc.name))?.id || null;
+      
+      console.log('🔍 [WALLET] Anna Doctor ID:', annaDoctorId);
+      console.log('🔍 [WALLET] Manual deposits count:', manualDepositsData?.length || 0);
+      console.log('🔍 [WALLET] Manual deposit payment IDs:', Array.from(manualDepositPaymentIds));
+      console.log('🔍 [WALLET] Total payments:', paymentsList.length);
+      console.log('🔍 [WALLET] Deduplicated payments:', deduplicatedPayments.length);
+      
+      // Debug: Check manual deposits doctor info
+      (manualDepositsData || []).forEach((md: any) => {
+        console.log('🔍 [WALLET DEBUG] Manual deposit:', md.payment_id, '→ doctor_id:', md.doctor_id, '→ doctor_name:', md.doctor_name);
+      });
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -436,22 +510,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       const averageSession = completedSessions > 0 ? totalRevenue / completedSessions : 0;
 
       const isAnnaPayment = (payment: any) => {
-        // Ελέγχος doctor_id
-        if (payment?.doctor_id && annaDoctorId && payment.doctor_id === annaDoctorId) {
+        const paymentId = payment?.id;
+        const paymentDoctorId = payment?.doctor_id;
+        const paymentDoctorName = payment?.doctor_name;
+        const paymentConcerns = payment?.concerns || '';
+        const paymentAmount = payment?.amount_cents || 0;
+        
+        // Ελέγχος doctor_id (πρώτα γιατί είναι πιο αξιόπιστο)
+        if (paymentDoctorId && annaDoctorId && paymentDoctorId === annaDoctorId) {
+          console.log('✅ [WALLET] Anna payment found by doctor_id:', paymentId, 'Amount:', paymentAmount);
           return true;
         }
-        // Ελέγχος doctor_name
-        if (isAnnaName(payment?.doctor_name)) {
+        
+        // Ελέγχος doctor_name (για κανονικά payments και manual deposits)
+        if (isAnnaName(paymentDoctorName)) {
+          console.log('✅ [WALLET] Anna payment found by doctor_name:', paymentId, paymentDoctorName, 'Amount:', paymentAmount);
           return true;
         }
+        
         // Ελέγχος για manual deposits που αναφέρονται στη Δρ. Φύτρου
-        const concerns = payment?.concerns || '';
-        if (typeof concerns === 'string' && concerns.startsWith('MANUAL_DEPOSIT#')) {
+        // Τα manual deposits έχουν concerns = 'MANUAL_DEPOSIT' και doctor info
+        if (typeof paymentConcerns === 'string' && (paymentConcerns === 'MANUAL_DEPOSIT' || paymentConcerns.startsWith('MANUAL_DEPOSIT'))) {
           // Αν υπάρχει doctor_id και ταιριάζει με την Άννα
-          if (payment?.doctor_id && annaDoctorId && payment.doctor_id === annaDoctorId) {
+          if (paymentDoctorId && annaDoctorId && paymentDoctorId === annaDoctorId) {
+            console.log('✅ [WALLET] Anna manual deposit found by doctor_id:', paymentId, 'Amount:', paymentAmount);
+            return true;
+          }
+          // Αν υπάρχει doctor_name και ταιριάζει με την Άννα
+          if (isAnnaName(paymentDoctorName)) {
+            console.log('✅ [WALLET] Anna manual deposit found by doctor_name:', paymentId, paymentDoctorName, 'Amount:', paymentAmount);
             return true;
           }
         }
+        
         return false;
       };
 
@@ -473,6 +564,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
       const annaCompletedSessions = annaCompleted.length;
       const annaPendingSessions = annaPayments.filter((p: any) => p.status === 'pending').length;
       const annaAverageSession = annaCompletedSessions > 0 ? annaTotalRevenue / annaCompletedSessions : 0;
+      
+      console.log('💰 [WALLET STATS] Anna payments found:', annaPayments.length);
+      console.log('💰 [WALLET STATS] Anna completed:', annaCompleted.length);
+      console.log('💰 [WALLET STATS] Anna total revenue:', annaTotalRevenue, 'cents = €', (annaTotalRevenue / 100).toFixed(2));
+      console.log('💰 [WALLET STATS] Anna this month revenue:', annaThisMonthRevenue, 'cents = €', (annaThisMonthRevenue / 100).toFixed(2));
 
       setWalletStats({
         totalRevenue,
@@ -1218,10 +1314,52 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                             €{entry.amount_cents ? (entry.amount_cents / 100).toFixed(2) : '0.00'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
-                            {entry.appointment_date || '—'}
+                            {(() => {
+                              // Εξαγωγή μόνο της ημερομηνίας από appointment_date (αν περιέχει ώρα)
+                              const dateStr = entry.appointment_date || '';
+                              if (dateStr.includes(' ')) {
+                                return dateStr.split(' ')[0];
+                              }
+                              return dateStr || '—';
+                            })()}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
-                            {entry.appointment_time || '—'}
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                // Εξαγωγή ώρας από appointment_time ή appointment_date
+                                let timeStr = entry.appointment_time;
+                                if (!timeStr || timeStr === '—' || timeStr.trim() === '') {
+                                  // Αν δεν υπάρχει appointment_time, δοκίμασε να το εξάγεις από appointment_date
+                                  const dateStr = entry.appointment_date || '';
+                                  if (dateStr.includes(' ')) {
+                                    const parts = dateStr.split(' ');
+                                    if (parts.length > 1) {
+                                      timeStr = parts[1]; // Παίρνουμε το δεύτερο μέρος (ώρα)
+                                    }
+                                  }
+                                }
+                                return timeStr || '—';
+                              })()}
+                              {(() => {
+                                // Εξαγωγή ώρας για να ελέγξουμε αν πρέπει να δείξουμε flag
+                                let timeStr = entry.appointment_time;
+                                if (!timeStr || timeStr === '—' || (typeof timeStr === 'string' && timeStr.trim() === '')) {
+                                  const dateStr = entry.appointment_date || '';
+                                  if (dateStr.includes(' ')) {
+                                    const parts = dateStr.split(' ');
+                                    if (parts.length > 1) {
+                                      timeStr = parts[1];
+                                    }
+                                  }
+                                }
+                                const hasTime = timeStr && timeStr !== '—' && (typeof timeStr === 'string' && timeStr.trim() !== '');
+                                return hasTime && entry.user_timezone ? (
+                                  <span className="text-lg" title={getCountryFlagTooltip(entry.user_timezone)}>
+                                    {getCountryFlagFromTimezone(entry.user_timezone)}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
                             {entry.payment_id || '—'}
@@ -1360,10 +1498,52 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
                             €{entry.amount_cents ? (entry.amount_cents / 100).toFixed(2) : '0.00'}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
-                            {entry.appointment_date || '—'}
+                            {(() => {
+                              // Εξαγωγή μόνο της ημερομηνίας από appointment_date (αν περιέχει ώρα)
+                              const dateStr = entry.appointment_date || '';
+                              if (dateStr.includes(' ')) {
+                                return dateStr.split(' ')[0];
+                              }
+                              return dateStr || '—';
+                            })()}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700 font-nunito">
-                            {entry.appointment_time || '—'}
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                // Εξαγωγή ώρας από appointment_time ή appointment_date
+                                let timeStr = entry.appointment_time;
+                                if (!timeStr || timeStr === '—' || timeStr.trim() === '') {
+                                  // Αν δεν υπάρχει appointment_time, δοκίμασε να το εξάγεις από appointment_date
+                                  const dateStr = entry.appointment_date || '';
+                                  if (dateStr.includes(' ')) {
+                                    const parts = dateStr.split(' ');
+                                    if (parts.length > 1) {
+                                      timeStr = parts[1]; // Παίρνουμε το δεύτερο μέρος (ώρα)
+                                    }
+                                  }
+                                }
+                                return timeStr || '—';
+                              })()}
+                              {(() => {
+                                // Εξαγωγή ώρας για να ελέγξουμε αν πρέπει να δείξουμε flag
+                                let timeStr = entry.appointment_time;
+                                if (!timeStr || timeStr === '—' || (typeof timeStr === 'string' && timeStr.trim() === '')) {
+                                  const dateStr = entry.appointment_date || '';
+                                  if (dateStr.includes(' ')) {
+                                    const parts = dateStr.split(' ');
+                                    if (parts.length > 1) {
+                                      timeStr = parts[1];
+                                    }
+                                  }
+                                }
+                                const hasTime = timeStr && timeStr !== '—' && (typeof timeStr === 'string' && timeStr.trim() !== '');
+                                return hasTime && entry.user_timezone ? (
+                                  <span className="text-lg" title={getCountryFlagTooltip(entry.user_timezone)}>
+                                    {getCountryFlagFromTimezone(entry.user_timezone)}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-600 font-nunito">
                             {entry.payment_id || '—'}
@@ -3602,7 +3782,7 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
   const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
       .from('appointments')
-      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
+      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, user_timezone, doctors(name, specialty)')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
     setItems((data || []) as any);
@@ -3733,7 +3913,14 @@ const AppointmentsList: React.FC<AppointmentsListProps> = ({ language }) => {
             {currentItems.map((a:any, index)=> (
               <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.date}</td>
-                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.time}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+                  <div className="flex items-center gap-2">
+                    <span>{a.time}</span>
+                    <span className="text-lg" title={getCountryFlagTooltip(a.user_timezone)}>
+                      {getCountryFlagFromTimezone(a.user_timezone)}
+                    </span>
+                  </div>
+                </td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">{a.parent_name}</td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.child_age || '-'}</td>
@@ -3816,7 +4003,7 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
   const fetchAppointments = async () => {
     const { data } = await supabaseAdmin
       .from('appointments')
-      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, doctors(name, specialty)')
+      .select('id, date, time, email, phone, parent_name, child_age, concerns, specialty, thematology, urgency, is_first_session, user_timezone, doctors(name, specialty)')
       .order('date', { ascending: false })
       .order('time', { ascending: false });
 
@@ -3954,7 +4141,14 @@ const AnnaAppointmentsList: React.FC<AnnaAppointmentsListProps> = ({ language })
             {currentItems.map((a:any, index)=> (
               <tr key={a.id} className={`border-t hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.date}</td>
-                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.time}</td>
+                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+                  <div className="flex items-center gap-2">
+                    <span>{a.time}</span>
+                    <span className="text-lg" title={getCountryFlagTooltip(a.user_timezone)}>
+                      {getCountryFlagFromTimezone(a.user_timezone)}
+                    </span>
+                  </div>
+                </td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.doctors? `${a.doctors.name} — ${a.doctors.specialty}`: a.doctor_id || 'Δεν έχει οριστεί'}</td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">{a.parent_name}</td>
                 <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">{a.child_age || '-'}</td>
