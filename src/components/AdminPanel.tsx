@@ -468,7 +468,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
         const isAnna = isAnnaName(doc.name);
         console.log('🔍 [WALLET DEBUG] Doctor:', doc.name, '→ normalized:', normalized, '→ isAnna:', isAnna);
       });
-      
+
       const annaDoctorId =
         (doctorsData || []).find((doc: any) => isAnnaName(doc.name))?.id || null;
       
@@ -540,7 +540,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ language, onLogout }) => {
           if (isAnnaName(paymentDoctorName)) {
             console.log('✅ [WALLET] Anna manual deposit found by doctor_name:', paymentId, paymentDoctorName, 'Amount:', paymentAmount);
             return true;
-          }
+        }
         }
         
         return false;
@@ -3109,6 +3109,42 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     return grid;
   };
 
+  // Navigation functions for calendar month
+  const goToPreviousMonth = () => {
+    const [yearStr, monthStr] = month.split('-');
+    const year = Number(yearStr);
+    const monthNum = Number(monthStr);
+    const prevMonth = monthNum === 1 ? 12 : monthNum - 1;
+    const prevYear = monthNum === 1 ? year - 1 : year;
+    setMonth(`${prevYear}-${String(prevMonth).padStart(2, '0')}`);
+  };
+
+  const goToNextMonth = () => {
+    const [yearStr, monthStr] = month.split('-');
+    const year = Number(yearStr);
+    const monthNum = Number(monthStr);
+    const nextMonth = monthNum === 12 ? 1 : monthNum + 1;
+    const nextYear = monthNum === 12 ? year + 1 : year;
+    setMonth(`${nextYear}-${String(nextMonth).padStart(2, '0')}`);
+  };
+
+  const goToCurrentMonth = () => {
+    const now = getCurrentDateInTimezone(getUserTimezone());
+    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  // Format month for display in Greek
+  const formatMonthGreek = (yyyyMM: string): string => {
+    const [yearStr, monthStr] = yyyyMM.split('-');
+    const monthNum = Number(monthStr);
+    const year = Number(yearStr);
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+    return `${monthNames[monthNum - 1]} ${year}`;
+  };
+
   const monthGrid = getMonthGrid(month);
   const formatHM = (t: string) => (t||'').slice(0,5);
   const rangesByDate = new Map<string, {id:string; start:string; end:string}[]>();
@@ -3449,17 +3485,49 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
 
       {/* 📅 Μηνιαίο Ημερολόγιο - Βελτιωμένο */}
       <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center flex-1">
             <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center mr-3">
               <span className="text-white text-lg">📅</span>
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-800 font-poppins">Πρόγραμμα Μήνα</h3>
               <p className="text-sm text-gray-600">Κλικ σε συνεδρία για ακύρωση διαθεσιμότητας</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4 text-sm">
+          
+          {/* Month Navigation Controls */}
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-200">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+              title="Προηγούμενος μήνας"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-700" />
+            </button>
+            <div className="flex items-center gap-2 px-3">
+              <span className="text-lg font-bold text-gray-800 font-poppins min-w-[180px] text-center">
+                {formatMonthGreek(month)}
+              </span>
+            </div>
+            <button
+              onClick={goToNextMonth}
+              className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+              title="Επόμενος μήνας"
+            >
+              <ChevronRight className="h-5 w-5 text-gray-700" />
+            </button>
+            <button
+              onClick={goToCurrentMonth}
+              className="ml-2 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200"
+              title="Τρέχων μήνας"
+            >
+              Σήμερα
+            </button>
+          </div>
+          
+          {/* Color Legend - Hidden on small screens, shown on larger */}
+          <div className="hidden lg:flex items-center space-x-4 text-sm">
             <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg border border-green-200">
               <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
               <span className="font-medium text-gray-700">Διαθέσιμη</span>
@@ -3472,6 +3540,22 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
               <span className="w-3 h-3 rounded-full bg-red-400 mr-2"></span>
               <span className="font-medium text-gray-700">Μη διαθέσιμη</span>
             </div>
+          </div>
+        </div>
+        
+        {/* Color Legend - Shown on small screens only */}
+        <div className="lg:hidden flex flex-wrap items-center gap-2 mb-4 text-sm">
+          <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+            <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+            <span className="font-medium text-gray-700">Διαθέσιμη</span>
+          </div>
+          <div className="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+            <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+            <span className="font-medium text-gray-700">Κρατημένη</span>
+          </div>
+          <div className="flex items-center bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+            <span className="w-3 h-3 rounded-full bg-red-400 mr-2"></span>
+            <span className="font-medium text-gray-700">Μη διαθέσιμη</span>
           </div>
         </div>
          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-xs sm:text-sm">
