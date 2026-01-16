@@ -1222,20 +1222,40 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       const list = Array.from(slotMap.values()).sort((a,b)=> a.time.localeCompare(b.time));
       console.log('[Contact] computed slots:', list);
       setSlots(list);
-      setSelectedTime('');
+      
+      // Μην καθαρίζουμε το selectedTime αν είναι valid slot για την επιλεγμένη ημερομηνία
+      // Αυτό επιτρέπει να διατηρείται η επιλογή από τα next available appointments
+      // Χρησιμοποιούμε functional update για να πάρουμε το current value
+      setSelectedTime(currentTime => {
+        // Αν δεν υπάρχει selectedTime, δεν κάνουμε τίποτα
+        if (!currentTime) {
+          return '';
+        }
+        // Ελέγχουμε αν το currentTime είναι valid slot
+        const isValidSlot = list.some(slot => slot.time === currentTime && slot.available);
+        // Αν είναι valid, το διατηρούμε, αλλιώς το καθαρίζουμε
+        return isValidSlot ? currentTime : '';
+      });
     };
     compute();
   }, [formData.appointmentDate, selectedDoctorId, settings, language, doctors, userTimezone]);
 
   // Υπολογισμός των επόμενων 3 διαθέσιμων ραντεβού
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchNextAvailableAppointments = async () => {
       if (!selectedDoctorId) {
-        setNextAvailableAppointments([]);
+        if (!isCancelled) {
+          setNextAvailableAppointments([]);
+        }
         return;
       }
 
-      setIsLoadingNextAppointments(true);
+      if (!isCancelled) {
+        setIsLoadingNextAppointments(true);
+      }
+      
       const foundAppointments: Array<{date: string, time: string}> = [];
       const maxDaysToCheck = 60; // Έλεγχος για 60 μέρες μπροστά
       const today = getCurrentDateInTimezone(userTimezone);
@@ -1245,45 +1265,99 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       const nowRestrictionTz = getCurrentDateInTimezone(userTimezone);
       const applyThreeHourRule = !!doctorForRestriction && RESTRICTED_DOCTOR_NAMES.has(doctorForRestriction.name);
 
-      for (let dayOffset = 0; dayOffset < maxDaysToCheck && foundAppointments.length < 3; dayOffset++) {
+      // Προετοιμάζουμε τις ημερομηνίες που θα ελέγξουμε
+      const datesToCheck: string[] = [];
+      for (let dayOffset = 0; dayOffset < maxDaysToCheck; dayOffset++) {
         const checkDate = new Date(today);
         checkDate.setDate(today.getDate() + dayOffset);
-        const dateString = toDateString(checkDate, userTimezone);
+        datesToCheck.push(toDateString(checkDate, userTimezone));
+      }
 
-        // Έλεγχος για κλείσιμο
-        const { data: closures } = await supabase
-          .from('clinic_closures')
-          .select('doctor_id,date_from,date_to')
-          .or(`doctor_id.eq.${selectedDoctorId},doctor_id.is.null`)
-          .lte('date_from', dateString)
-          .gte('date_to', dateString);
+      // Batch query για closures - φέρνουμε όλα τα closures μαζί
+      const startDate = datesToCheck[0];
+      const endDate = datesToCheck[datesToCheck.length - 1];
+      const { data: allClosures } = await supabase
+        .from('clinic_closures')
+        .select('doctor_id,date_from,date_to')
+        .or(`doctor_id.eq.${selectedDoctorId},doctor_id.is.null`)
+        .lte('date_from', endDate)
+        .gte('date_to', startDate);
 
-        if (closures && closures.length > 0) {
-          continue; // Skip closed days
+      if (isCancelled) return;
+
+      // Δημιουργούμε Set με τις κλειστές ημερομηνίες
+      const closedDates = new Set<string>();
+      if (allClosures) {
+        for (const closure of allClosures) {
+          const fromDate = new Date(closure.date_from);
+          const toDate = new Date(closure.date_to);
+          for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+            closedDates.add(toDateString(d, userTimezone));
+          }
+        }
+      }
+
+      // Batch query για availability - φέρνουμε όλες τις availability μαζί
+      const { data: allAvailability } = await supabase
+        .from('availability')
+        .select('date,start_time,end_time,increment_minutes')
+        .eq('doctor_id', selectedDoctorId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date,start_time');
+
+      if (isCancelled) return;
+
+      // Batch query για appointments - φέρνουμε όλα τα appointments μαζί
+      const { data: allBooked } = await supabase
+        .from('appointments')
+        .select('date,time,user_timezone')
+        .eq('doctor_id', selectedDoctorId)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      if (isCancelled) return;
+
+      // Ομαδοποιούμε τα δεδομένα ανά ημερομηνία για γρήγορη πρόσβαση
+      const availabilityByDate = new Map<string, typeof allAvailability>();
+      if (allAvailability) {
+        for (const av of allAvailability) {
+          if (!availabilityByDate.has(av.date)) {
+            availabilityByDate.set(av.date, []);
+          }
+          availabilityByDate.get(av.date)!.push(av);
+        }
+      }
+
+      const bookedByDate = new Map<string, typeof allBooked>();
+      if (allBooked) {
+        for (const apt of allBooked) {
+          if (!bookedByDate.has(apt.date)) {
+            bookedByDate.set(apt.date, []);
+          }
+          bookedByDate.get(apt.date)!.push(apt);
+        }
+      }
+
+      const toHHMM = (t: string) => (t || '').slice(0,5);
+
+      // Ελέγχουμε κάθε ημερομηνία
+      for (const dateString of datesToCheck) {
+        if (isCancelled || foundAppointments.length >= 3) break;
+
+        // Skip closed dates
+        if (closedDates.has(dateString)) {
+          continue;
         }
 
-        // Φέρνουμε availability για αυτή τη μέρα
-        const { data: av } = await supabase
-          .from('availability')
-          .select('start_time,end_time,increment_minutes')
-          .eq('doctor_id', selectedDoctorId)
-          .eq('date', dateString)
-          .order('start_time');
-
+        const av = availabilityByDate.get(dateString);
         if (!av || av.length === 0) {
           continue;
         }
 
-        // Φέρνουμε τα booked appointments
-        const { data: booked } = await supabase
-          .from('appointments')
-          .select('time, user_timezone')
-          .eq('doctor_id', selectedDoctorId)
-          .eq('date', dateString);
-
-        const toHHMM = (t: string) => (t || '').slice(0,5);
+        const booked = bookedByDate.get(dateString) || [];
         const bookedSet = new Set<string>(
-          (booked||[]).map((b: any) => {
+          booked.map((b: any) => {
             const appointmentTimeInDb = toHHMM(b.time);
             let appointmentSourceTimezone: string;
             if (b.user_timezone) {
@@ -1308,6 +1382,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
 
         // Υπολογίζουμε τα διαθέσιμα slots
         for (const a of av) {
+          if (isCancelled || foundAppointments.length >= 3) break;
           if (!a || !a.start_time || !a.end_time || !a.increment_minutes) continue;
 
           const convertedStartTime = convertTimeToTimezone(
@@ -1334,7 +1409,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
           const step = a.increment_minutes as 30|60;
           if (step !== 30 && step !== 60) continue;
 
-          while (cur < end && foundAppointments.length < 3) {
+          while (cur < end && foundAppointments.length < 3 && !isCancelled) {
             const dayMinutes = ((cur % (24 * 60)) + (24 * 60)) % (24 * 60);
             const hh = Math.floor(dayMinutes/60).toString().padStart(2,'0');
             const mm = (dayMinutes%60).toString().padStart(2,'0');
@@ -1369,12 +1444,19 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         }
       }
 
-      setNextAvailableAppointments(foundAppointments);
-      setIsLoadingNextAppointments(false);
+      if (!isCancelled) {
+        setNextAvailableAppointments(foundAppointments);
+        setIsLoadingNextAppointments(false);
+      }
     };
 
     fetchNextAvailableAppointments();
-  }, [selectedDoctorId, settings, doctors, userTimezone]);
+
+    // Cleanup function
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedDoctorId, settings?.lock_half_hour, userTimezone, doctors]);
 
   return (
     <section id="contact" className={onlyForm ? "py-0 bg-white" : "py-20 bg-white"}>
@@ -1785,63 +1867,105 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
               {/* Next Available Appointments Section */}
               {selectedDoctorId && (
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
-                    {content[language].nextAvailableTitle}
-                  </label>
-                  <p className="text-xs text-gray-600 mb-3 font-nunito">
-                    {content[language].nextAvailableDescription}
-                  </p>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-800 mb-1 font-poppins">
+                      {content[language].nextAvailableTitle}
+                    </h3>
+                    <p className="text-sm text-gray-600 font-nunito">
+                      {content[language].nextAvailableDescription}
+                    </p>
+                  </div>
                   {isLoadingNextAppointments ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-rose-soft mr-2" />
-                      <span className="text-sm text-gray-600 font-nunito">{content[language].nextAvailableLoading}</span>
+                    <div className="flex items-center justify-center py-8 bg-gray-50 rounded-2xl border border-gray-200">
+                      <Loader2 className="h-6 w-6 animate-spin text-rose-soft mr-3" />
+                      <span className="text-base text-gray-700 font-nunito font-medium">{content[language].nextAvailableLoading}</span>
                     </div>
                   ) : nextAvailableAppointments.length === 0 ? (
-                    <div className="text-sm text-gray-500 py-4 font-nunito">
+                    <div className="text-base text-gray-500 py-8 bg-gray-50 rounded-2xl border border-gray-200 text-center font-nunito">
                       {content[language].nextAvailableNone}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                       {nextAvailableAppointments.map((apt, index) => {
                         const dateObj = new Date(apt.date + 'T00:00:00');
-                        const formattedDate = new Intl.DateTimeFormat(
+                        const dayName = new Intl.DateTimeFormat(
                           language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
-                          { 
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          }
+                          { weekday: 'short' }
                         ).format(dateObj);
+                        const dayNumber = dateObj.getDate();
+                        const monthName = new Intl.DateTimeFormat(
+                          language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
+                          { month: 'short' }
+                        ).format(dateObj);
+                        const year = dateObj.getFullYear();
+                        const isSelected = formData.appointmentDate === apt.date && selectedTime === apt.time;
                         
                         return (
                           <motion.button
                             key={`${apt.date}-${apt.time}`}
                             type="button"
-                            whileHover={{ scale: 1.05, y: -2 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Ορίζουμε ταυτόχρονα ημερομηνία και ώρα
+                              // Χρησιμοποιούμε functional updates για να διασφαλίσουμε ότι τα updates γίνονται σωστά
                               setFormData(prev => ({ ...prev, appointmentDate: apt.date }));
                               setSelectedTime(apt.time);
                             }}
-                            className={`p-4 rounded-2xl border-2 transition-all duration-300 font-nunito text-left ${
-                              formData.appointmentDate === apt.date && selectedTime === apt.time
-                                ? 'bg-gradient-to-r from-rose-soft to-purple-soft text-white border-transparent shadow-lg'
-                                : 'bg-white border-gray-200 hover:border-rose-soft hover:shadow-md text-gray-800'
+                            className={`relative p-4 rounded-xl border-2 transition-all duration-300 text-left ${
+                              isSelected
+                                ? 'bg-rose-50 border-rose-soft shadow-lg ring-2 ring-rose-200'
+                                : 'bg-white border-gray-300 hover:border-rose-soft hover:shadow-md text-gray-800'
                             }`}
                           >
-                            <div className="flex items-center space-x-2 mb-1">
-                              <Calendar className={`h-4 w-4 ${formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-rose-soft'}`} />
-                              <span className="text-xs font-semibold opacity-80">
-                                {language === 'gr' ? 'Ραντεβού' : language === 'en' ? 'Appointment' : 'Rendez-vous'} {index + 1}
-                              </span>
+                            {/* Badge */}
+                            <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold ${
+                              isSelected 
+                                ? 'bg-rose-soft text-white' 
+                                : 'bg-rose-soft/10 text-rose-700'
+                            }`}>
+                              {index + 1}
                             </div>
-                            <div className="text-sm font-bold mb-1">
-                              {formattedDate}
+
+                            {/* Date Section */}
+                            <div className="mb-3">
+                              <div className="flex items-center gap-1.5 mb-1.5">
+                                <Calendar className={`h-4 w-4 ${isSelected ? 'text-rose-soft' : 'text-rose-soft'}`} />
+                                <span className={`text-xs font-semibold uppercase tracking-wide ${
+                                  isSelected ? 'text-rose-700' : 'text-gray-500'
+                                }`}>
+                                  {language === 'gr' ? 'Ραντεβού' : language === 'en' ? 'Appointment' : 'Rendez-vous'}
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <div className={`text-xl font-bold leading-tight ${
+                                  isSelected ? 'text-gray-900' : 'text-gray-900'
+                                }`}>
+                                  {dayName}
+                                </div>
+                                <div className={`text-base font-semibold ${
+                                  isSelected ? 'text-gray-700' : 'text-gray-700'
+                                }`}>
+                                  {dayNumber} {monthName}
+                                </div>
+                                <div className={`text-xs font-medium ${
+                                  isSelected ? 'text-gray-500' : 'text-gray-500'
+                                }`}>
+                                  {year}
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-1 text-xs">
-                              <Clock className={`h-3 w-3 ${formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-gray-600'}`} />
-                              <span className={formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-gray-600'}>
+
+                            {/* Time Section */}
+                            <div className={`flex items-center gap-2 pt-2.5 border-t ${
+                              isSelected ? 'border-rose-200' : 'border-gray-200'
+                            }`}>
+                              <Clock className={`h-4 w-4 ${isSelected ? 'text-rose-soft' : 'text-rose-soft'}`} />
+                              <span className={`text-base font-bold ${
+                                isSelected ? 'text-gray-900' : 'text-gray-900'
+                              }`}>
                                 {apt.time}
                               </span>
                             </div>
@@ -1850,8 +1974,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                       })}
                     </div>
                   )}
-                  <div className="mb-4 border-t border-gray-200 pt-4">
-                    <p className="text-xs text-gray-500 text-center font-nunito">
+                  <div className="mb-6 pt-4 border-t-2 border-gray-200">
+                    <p className="text-sm text-gray-500 text-center font-nunito font-medium">
                       {language === 'gr' 
                         ? 'ή επιλέξτε ημερομηνία παρακάτω'
                         : language === 'en'
