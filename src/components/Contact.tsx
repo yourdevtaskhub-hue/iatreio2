@@ -125,6 +125,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
   const [closureNotice, setClosureNotice] = useState<{from: string, to: string, reason?: string} | null>(null);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
+  const [nextAvailableAppointments, setNextAvailableAppointments] = useState<Array<{date: string, time: string}>>([]);
+  const [isLoadingNextAppointments, setIsLoadingNextAppointments] = useState(false);
   const [calendarMonth] = useState(() => {
     const d = getCurrentDateInTimezone(getUserTimezone());
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -645,6 +647,10 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistTitle: 'Εγγραφή στη Λίστα Αναμονής',
       waitlistDateTimeLabel: 'Ημερομηνία και Ώρα που ήθελα να κλείσω ραντεβού',
       scheduleInfo: 'Ιδανικά οι πρωινές ώρες προορίζονται για γονείς (πρώτα ραντεβού, συμβουλευτική και εποπτείες) ενώ τα απογευματινά για την ψυχοθεραπεία των παιδιών.',
+      nextAvailableTitle: 'Επόμενα Διαθέσιμα Ραντεβού',
+      nextAvailableDescription: 'Επιλέξτε ένα από τα επόμενα διαθέσιμα ραντεβού:',
+      nextAvailableLoading: 'Αναζήτηση διαθέσιμων ραντεβού...',
+      nextAvailableNone: 'Δεν βρέθηκαν διαθέσιμα ραντεβού.',
       waitlistDescription: 'Σε περίπτωση που δεν βρήκατε ώρα συνεδρίας με τη γιατρό ή τους κλινικούς παιδοψυχολόγους μας, παρακαλώ αφήστε μας σύντομο μήνυμα για να μπείτε στη λίστα αναμονής των περιστατικών τους.',
       waitlistName: 'Όνομα Γονέα/Κηδεμόνα',
       waitlistEmail: 'Email',
@@ -759,6 +765,10 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistTitle: 'Join Waitlist',
       waitlistDateTimeLabel: 'Date and Time I would like to book an appointment',
       scheduleInfo: 'Ideally, morning hours are reserved for parents (first appointments, counseling and supervision) while afternoon hours are for children\'s psychotherapy.',
+      nextAvailableTitle: 'Next Available Appointments',
+      nextAvailableDescription: 'Select one of the next available appointments:',
+      nextAvailableLoading: 'Searching for available appointments...',
+      nextAvailableNone: 'No available appointments found.',
       waitlistDescription: 'In case you did not find an appointment time with the doctor or our clinical child psychologists, please leave us a short message to be added to their patient waiting list.',
       waitlistName: 'Parent/Guardian Name',
       waitlistEmail: 'Email',
@@ -872,6 +882,10 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       waitlistTitle: 'Rejoindre la Liste d\'Attente',
       waitlistDateTimeLabel: 'Date et Heure où j\'aimerais prendre rendez-vous',
       scheduleInfo: 'Idéalement, les heures du matin sont réservées aux parents (premiers rendez-vous, conseil et supervision) tandis que les heures de l\'après-midi sont pour la psychothérapie des enfants.',
+      nextAvailableTitle: 'Prochains Rendez-vous Disponibles',
+      nextAvailableDescription: 'Sélectionnez l\'un des prochains rendez-vous disponibles:',
+      nextAvailableLoading: 'Recherche de rendez-vous disponibles...',
+      nextAvailableNone: 'Aucun rendez-vous disponible trouvé.',
       waitlistDescription: 'Au cas où vous n\'auriez pas trouvé d\'heure de rendez-vous avec le médecin ou nos psychologues cliniques pour enfants, veuillez nous laisser un bref message pour être ajouté à leur liste d\'attente des patients.',
       waitlistName: 'Nom du Parent/Tuteur',
       waitlistEmail: 'Email',
@@ -1212,6 +1226,155 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
     };
     compute();
   }, [formData.appointmentDate, selectedDoctorId, settings, language, doctors, userTimezone]);
+
+  // Υπολογισμός των επόμενων 3 διαθέσιμων ραντεβού
+  useEffect(() => {
+    const fetchNextAvailableAppointments = async () => {
+      if (!selectedDoctorId) {
+        setNextAvailableAppointments([]);
+        return;
+      }
+
+      setIsLoadingNextAppointments(true);
+      const foundAppointments: Array<{date: string, time: string}> = [];
+      const maxDaysToCheck = 60; // Έλεγχος για 60 μέρες μπροστά
+      const today = getCurrentDateInTimezone(userTimezone);
+      const doctorForRestriction = doctors.find(d => d.id === selectedDoctorId);
+      const doctorTimezone = getDoctorTimezone(doctorForRestriction?.name);
+      const patientTimezone = getUserTimezone();
+      const nowRestrictionTz = getCurrentDateInTimezone(userTimezone);
+      const applyThreeHourRule = !!doctorForRestriction && RESTRICTED_DOCTOR_NAMES.has(doctorForRestriction.name);
+
+      for (let dayOffset = 0; dayOffset < maxDaysToCheck && foundAppointments.length < 3; dayOffset++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + dayOffset);
+        const dateString = toDateString(checkDate, userTimezone);
+
+        // Έλεγχος για κλείσιμο
+        const { data: closures } = await supabase
+          .from('clinic_closures')
+          .select('doctor_id,date_from,date_to')
+          .or(`doctor_id.eq.${selectedDoctorId},doctor_id.is.null`)
+          .lte('date_from', dateString)
+          .gte('date_to', dateString);
+
+        if (closures && closures.length > 0) {
+          continue; // Skip closed days
+        }
+
+        // Φέρνουμε availability για αυτή τη μέρα
+        const { data: av } = await supabase
+          .from('availability')
+          .select('start_time,end_time,increment_minutes')
+          .eq('doctor_id', selectedDoctorId)
+          .eq('date', dateString)
+          .order('start_time');
+
+        if (!av || av.length === 0) {
+          continue;
+        }
+
+        // Φέρνουμε τα booked appointments
+        const { data: booked } = await supabase
+          .from('appointments')
+          .select('time, user_timezone')
+          .eq('doctor_id', selectedDoctorId)
+          .eq('date', dateString);
+
+        const toHHMM = (t: string) => (t || '').slice(0,5);
+        const bookedSet = new Set<string>(
+          (booked||[]).map((b: any) => {
+            const appointmentTimeInDb = toHHMM(b.time);
+            let appointmentSourceTimezone: string;
+            if (b.user_timezone) {
+              appointmentSourceTimezone = b.user_timezone;
+            } else {
+              appointmentSourceTimezone = doctorTimezone;
+            }
+            
+            if (appointmentSourceTimezone === patientTimezone) {
+              return appointmentTimeInDb;
+            }
+            
+            const appointmentTimeInPatientTz = convertTimeToTimezone(
+              dateString,
+              appointmentTimeInDb,
+              appointmentSourceTimezone,
+              patientTimezone
+            );
+            return toHHMM(appointmentTimeInPatientTz);
+          })
+        );
+
+        // Υπολογίζουμε τα διαθέσιμα slots
+        for (const a of av) {
+          if (!a || !a.start_time || !a.end_time || !a.increment_minutes) continue;
+
+          const convertedStartTime = convertTimeToTimezone(
+            dateString,
+            a.start_time,
+            doctorTimezone,
+            patientTimezone
+          );
+          const convertedEndTime = convertTimeToTimezone(
+            dateString,
+            a.end_time,
+            doctorTimezone,
+            patientTimezone
+          );
+
+          const [sh, sm] = convertedStartTime.split(':').map(Number);
+          const [eh, em] = convertedEndTime.split(':').map(Number);
+          let cur = sh * 60 + sm;
+          let end = eh * 60 + em;
+          if (Number.isNaN(cur) || Number.isNaN(end)) continue;
+          if (end <= cur) {
+            end += 24 * 60;
+          }
+          const step = a.increment_minutes as 30|60;
+          if (step !== 30 && step !== 60) continue;
+
+          while (cur < end && foundAppointments.length < 3) {
+            const dayMinutes = ((cur % (24 * 60)) + (24 * 60)) % (24 * 60);
+            const hh = Math.floor(dayMinutes/60).toString().padStart(2,'0');
+            const mm = (dayMinutes%60).toString().padStart(2,'0');
+            const t = `${hh}:${mm}`;
+            const isBooked = bookedSet.has(t);
+            let available = !isBooked;
+
+            // Lock half hour rule
+            if (settings?.lock_half_hour && !isBooked) {
+              const hourStart = `${hh}:00`;
+              const half = `${hh}:30`;
+              if (bookedSet.has(hourStart) || bookedSet.has(half)) {
+                available = false;
+              }
+            }
+
+            // Three hour rule
+            if (available && applyThreeHourRule) {
+              if (isSlotWithinThreeHours(dateString, t, userTimezone, nowRestrictionTz)) {
+                available = false;
+              }
+            }
+
+            if (available) {
+              foundAppointments.push({ date: dateString, time: t });
+            }
+
+            cur += step;
+          }
+
+          if (foundAppointments.length >= 3) break;
+        }
+      }
+
+      setNextAvailableAppointments(foundAppointments);
+      setIsLoadingNextAppointments(false);
+    };
+
+    fetchNextAvailableAppointments();
+  }, [selectedDoctorId, settings, doctors, userTimezone]);
 
   return (
     <section id="contact" className={onlyForm ? "py-0 bg-white" : "py-20 bg-white"}>
@@ -1563,8 +1726,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                 >
                   <option value="">{content[language].selectSpecialty}</option>
                   <option value="psychiatrist">{content[language].specialtyOptions.psychiatrist}</option>
-                  <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
                   <option value="clinicalPsychologist">{content[language].specialtyOptions.clinicalPsychologist}</option>
+                  <option value="psychologist">{content[language].specialtyOptions.psychologist}</option>
                 </motion.select>
               </div>
 
@@ -1618,6 +1781,86 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   ))}
                 </select>
               </div>
+
+              {/* Next Available Appointments Section */}
+              {selectedDoctorId && (
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
+                    {content[language].nextAvailableTitle}
+                  </label>
+                  <p className="text-xs text-gray-600 mb-3 font-nunito">
+                    {content[language].nextAvailableDescription}
+                  </p>
+                  {isLoadingNextAppointments ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-rose-soft mr-2" />
+                      <span className="text-sm text-gray-600 font-nunito">{content[language].nextAvailableLoading}</span>
+                    </div>
+                  ) : nextAvailableAppointments.length === 0 ? (
+                    <div className="text-sm text-gray-500 py-4 font-nunito">
+                      {content[language].nextAvailableNone}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                      {nextAvailableAppointments.map((apt, index) => {
+                        const dateObj = new Date(apt.date + 'T00:00:00');
+                        const formattedDate = new Intl.DateTimeFormat(
+                          language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
+                          { 
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          }
+                        ).format(dateObj);
+                        
+                        return (
+                          <motion.button
+                            key={`${apt.date}-${apt.time}`}
+                            type="button"
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, appointmentDate: apt.date }));
+                              setSelectedTime(apt.time);
+                            }}
+                            className={`p-4 rounded-2xl border-2 transition-all duration-300 font-nunito text-left ${
+                              formData.appointmentDate === apt.date && selectedTime === apt.time
+                                ? 'bg-gradient-to-r from-rose-soft to-purple-soft text-white border-transparent shadow-lg'
+                                : 'bg-white border-gray-200 hover:border-rose-soft hover:shadow-md text-gray-800'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-2 mb-1">
+                              <Calendar className={`h-4 w-4 ${formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-rose-soft'}`} />
+                              <span className="text-xs font-semibold opacity-80">
+                                {language === 'gr' ? 'Ραντεβού' : language === 'en' ? 'Appointment' : 'Rendez-vous'} {index + 1}
+                              </span>
+                            </div>
+                            <div className="text-sm font-bold mb-1">
+                              {formattedDate}
+                            </div>
+                            <div className="flex items-center space-x-1 text-xs">
+                              <Clock className={`h-3 w-3 ${formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-gray-600'}`} />
+                              <span className={formData.appointmentDate === apt.date && selectedTime === apt.time ? 'text-white' : 'text-gray-600'}>
+                                {apt.time}
+                              </span>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="mb-4 border-t border-gray-200 pt-4">
+                    <p className="text-xs text-gray-500 text-center font-nunito">
+                      {language === 'gr' 
+                        ? 'ή επιλέξτε ημερομηνία παρακάτω'
+                        : language === 'en'
+                        ? 'or select a date below'
+                        : 'ou sélectionnez une date ci-dessous'}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="appointmentDate" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
