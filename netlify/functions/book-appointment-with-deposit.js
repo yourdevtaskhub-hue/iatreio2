@@ -135,21 +135,32 @@ exports.handler = async (event) => {
       appointmentTime
     });
 
-    const { data: existingAppointment, error: existingAppointmentError } = await supabaseClient
+    // Safe check: find any booked appointment at this slot (status='booked' or IS NULL for legacy)
+    const { data: existingAppointments, error: existingAppointmentError } = await supabaseClient
       .from('appointments')
-      .select('id')
+      .select('id, status')
       .eq('doctor_id', doctorId)
       .eq('date', appointmentDate)
-      .eq('time', appointmentTime)
-      .maybeSingle();
+      .eq('time', appointmentTime);
+      // Note: We fetch all and filter in code because Supabase doesn't support (col='x' OR col IS NULL) well
 
     if (existingAppointmentError) {
       console.error('❌ [ERROR] Existing appointment lookup failed:', existingAppointmentError);
       throw existingAppointmentError;
     }
 
-    if (existingAppointment) {
-      console.warn('⚠️ [BOOK_DEPOSIT] Slot already booked:', existingAppointment);
+    // Filter for booked slots (status='booked' or NULL for legacy backward compatibility)
+    const bookedAppointment = (existingAppointments || []).find(
+      (apt) => apt.status === 'booked' || apt.status === null
+    );
+
+    if (existingAppointmentError) {
+      console.error('❌ [ERROR] Existing appointment lookup failed:', existingAppointmentError);
+      throw existingAppointmentError;
+    }
+
+    if (bookedAppointment) {
+      console.warn('⚠️ [BOOK_DEPOSIT] Slot already booked:', bookedAppointment);
       return {
         statusCode: 409,
         headers,
@@ -171,7 +182,8 @@ exports.handler = async (event) => {
         parent_name: parentName,
         email: parentEmail,
         phone: phone || null,
-        concerns: concerns || ''
+        concerns: concerns || '',
+        status: 'booked'
       })
       .select()
       .single();

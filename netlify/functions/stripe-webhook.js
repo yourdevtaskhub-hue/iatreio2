@@ -458,19 +458,23 @@ async function handleCheckoutSessionCompleted(session) {
       payment_id
     });
     console.log('🔍 [DEBUG] Checking for existing appointment conflicts before inserting...');
-    const { data: existing, error: existingErr } = await supabase
+    // Safe check: find any booked appointment at this slot (status='booked' or IS NULL for legacy)
+    const { data: existingAppointments, error: existingErr } = await supabase
       .from('appointments')
-      .select('id')
+      .select('id, status')
       .eq('doctor_id', doctor_id)
       .eq('date', appointment_date)
-      .eq('time', appointment_time)
-      .limit(1)
-      .maybeSingle();
+      .eq('time', appointment_time);
 
     if (existingErr) {
       console.error('❌ [ERROR] Failed to check existing appointment before insert:', existingErr);
       throw existingErr;
     }
+
+    // Filter for booked slots (status='booked' or NULL for legacy backward compatibility)
+    const existing = (existingAppointments || []).find(
+      (apt) => apt.status === 'booked' || apt.status === null
+    );
 
     if (existing) {
       console.warn('⚠️ [WARNING] Appointment slot already exists. Will skip creation and log payment linkage.', existing);
@@ -487,7 +491,8 @@ async function handleCheckoutSessionCompleted(session) {
         duration_minutes: 30,
         parent_name: parent_name,
         email: parent_email,
-        concerns: concerns || ''
+        concerns: concerns || '',
+        status: 'booked'
       })
       .select()
       .single();

@@ -127,7 +127,7 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
             .order('start_time'),
           supabase
             .from('appointments')
-            .select('time')
+            .select('time, user_timezone, status')
             .eq('doctor_id', selectedDoctorId)
             .eq('date', selectedDate)
         ]);
@@ -155,7 +155,9 @@ const DepositScheduler: React.FC<DepositSchedulerProps> = ({
         // Μετατρέπουμε τα appointment times στη timezone χρήστη
         const toHHMM = (t: string) => (t || '').slice(0, 5);
         const bookedSet = new Set<string>(
-          (booked || []).map((row: any) => {
+          (booked || [])
+            .filter((row: any) => row.status === 'booked' || row.status === null || row.status === undefined)
+            .map((row: any) => {
             const appointmentTimeInDb = toHHMM(row.time);
             
             // Το appointment time στη βάση είναι στη timezone που δείχνει το user_timezone

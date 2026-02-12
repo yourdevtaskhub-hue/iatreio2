@@ -29,6 +29,7 @@ export interface Appointment {
   thematology?: string;
   urgency?: string;
   is_first_session?: boolean;
+  status?: 'booked' | 'cancelled' | 'pending' | 'available';
   created_at: string;
 }
 

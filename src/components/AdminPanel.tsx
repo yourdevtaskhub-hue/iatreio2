@@ -2963,7 +2963,7 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
     try {
       const { data } = await supabaseAdmin
         .from('appointments')
-        .select('id, date, time, doctor_id, parent_name, email, phone, child_age, concerns, specialty, thematology, urgency, is_first_session, created_at')
+        .select('id, date, time, doctor_id, parent_name, email, phone, child_age, concerns, specialty, thematology, urgency, is_first_session, created_at, status')
         .gte('date', monthStart)
         .lte('date', monthEnd);
       setAppointments((data || []) as Appointment[]);
@@ -3168,29 +3168,29 @@ const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({ doctors, avai
   };
 
   const getAppointmentForSlot = (date: string, startTime: string, endTime?: string) => {
-    // Βρίσκουμε τον γιατρό για να πάρουμε την timezone του
     const selectedDoctor = doctors.find(d => d.id === doctorId);
     const doctorTimezone = getDoctorTimezone(selectedDoctor?.name);
-    // Υποθέτουμε ότι τα appointments αποθηκεύονται στην ώρα Ελλάδας (default)
-    // ή στην ώρα που έκλεισε ο πελάτης, οπότε τα μετατρέπουμε στη timezone του γιατρού
-    const patientTimezone = TIMEZONES.GREECE; // Default: Ελλάδα
-    
     return appointments.find(apt => {
       if (doctorId && apt.doctor_id !== doctorId) return false;
-      
-      // Μετατρέπουμε το appointment time στη timezone του γιατρού
-      const aptTimeInPatientTz = apt.time.slice(0, 5);
-      const aptTimeInDoctorTz = convertTimeToTimezone(
-        apt.date,
-        aptTimeInPatientTz,
-        patientTimezone,
-        doctorTimezone
-      ).slice(0, 5);
-      
+      const isBooked = apt.status === 'booked' || apt.status === null || apt.status === undefined;
+      if (!isBooked) return false;
+      // Μετατροπή slot time στη timezone του ραντεβού (ή doctor αν λείπει)
+      const slotTimeInPatientTz = convertTimeToTimezone(
+        date,
+        startTime,
+        doctorTimezone,
+        apt.user_timezone || doctorTimezone
+      ).slice(0,5);
       if (endTime) {
-        return apt.date === date && aptTimeInDoctorTz >= startTime && aptTimeInDoctorTz < endTime;
+        const slotEndInPatientTz = convertTimeToTimezone(
+          date,
+          endTime,
+          doctorTimezone,
+          apt.user_timezone || doctorTimezone
+        ).slice(0,5);
+        return apt.date === date && apt.time.slice(0,5) >= slotTimeInPatientTz && apt.time.slice(0,5) < slotEndInPatientTz;
       }
-      return apt.date === date && aptTimeInDoctorTz === startTime;
+      return apt.date === date && apt.time.slice(0,5) === slotTimeInPatientTz;
     }) || null;
   };
 

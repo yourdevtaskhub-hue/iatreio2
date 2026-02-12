@@ -16,7 +16,7 @@ export const useRealtimeUpdates = ({ doctorName, onAppointmentChange }: UseRealt
         .from('appointments')
         .select(`
           id, date, time, email, phone, parent_name, child_age, 
-          concerns, specialty, thematology, urgency, is_first_session,
+          concerns, specialty, thematology, urgency, is_first_session, status,
           doctors(name, specialty)
         `)
         .order('date', { ascending: false })
