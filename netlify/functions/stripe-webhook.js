@@ -119,13 +119,26 @@ async function handleCheckoutSessionCompleted(session) {
     appointment_time,
     doctor_name,
     concerns,
-    amount_cents
+    amount_cents,
+    user_timezone // New: capture user_timezone from metadata
   } = session.metadata || {};
 
   // Get parent_email from multiple sources with fallback
   const parent_email = session.metadata?.parent_email || 
                       session.customer_details?.email || 
                       session.customer_email;
+
+  // Validate user_timezone (IANA)
+  function isValidIANATimezone(tz) {
+    if (!tz || typeof tz !== 'string') return false;
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const safeUserTimezone = isValidIANATimezone(user_timezone) ? user_timezone : null;
 
   console.log('🔍 [DEBUG] Session metadata:', {
     doctor_id,
@@ -482,6 +495,7 @@ async function handleCheckoutSessionCompleted(session) {
       return;
     }
 
+    // Only patch: add user_timezone to Stripe flow. Manual deposit and other flows untouched.
     const { data: appointmentData, error: appointmentError } = await supabase
       .from('appointments')
       .insert({
@@ -492,7 +506,8 @@ async function handleCheckoutSessionCompleted(session) {
         parent_name: parent_name,
         email: parent_email,
         concerns: concerns || '',
-        status: 'booked'
+        status: 'booked',
+        user_timezone: safeUserTimezone // Safe: only new Stripe bookings, null if missing/invalid
       })
       .select()
       .single();
@@ -555,7 +570,8 @@ async function handleCheckoutSessionCompleted(session) {
         parentName: parent_name,
         appointmentDate: appointment_date,
         appointmentTime: appointment_time,
-        doctorName: finalDoctorName
+        doctorName: finalDoctorName,
+        userTimezone: safeUserTimezone // Pass userTimezone to email function
       });
       console.log('✅ [EMAIL] Confirmation email sent successfully');
     } catch (emailError) {
@@ -646,7 +662,8 @@ async function handleCheckoutSessionCompleted(session) {
 }
 
 // Helper function για αποστολή email επιβεβαιώσεως
-async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appointmentDate, appointmentTime, doctorName }) {
+// Accept userTimezone for timezone-aware rendering
+async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appointmentDate, appointmentTime, doctorName, userTimezone }) {
   try {
     // Προσδιορισμός base URL για Netlify Functions
     const functionsBase = process.env.NETLIFY_FUNCTIONS_BASE || 
@@ -667,7 +684,8 @@ async function sendAppointmentConfirmationEmail({ parentEmail, parentName, appoi
         parentName: parentName || '',
         appointmentDate,
         appointmentTime,
-        doctorName
+        doctorName,
+        userTimezone: userTimezone || null // Always include, null if missing
       })
     });
 

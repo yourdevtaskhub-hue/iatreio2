@@ -81,11 +81,15 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
     setLoading(true);
     setError(null);
-    
+
     try {
+      // Get user's IANA timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log('🌍 User timezone sent to Stripe:', userTimezone);
+
       // Create REAL Stripe Checkout Session
       console.log('🚀 [INFO] Creating REAL Stripe Checkout...');
-      
+
       const { sessionId, paymentId } = await createRealStripeCheckout({
         doctorId,
         doctorName,
@@ -94,12 +98,13 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         appointmentDate,
         appointmentTime,
         concerns,
-        amountCents: price
+        amountCents: price,
+        userTimezone // Pass to backend
       });
 
       // If we reach here, the redirect to Stripe should have happened
       console.log('✅ [SUCCESS] Redirecting to Stripe Checkout:', { sessionId, paymentId });
-      
+
       // The user will be redirected to Stripe, so we don't need to show success here
       // Stripe will handle the payment and redirect back to our success page
 

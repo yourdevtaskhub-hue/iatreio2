@@ -17,6 +17,7 @@ export interface CreateCheckoutSessionData {
   appointmentTime: string;
   concerns: string;
   amountCents: number;
+  userTimezone?: string;
   sessionsCount?: number; // Optional: for deposit purchases
   scheduleDetails?: Array<{ date: string; time: string }>;
   manualSessionsLabel?: string;
@@ -140,7 +141,8 @@ export const createRealStripeCheckout = async (data: CreateCheckoutSessionData) 
             sessionsCount: data.sessionsCount || null, // for deposit purchases
             manualDepositData: data.manualDepositData || null,
             scheduleDetails: Array.isArray(data.scheduleDetails) ? data.scheduleDetails : null,
-            manualSessionsLabel: data.manualSessionsLabel || null
+            manualSessionsLabel: data.manualSessionsLabel || null,
+            user_timezone: data.userTimezone || null // Pass to backend
           };
           
           console.log('🔍 [DEBUG] === FRONTEND: Sending to Netlify Function ===');

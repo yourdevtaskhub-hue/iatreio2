@@ -89,8 +89,12 @@ exports.handler = async (event, context) => {
       sessionsCount: sessionsCountFromBody, // Optional: passed explicitly for deposit purchases
       scheduleDetails: scheduleDetailsFromBody,
       manualSessionsLabel,
-      manualDepositData
+      manualDepositData,
+      user_timezone // New: from frontend
     } = body;
+
+    // TEMP DEBUG LOG
+    console.log('🌍 User timezone received from frontend:', user_timezone);
 
     console.log('🔍 [CHECKOUT] Raw request body:', JSON.stringify(body, null, 2));
     console.log('🔍 [CHECKOUT] Parsed request data:', {
@@ -442,7 +446,8 @@ exports.handler = async (event, context) => {
           schedule_details: scheduleSummaryText,
           schedule_details_json: normalizedScheduleDetails.length ? JSON.stringify(normalizedScheduleDetails) : '',
           manual_sessions_label: manualSessionsLabel || '',
-          manual_deposit_data: manualDepositData ? JSON.stringify(manualDepositData) : ''
+          manual_deposit_data: manualDepositData ? JSON.stringify(manualDepositData) : '',
+          user_timezone: user_timezone || null // New: pass to Stripe metadata
         },
       };
       console.log('🔍 [CHECKOUT] Session data about to send to Stripe:', JSON.stringify(sessionData, null, 2));

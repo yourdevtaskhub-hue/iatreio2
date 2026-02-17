@@ -60,7 +60,8 @@ exports.handler = async (event) => {
       parentName,
       appointmentDate,
       appointmentTime,
-      doctorName
+      doctorName,
+      userTimezone // New: for DST-safe rendering
     } = payload;
 
     // Ensure doctorName is properly handled
@@ -142,24 +143,60 @@ exports.handler = async (event) => {
       };
     }
 
-    // Μορφοποίηση ημερομηνίας (YYYY-MM-DD -> DD/MM/YYYY)
-    const formatDate = (dateStr) => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr + 'T00:00:00');
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
 
-    // Μορφοποίηση ώρας (HH:MM -> HH:MM)
-    const formatTime = (timeStr) => {
-      if (!timeStr) return '';
-      return timeStr.substring(0, 5); // Παίρνουμε μόνο HH:MM
-    };
+    // DST-safe, IANA-correct local date/time rendering
+    function formatDateTime(dateStr, timeStr, tz) {
+      if (!dateStr || !timeStr) return { date: '', time: '' };
+      // Compose ISO string in UTC
+      const [year, month, day] = dateStr.split('-');
+      const [hour, minute] = timeStr.split(':');
+      // Use Date.UTC to avoid local timezone offset
+      const utcDate = new Date(Date.UTC(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hour),
+        parseInt(minute)
+      ));
+      // Use Intl.DateTimeFormat with tz if valid
+      let date = '', time = '';
+      try {
+        if (tz && typeof tz === 'string') {
+          const dtf = new Intl.DateTimeFormat('el-GR', {
+            timeZone: tz,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          });
+          const parts = dtf.formatToParts(utcDate);
+          const d = {
+            day: parts.find(p => p.type === 'day')?.value,
+            month: parts.find(p => p.type === 'month')?.value,
+            year: parts.find(p => p.type === 'year')?.value
+          };
+          date = `${d.day}/${d.month}/${d.year}`;
+          // Time
+          const tf = new Intl.DateTimeFormat('el-GR', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          time = tf.format(utcDate);
+        } else {
+          // Fallback: legacy formatting
+          date = `${day}/${month}/${year}`;
+          time = timeStr.substring(0, 5);
+        }
+      } catch (e) {
+        // Fallback: legacy formatting
+        date = `${day}/${month}/${year}`;
+        time = timeStr.substring(0, 5);
+      }
+      return { date, time };
+    }
 
-    const formattedDate = formatDate(appointmentDate);
-    const formattedTime = formatTime(appointmentTime);
+    const { date: formattedDate, time: formattedTime } = formatDateTime(appointmentDate, appointmentTime, userTimezone);
 
     // Δημιουργία email body
     const emailBody = `Καλωσορίσατε,
