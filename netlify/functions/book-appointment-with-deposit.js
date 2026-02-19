@@ -68,6 +68,7 @@ exports.handler = async (event) => {
 
     const payload = JSON.parse(event.body || '{}');
     console.log('🔍 [BOOK_DEPOSIT] Parsed payload:', JSON.stringify(payload, null, 2));
+    const userTimezone = payload.userTimezone || null;
 
     const {
       doctorId,
@@ -183,7 +184,8 @@ exports.handler = async (event) => {
         email: parentEmail,
         phone: phone || null,
         concerns: concerns || '',
-        status: 'booked'
+        status: 'booked',
+        user_timezone: userTimezone
       })
       .select()
       .single();
@@ -245,13 +247,16 @@ exports.handler = async (event) => {
     // Αποστολή email επιβεβαιώσεως
     console.log('📧 [EMAIL] Sending appointment confirmation email...');
     try {
-      await sendAppointmentConfirmationEmail({
+      const emailPayload = {
         parentEmail: parentEmail,
         parentName: parentName,
         appointmentDate: appointmentDate,
         appointmentTime: appointmentTime,
-        doctorName: finalDoctorName
-      });
+        doctorName: finalDoctorName,
+        userTimezone: userTimezone
+      };
+      console.log('📧 [EMAIL] Would send payload:', JSON.stringify(emailPayload, null, 2));
+      await sendAppointmentConfirmationEmail(emailPayload);
       console.log('✅ [EMAIL] Confirmation email sent successfully');
     } catch (emailError) {
       // Μη blocking error - απλά log

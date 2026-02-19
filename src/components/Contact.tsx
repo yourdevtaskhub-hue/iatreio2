@@ -599,7 +599,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       formTitle: 'Επικοινωνήστε Μαζί μας',
       parentName: 'Όνομα Γονέα/Κηδεμόνα *',
       childAge: 'Ηλικία Παιδιού',
-      emailAddress: 'Διεύθυνση Email *',
+      emailAddress: 'Διεύθυνση Email',
       phoneNumber: 'Αριθμός Τηλεφώνου',
       concerns: 'Σύντομη Περιγραφή Ανησυχιών',
       concernsPlaceholder: 'Παρακαλώ περιγράψτε συνοπτικά τις ανησυχίες σας ή τι θα θέλατε να συζητήσετε κατά τη διάρκεια της συμβουλής...',
@@ -1420,52 +1420,29 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         }
       }
 
-      const toHHMM = (t: string) => (t || '').slice(0,5);
-
       // Ελέγχουμε κάθε ημερομηνία
+      outer:
       for (const dateString of datesToCheck) {
-        if (isCancelled || foundAppointments.length >= 3) break;
-
+        if (isCancelled) break;
         // Skip closed dates
-        if (closedDates.has(dateString)) {
-          continue;
-        }
-
+        if (closedDates.has(dateString)) continue;
         const av = availabilityByDate.get(dateString);
-        if (!av || av.length === 0) {
+        if (!av || av.length === 0) continue;
+        const booked = bookedByDate.get(dateString) || [];
+        
+        // 🔴 CRITICAL FIX: Skip entire date if it has ANY booked appointments
+        if (booked.length > 0) {
+          console.log('[Contact] ⏭️ SKIPPING ENTIRE DATE - HAS BOOKED APPOINTMENTS:', { 
+            dateString, 
+            bookedCount: booked.length,
+            bookedAppointments: booked.map((b: any) => ({ time: b.time, status: b.status }))
+          });
           continue;
         }
-
-        const booked = bookedByDate.get(dateString) || [];
-        const bookedSet = new Set<string>(
-          booked.map((b: any) => {
-            const appointmentTimeInDb = toHHMM(b.time);
-            let appointmentSourceTimezone: string;
-            if (b.user_timezone) {
-              appointmentSourceTimezone = b.user_timezone;
-            } else {
-              appointmentSourceTimezone = doctorTimezone;
-            }
-            
-            if (appointmentSourceTimezone === patientTimezone) {
-              return appointmentTimeInDb;
-            }
-            
-            const appointmentTimeInPatientTz = convertTimeToTimezone(
-              dateString,
-              appointmentTimeInDb,
-              appointmentSourceTimezone,
-              patientTimezone
-            );
-            return toHHMM(appointmentTimeInPatientTz);
-          })
-        );
-
-        // Υπολογίζουμε τα διαθέσιμα slots
+        
         for (const a of av) {
-          if (isCancelled || foundAppointments.length >= 3) break;
+          if (isCancelled) break outer;
           if (!a || !a.start_time || !a.end_time || !a.increment_minutes) continue;
-
           const convertedStartTime = convertTimeToTimezone(
             dateString,
             a.start_time,
@@ -1478,54 +1455,42 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
             doctorTimezone,
             patientTimezone
           );
-
           const [sh, sm] = convertedStartTime.split(':').map(Number);
           const [eh, em] = convertedEndTime.split(':').map(Number);
           let cur = sh * 60 + sm;
           let end = eh * 60 + em;
           if (Number.isNaN(cur) || Number.isNaN(end)) continue;
-          if (end <= cur) {
-            end += 24 * 60;
-          }
+          if (end <= cur) end += 24 * 60;
           const step = a.increment_minutes as 30|60;
           if (step !== 30 && step !== 60) continue;
-
-          while (cur < end && foundAppointments.length < 3 && !isCancelled) {
+          while (cur < end && !isCancelled) {
             const dayMinutes = ((cur % (24 * 60)) + (24 * 60)) % (24 * 60);
             const hh = Math.floor(dayMinutes/60).toString().padStart(2,'0');
             const mm = (dayMinutes%60).toString().padStart(2,'0');
             const t = `${hh}:${mm}`;
-            const isBooked = bookedSet.has(t);
+            const isBooked = false; // No booked appointments on this date (we skipped it above)
             let available = !isBooked;
-
-            // Lock half hour rule
             if (settings?.lock_half_hour && !isBooked) {
-              const hourStart = `${hh}:00`;
-              const half = `${hh}:30`;
-              if (bookedSet.has(hourStart) || bookedSet.has(half)) {
-                available = false;
-              }
+              // Skip lock_half_hour check since there are no booked appointments
             }
-
-            // Three hour rule
             if (available && applyThreeHourRule) {
-              if (isSlotWithinThreeHours(dateString, t, userTimezone, nowRestrictionTz)) {
-                available = false;
-              }
+              if (isSlotWithinThreeHours(dateString, t, userTimezone, nowRestrictionTz)) available = false;
             }
-
             if (available) {
               foundAppointments.push({ date: dateString, time: t });
+              console.log('[Contact] ✅ ADDED TO AVAILABLE:', { dateString, time: t, reason: 'no booked appointments on this date' });
+              if (foundAppointments.length >= 3) break outer;
             }
-
             cur += step;
           }
-
-          if (foundAppointments.length >= 3) break;
         }
       }
 
       if (!isCancelled) {
+        console.log('[Contact] 🎯 FINAL NEXT AVAILABLE APPOINTMENTS:', {
+          count: foundAppointments.length,
+          appointments: foundAppointments.map(apt => ({ date: apt.date, time: apt.time }))
+        });
         setNextAvailableAppointments(foundAppointments);
         setIsLoadingNextAppointments(false);
       }
@@ -1825,6 +1790,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
                   {content[language].emailAddress}
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <motion.input
                   whileFocus={{ scale: 1.02 }}
@@ -1842,6 +1808,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2 font-quicksand">
                   {content[language].phoneNumber}
+                  <span className="text-red-500 ml-1">*</span>
                 </label>
                 <motion.input
                   whileFocus={{ scale: 1.02 }}
@@ -1969,18 +1936,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                       {nextAvailableAppointments.map((apt, index) => {
                         const dateObj = new Date(apt.date + 'T00:00:00');
-                        const dayName = new Intl.DateTimeFormat(
-                          language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
-                          { weekday: 'short' }
-                        ).format(dateObj);
+                        const dayName = new Intl.DateTimeFormat(language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short' }).format(dateObj);
                         const dayNumber = dateObj.getDate();
-                        const monthName = new Intl.DateTimeFormat(
-                          language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US',
-                          { month: 'short' }
-                        ).format(dateObj);
+                        const monthName = new Intl.DateTimeFormat(language === 'gr' ? 'el-GR' : language === 'fr' ? 'fr-FR' : 'en-US', { month: 'short' }).format(dateObj);
                         const year = dateObj.getFullYear();
                         const isSelected = formData.appointmentDate === apt.date && selectedTime === apt.time;
-                        
                         return (
                           <motion.button
                             key={`${apt.date}-${apt.time}`}
@@ -1990,8 +1950,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              // Ορίζουμε ταυτόχρονα ημερομηνία και ώρα
-                              // Χρησιμοποιούμε functional updates για να διασφαλίσουμε ότι τα updates γίνονται σωστά
                               setFormData(prev => ({ ...prev, appointmentDate: apt.date }));
                               setSelectedTime(apt.time);
                             }}
@@ -2009,7 +1967,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                             }`}>
                               {index + 1}
                             </div>
-
                             {/* Date Section */}
                             <div className="mb-3">
                               <div className="flex items-center gap-1.5 mb-1.5">
@@ -2038,7 +1995,6 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                                 </div>
                               </div>
                             </div>
-
                             {/* Time Section */}
                             <div className={`flex items-center gap-2 pt-2.5 border-t ${
                               isSelected ? 'border-rose-200' : 'border-gray-200'
@@ -2222,7 +2178,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   required
                 />
                 <label htmlFor="privacy" className="text-sm text-gray-900 font-nunito leading-relaxed">
-                  {content[language].privacy}
+                  <div className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    {language === 'gr' ? 'Κατανοώ ότι αυτή η φόρμα δεν είναι για επείγουσες καταστάσεις. Για άμεση βοήθεια, παρακαλώ επικοινωνήστε με τις υπηρεσίες έκτακτης ανάγκης ή πηγαίνετε στο πλησιέστερο τμήμα επειγόντων περιστατικών.' :
+                     language === 'en' ? 'I understand that this form is not for emergency situations. For immediate assistance, please contact emergency services or go to the nearest emergency department.' :
+                     'Je comprends que ce formulaire n\'est pas destiné aux situations d\'urgence. Pour une assistance immédiate, veuillez contacter les services d\'urgence ou vous rendre au plus proche service des urgences.'}
+                  </div>
                 </label>
               </div>
 
@@ -2237,7 +2197,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   required
                 />
                 <label htmlFor="recordingPolicy" className="text-sm text-gray-900 font-nunito leading-relaxed">
-                  {content[language].recordingPolicy}
+                  <div className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    {language === 'gr' ? 'Πολιτική ηχογράφησης & καταγραφής: Για λόγους προστασίας της ιδιωτικής ζωής και δεοντολογίας, απαγορεύεται αυστηρά η ηχογράφηση ή/και μαγνητοσκόπηση των συνεδριών. Σε περίπτωση παραβίασης αυτής της πολιτικής θα επιβάλλονται κυρώσεις.' :
+                     language === 'en' ? 'Recording & Archiving Policy: For reasons of privacy protection and ethics, recording and/or videotaping of sessions is strictly prohibited. In case of violation of this policy, sanctions will be imposed.' :
+                     'Politique d\'enregistrement et d\'archivage: Pour des raisons de protection de la vie privée et d\'éthique, l\'enregistrement et/ou la vidéographie des séances est strictement interdit. En cas de violation de cette politique, des sanctions seront imposées.'}
+                  </div>
                 </label>
               </div>
 
@@ -2252,7 +2216,11 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   required
                 />
                 <label htmlFor="parentalConsent" className="text-sm text-gray-900 font-nunito leading-relaxed">
-                  {content[language].parentalConsent}
+                  <div className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    {language === 'gr' ? 'Ως γονεϊκό ζευγάρι αποδεχόμαστε η γιατρός και η ομάδα της να εξετάσουν και να πραγματοποιήσουν συνεδρίες με το παιδί μας.' :
+                     language === 'en' ? 'As a parental couple, we accept that the doctor and her team may examine and conduct sessions with our child.' :
+                     'En tant que couple parental, nous acceptons que la médecin et son équipe puissent examiner et mener des séances avec notre enfant.'}
+                  </div>
                 </label>
               </div>
 
@@ -2271,24 +2239,74 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                   className="text-sm text-gray-900 font-nunito leading-relaxed"
                   style={{ whiteSpace: 'pre-line' }}
                 >
-                  {content[language].cancellationPolicy}
+                  <div className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    {language === 'gr' ? 'Πολιτική Ακύρωσης\n\nΟι ακυρώσεις συνεδριών μπορούν να πραγματοποιηθούν έως και 12 ώρες πριν από την προγραμματισμένη ώρα. Σε ακυρώσεις που γίνονται μετά το όριο αυτό, δυστυχώς δεν είναι δυνατή η επιστροφή χρημάτων, καθώς ο χρόνος έχει δεσμευτεί αποκλειστικά για εσάς. Σας ευχαριστούμε για την κατανόηση και τον σεβασμό στον κοινό μας χρόνο.' :
+                     language === 'en' ? 'Cancellation Policy\n\nSession cancellations can be made up to 12 hours before the scheduled time. For cancellations made after this deadline, unfortunately a refund is not possible as the time has been exclusively reserved for you. Thank you for your understanding and respect for our shared time.' :
+                     'Politique d\'Annulation\n\nLes annulations de session peuvent être effectuées jusqu\'à 12 heures avant l\'heure prévue. Pour les annulations effectuées après ce délai, malheureusement, un remboursement n\'est pas possible car le temps a été exclusivement réservé pour vous. Merci de votre compréhension et du respect de notre temps partagé.'}
+                  </div>
                 </label>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                type="submit"
-                disabled={!selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || !formData.cancellationPolicyAccepted || messageLength > 200}
-                className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
-                  !selectedSpecialty || !formData.privacyAccepted || !formData.recordingPolicyAccepted || !formData.parentalConsentAccepted || !formData.cancellationPolicyAccepted || messageLength > 200
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
-                }`}
-              >
-                <Calendar className="inline-block h-5 w-5 mr-2" />
-                {content[language].sendMessage}
-              </motion.button>
+              <div>
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="submit"
+                  disabled={
+                    !selectedSpecialty || 
+                    !formData.phone || 
+                    !formData.phone.trim() ||
+                    !selectedDoctorId || 
+                    !formData.appointmentDate || 
+                    !selectedTime ||
+                    !formData.privacyAccepted || 
+                    !formData.recordingPolicyAccepted || 
+                    !formData.parentalConsentAccepted || 
+                    !formData.cancellationPolicyAccepted || 
+                    messageLength > 200
+                  }
+                  className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-poppins ${
+                    !selectedSpecialty || 
+                    !formData.phone || 
+                    !formData.phone.trim() ||
+                    !selectedDoctorId || 
+                    !formData.appointmentDate || 
+                    !selectedTime ||
+                    !formData.privacyAccepted || 
+                    !formData.recordingPolicyAccepted || 
+                    !formData.parentalConsentAccepted || 
+                    !formData.cancellationPolicyAccepted || 
+                    messageLength > 200
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-rose-soft to-purple-soft text-white hover:shadow-2xl'
+                  }`}
+                >
+                  <CreditCard className="inline-block h-5 w-5 mr-2" />
+                  {content[language].sendMessage}
+                </motion.button>
+                
+                {/* Validation Helper Text */}
+                {((!formData.phone || !formData.phone.trim()) || 
+                  !formData.privacyAccepted || 
+                  !formData.recordingPolicyAccepted || 
+                  !formData.parentalConsentAccepted || 
+                  !formData.cancellationPolicyAccepted
+                ) && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-300 rounded-lg">
+                    <ul className="text-xs text-red-600 space-y-1 font-nunito list-disc list-inside">
+                      {(!formData.phone || !formData.phone.trim()) && (
+                        <li>{language === 'gr' ? 'Συμπληρώστε τηλέφωνο' : language === 'en' ? 'Enter phone number' : 'Entrez le numéro de téléphone'}</li>
+                      )}
+                      {(!formData.privacyAccepted || 
+                        !formData.recordingPolicyAccepted || 
+                        !formData.parentalConsentAccepted || 
+                        !formData.cancellationPolicyAccepted) && (
+                        <li>{language === 'gr' ? 'Αποδέχομαι όλους τους όρους και τις σχετικές πολιτικές.' : language === 'en' ? 'I accept all terms and related policies.' : 'J\'accepte tous les termes et politiques connexes.'}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </form>
 
             {/* Stripe Checkout Modal */}
