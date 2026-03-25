@@ -465,11 +465,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
       return;
     }
     if (!manualDepositForm.phone || !manualDepositForm.phone.trim()) {
-      setManualDepositError(language === 'gr' 
-        ? 'Παρακαλώ συμπληρώστε τον τηλεφωνικό σας αριθμό.'
-        : language === 'en' 
-        ? 'Please provide your phone number.'
-        : 'Veuillez fournir votre numéro de téléphone.');
+      setManualDepositError(manualStrings.validation.phone);
       return;
     }
     if (!manualDepositForm.doctorId) {
@@ -664,7 +660,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         subtitle: 'Συμπληρώστε τα στοιχεία της κατάθεσης και προχωρήστε στην εξόφληση των συνεδριών μέσω Stripe.',
         parentName: 'Ονοματεπώνυμο',
         email: 'Email',
-        phone: 'Τηλέφωνο',
+        phone: 'Τηλέφωνο *',
         doctor: 'Ειδικός',
         sessions: 'Αριθμός συνεδριών',
         dateTime: 'Ημερομηνία/Ώρα',
@@ -684,6 +680,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Συμπληρώστε το όνομά σας.',
           email: 'Συμπληρώστε έγκυρο email.',
+          phone: 'Συμπληρώστε το τηλέφωνό σας.',
           doctor: 'Επιλέξτε ειδικό.',
           sessions: 'Ο αριθμός συνεδριών πρέπει να είναι τουλάχιστον 1.',
           dateTime: 'Συμπληρώστε την ημερομηνία/ώρα.',
@@ -782,7 +779,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         subtitle: 'Fill in the deposit details and proceed to settle the sessions through Stripe.',
         parentName: 'Full Name',
         email: 'Email',
-        phone: 'Phone',
+        phone: 'Phone *',
         doctor: 'Specialist',
         sessions: 'Number of sessions',
         dateTime: 'Date/Time',
@@ -802,6 +799,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Please enter your name.',
           email: 'Please enter a valid email.',
+          phone: 'Please enter your phone number.',
           doctor: 'Please select a specialist.',
           sessions: 'Sessions must be at least 1.',
           dateTime: 'Please provide the date/time.',
@@ -899,7 +897,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         subtitle: 'Renseignez les détails du dépôt puis procédez au règlement des séances via Stripe.',
         parentName: 'Nom complet',
         email: 'Email',
-        phone: 'Téléphone',
+        phone: 'Téléphone *',
         doctor: 'Spécialiste',
         sessions: 'Nombre de séances',
         dateTime: 'Date/Heure',
@@ -919,6 +917,7 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
         validation: {
           name: 'Veuillez saisir votre nom.',
           email: 'Veuillez saisir un email valide.',
+          phone: 'Veuillez saisir votre numéro de téléphone.',
           doctor: 'Veuillez choisir un spécialiste.',
           sessions: 'Le nombre de séances doit être au moins égal à 1.',
           dateTime: 'Veuillez indiquer la date/heure.',
@@ -2724,6 +2723,8 @@ const Contact: React.FC<ContactProps> = ({ language, prefill, onlyForm }) => {
                         type="submit"
                         disabled={
                           isSubmittingManualDeposit ||
+                          !manualDepositForm.phone ||
+                          !manualDepositForm.phone.trim() ||
                           !manualDepositForm.customPrice ||
                           !manualDepositForm.customPrice.trim() ||
                           customPriceValue === null ||
